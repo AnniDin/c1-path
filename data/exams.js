@@ -46,10 +46,11 @@ C1.exams = {
     <li><strong>Linguaskill</strong> is quicker and more flexible: on-demand booking and fast results. Choose it if an institution or employer accepts it and you need a level report soon.</li>
     <li><strong>CertAcles</strong> is accepted across Spanish universities and is often cheaper. Choose it if your goal is a university requirement in Spain (degree completion, mobility, grants).</li></ul>
     <p>In all cases, ask the requesting institution which certificates it accepts <em>before</em> you register.</p>`,
-  mapping: `  mapping: `<div class="tablewrap"><table><tr><th>This site</th><th>Prepares for</th></tr>
+  mapping: `<div class="tablewrap"><table><tr><th>This site</th><th>Prepares for</th></tr>
     <tr><td>Grammar lessons</td><td>Use of English Parts 1–4, Writing accuracy, Speaking range</td></tr>
     <tr><td>Vocabulary (phrasal verbs, collocations, idioms, linkers, topic language)</td><td>Multiple-choice cloze, word formation, Reading, Listening, Writing, Speaking</td></tr>
     <tr><td>Use of English sets</td><td>Cambridge Reading and Use of English Parts 1–4; Linguaskill gapped texts; rewrite tasks in CertAcles</td></tr>
+    <tr><td>Skills: Listening, Speaking, Writing</td><td>Cambridge Listening, Speaking and Writing papers; Linguaskill modules; the oral, listening and written components of CertAcles</td></tr>
     <tr><td>Reading comprehension and gapped text</td><td>Cambridge Reading Part 5 and a Part 7-style task; Linguaskill extended reading and gapped sentences; CertAcles reading</td></tr></table></div>
-    <p class="muted">Not yet covered: Listening, Writing feedback and Speaking. For these, use official sample papers alongside this site.</p>`
+    <p class="muted">Listening, Speaking and Writing are in the Skills section. They cannot be marked automatically, so use official sample papers and, when you can, a teacher or language partner alongside them.</p>`
 };

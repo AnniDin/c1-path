@@ -6,18 +6,24 @@
   <title>C1 Path – Advanced English practice</title>
   <meta name="description" content="Understand-first English practice for Cambridge C1 Advanced, Linguaskill and CertAcles.">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#b4441a">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="#/"><span class="brand-mark">C1</span> Path</a>
     <nav id="nav" aria-label="Main">
       <a href="#/" data-r="home">Home</a>
-      <a href="#/grammar" data-r="grammar">Grammar</a>
-      <a href="#/vocab" data-r="vocab">Vocabulary</a>
-      <a href="#/practice" data-r="practice">Practice</a>
+      <a href="#/course" data-r="course">Course</a>
+      <a href="#/toolkit" data-r="toolkit">Toolkit</a>
+      <a href="#/skills" data-r="skills">Skills</a>
+      <a href="#/mistakes" data-r="mistakes">Mistakes <span id="mbadge" class="badge"></span></a>
+      <a href="#/notebook" data-r="notebook">Notebook</a>
       <a href="#/exams" data-r="exams">The exams</a>
       <a href="#/progress" data-r="progress">Progress</a>
     </nav>
+    <button id="qnote" class="icon-btn" aria-label="Quick note (Alt+N)" title="Quick note (Alt+N)">✎</button>
     <button id="theme" class="icon-btn" aria-label="Toggle dark mode" title="Toggle dark mode">◐</button>
   </header>
 
@@ -35,10 +41,16 @@
   <script src="data/practice.js"></script>
   <script src="data/practice2.js"></script>
   <script src="data/practice3.js"></script>
+  <script src="data/listening.js"></script>
+  <script src="data/writing.js"></script>
+  <script src="data/speaking.js"></script>
+  <script src="data/course.js"></script>
   <script src="data/placement.js"></script>
   <script src="data/exams.js"></script>
   <script src="js/store.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/skills.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>

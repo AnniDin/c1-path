@@ -38,6 +38,7 @@ window.validate = function () {
       if (!q.paras || !q.paras.length) issues.push(where + ' empty text');
     } else issues.push(where + ' unknown type ' + q.type);
   };
+  const norm = N;
   const ids = new Set();
   C1.grammar.forEach((g) => {
     if (ids.has(g.id)) issues.push('duplicate lesson id ' + g.id); ids.add(g.id);
@@ -55,5 +56,39 @@ window.validate = function () {
       if (!/\[\[.+?\]\]/.test(c.ex)) issues.push('vocab example without [[ ]]: ' + c.phrase);
     });
   });
+  const used = { grammar: new Set(), vocab: new Set(), practice: new Set() };
+  (C1.course || []).forEach((u) => u.steps.forEach((st, i) => {
+    const w = 'course:' + u.id + ' step ' + (i + 1);
+    if (st.t === 'grammar') { if (!C1.grammar.some((g) => g.id === st.id)) issues.push(w + ' unknown lesson ' + st.id); used.grammar.add(st.id); }
+    else if (st.t === 'vocab') { if (!C1.vocab.some((g) => g.id === st.id)) issues.push(w + ' unknown vocab group ' + st.id); used.vocab.add(st.id); }
+    else if (st.t === 'practice') { const p = C1.practice.find((x) => x.id === st.id); if (!p || !p.sets[st.set]) issues.push(w + ' unknown set ' + st.id + '/' + st.set); used.practice.add(st.id + '/' + st.set); }
+    else if (!['listening', 'speaking', 'writing'].includes(st.t)) issues.push(w + ' unknown step type ' + st.t);
+  }));
+  C1.grammar.forEach((g) => { if (!used.grammar.has(g.id)) issues.push('lesson not in any unit: ' + g.id); });
+  C1.vocab.forEach((g) => { if (!used.vocab.has(g.id)) issues.push('vocab group not in any unit: ' + g.id); });
+  C1.practice.forEach((p) => p.sets.forEach((_, i) => { if (!used.practice.has(p.id + '/' + i)) issues.push('practice set not in any unit: ' + p.id + '/' + i); }));
+  (C1.listening || []).forEach((l) => {
+    if (!l.script || !l.script.length) issues.push('listening ' + l.id + ' has no script');
+    if (!l.questions || l.questions.length < 4) issues.push('listening ' + l.id + ' has fewer than 4 questions');
+    (l.questions || []).forEach((q, i) => chk('listening:' + l.id + '#' + (i + 1), q));
+    (l.questions || []).filter((q) => q.type === 'gap').forEach((q, i) => {
+      const text = norm(l.script.map((x) => x.text).join(' '));
+      if (!q.answers.some((a) => text.includes(norm(a)))) issues.push('listening ' + l.id + ' gap answer not found in script: ' + q.answers.join('/'));
+    });
+  });
+  const wr = C1.writing;
+  if (wr) wr.tasks.forEach((t) => {
+    ['prompt', 'points', 'plan', 'model', 'notes', 'language'].forEach((f) => { if (!t[f] || !t[f].length) issues.push('writing ' + t.id + ' missing ' + f); });
+    const words = t.model.join(' ').replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
+    if (words < t.min - 15 || words > t.max + 15) issues.push('writing ' + t.id + ' model has ' + words + ' words');
+    (t.notes || []).forEach((n) => { if (!(n.para >= 0 && n.para < t.model.length)) issues.push('writing ' + t.id + ' note points at missing paragraph ' + n.para); });
+  });
+  const sp = C1.speaking;
+  if (sp) sp.sets.forEach((s) => { if (!s.part1 || s.part1.length < 4 || !s.part2 || !s.part3 || !s.part4) issues.push('speaking ' + s.id + ' incomplete'); });
+  (C1.course || []).forEach((u) => u.steps.forEach((st) => {
+    if (st.t === 'listening' && !(C1.listening || []).some((x) => x.id === st.id)) issues.push('course ' + u.id + ': unknown listening set ' + st.id);
+    if (st.t === 'speaking' && !((C1.speaking || {}).sets || []).some((x) => x.id === st.id)) issues.push('course ' + u.id + ': unknown speaking set ' + st.id);
+    if (st.t === 'writing' && !((C1.writing || {}).tasks || []).some((x) => x.id === st.id)) issues.push('course ' + u.id + ': unknown writing task ' + st.id);
+  }));
   return issues;
 };

@@ -1,0 +1,12 @@
+{
+  "name": "C1 Path",
+  "short_name": "C1 Path",
+  "description": "Understand-first English practice for Cambridge C1 Advanced, Linguaskill and CertAcles.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f8f0e3",
+  "theme_color": "#b4441a",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

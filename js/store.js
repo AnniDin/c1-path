@@ -1,7 +1,7 @@
 /* Progress storage (localStorage with in-memory fallback), streaks and spaced repetition. */
 (function () {
   const KEY = 'c1path.v1';
-  const fresh = () => ({ stats: {}, days: {}, cards: {}, newToday: {}, lessons: {}, scores: {}, placement: null, theme: null });
+  const fresh = () => ({ stats: {}, days: {}, cards: {}, newToday: {}, lessons: {}, scores: {}, placement: null, theme: null, mistakes: {}, notes: [], drafts: {}, skills: {}, goal: 20 });
   let mem = null;
 
   function load() {
@@ -58,6 +58,53 @@
       if (!d || typeof d !== 'object' || !d.stats || !d.days) throw new Error('Not a C1 Path backup');
       state = Object.assign(fresh(), d); save();
     },
+
+    /* ---- mistakes log ---- */
+    itemId(item) {
+      const str = (item.type || '') + '|' + (item.q || item.first || item.second || '') + '|' + (item.options ? item.options.join('/') : '');
+      let hsh = 5381; for (let i = 0; i < str.length; i++) hsh = ((hsh * 33) ^ str.charCodeAt(i)) >>> 0;
+      return 'm' + hsh.toString(36);
+    },
+    /* results: [{ ok, given, item }]. A wrong answer is saved; a mistake is cleared after two correct answers. */
+    logResults(results, source) {
+      results.forEach((r) => {
+        if (!r.item) return;
+        const id = Store.itemId(r.item), m = state.mistakes[id];
+        if (!r.ok) {
+          state.mistakes[id] = {
+            id, item: r.item, given: r.given || '', topic: m ? m.topic : source.topic, label: m ? m.label : source.label, href: m ? m.href : source.href,
+            count: (m ? m.count : 0) + 1, right: 0, ts: Date.now()
+          };
+        } else if (m) {
+          m.right = (m.right || 0) + 1;
+          if (m.right >= 2) delete state.mistakes[id];
+        }
+      });
+      const ids = Object.keys(state.mistakes);
+      if (ids.length > 400) ids.sort((a, b) => state.mistakes[a].ts - state.mistakes[b].ts).slice(0, ids.length - 400).forEach((k) => delete state.mistakes[k]);
+      save();
+    },
+    mistakes() { return Object.values(state.mistakes).sort((a, b) => b.ts - a.ts); },
+    removeMistake(id) { delete state.mistakes[id]; save(); },
+    clearMistakes() { state.mistakes = {}; save(); },
+
+    /* ---- notebook ---- */
+    notes() { return state.notes.slice().sort((a, b) => b.ts - a.ts); },
+    addNote(n) {
+      const note = { id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title: n.title || '', text: n.text || '', tag: n.tag || 'Other', href: n.href || '', ts: Date.now() };
+      state.notes.push(note); save(); return note;
+    },
+    updateNote(id, patch) { const n = state.notes.find((x) => x.id === id); if (n) { Object.assign(n, patch, { ts: Date.now() }); save(); } },
+    deleteNote(id) { state.notes = state.notes.filter((x) => x.id !== id); save(); },
+
+    /* ---- writing drafts, skills self-assessment, daily goal ---- */
+    draft(id) { return state.drafts[id] || null; },
+    saveDraft(id, text) { state.drafts[id] = { text, ts: Date.now(), words: (text.trim().match(/\S+/g) || []).length }; save(); },
+    skill(key) { return state.skills[key] || null; },
+    setSkill(key, data) { state.skills[key] = Object.assign({}, state.skills[key], data, { ts: Date.now() }); save(); },
+    goal() { return state.goal || 20; },
+    setGoal(n) { state.goal = n; save(); },
+    todayCount() { return state.days[dayStr()] || 0; },
     markLesson(id) { state.lessons[id] = true; save(); },
     setPlacement(p) { state.placement = p; save(); },
     setTheme(t) { state.theme = t; save(); },

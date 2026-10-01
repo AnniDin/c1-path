@@ -1,4 +1,4 @@
-/* Exercise engine: renders items, checks answers, gives explanatory feedback. */
+/* Exercise engine: renders items, checks answers, gives explanatory feedback, text-to-speech. */
 (function () {
   function h(tag, attrs, ...kids) {
     const el = document.createElement(tag);
@@ -11,6 +11,7 @@
     for (const kid of kids.flat()) if (kid != null) el.append(kid.nodeType ? kid : document.createTextNode(kid));
     return el;
   }
+  const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
   /* Normalise for comparison: case, spacing, punctuation and contractions. */
   function norm(s) {
@@ -27,30 +28,93 @@
     return h('div', { class: 'fb' + (ok ? ' good' : ''), html: (ok ? '<b>Correct.</b> ' : exp) + (why || '') });
   }
 
-  /* Each renderer returns { el, check() -> [{ok}] }. */
+  /* ---------- text-to-speech (browser voices; no audio files needed) ---------- */
+  const Speech = (() => {
+    const supported = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+    let token = 0;
+    function voicesNow() {
+      const vs = speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang));
+      const gb = vs.filter((v) => /en[-_]GB/i.test(v.lang));
+      return gb.length >= 2 ? gb : vs;
+    }
+    function ready(cb) {
+      if (!supported) return;
+      if (speechSynthesis.getVoices().length) return cb();
+      let called = false;
+      const go = () => { if (!called) { called = true; cb(); } };
+      speechSynthesis.addEventListener('voiceschanged', go, { once: true });
+      setTimeout(go, 400);
+    }
+    function stop() { token++; if (supported) speechSynthesis.cancel(); }
+    /* segments: [{who, text}]. Distinct speakers get distinct voices, or distinct pitch when only one voice exists. */
+    function play(segments, o) {
+      o = o || {};
+      if (!supported) { o.onEnd && o.onEnd(false); return; }
+      stop();
+      const my = token;
+      ready(() => {
+        const vs = voicesNow(), speakers = [];
+        let i = 0;
+        const next = () => {
+          if (my !== token) return;
+          if (i >= segments.length) { o.onEnd && o.onEnd(true); return; }
+          const seg = segments[i++];
+          let k = speakers.indexOf(seg.who || ''); if (k < 0) { speakers.push(seg.who || ''); k = speakers.length - 1; }
+          const u = new SpeechSynthesisUtterance(seg.text);
+          u.lang = 'en-GB';
+          if (vs.length) u.voice = vs[k % vs.length];
+          u.rate = o.rate || 1;
+          if (vs.length < 2 || speakers.length > vs.length) u.pitch = [1, 0.82, 1.15][k % 3];
+          u.onend = () => setTimeout(next, 250);
+          u.onerror = () => { if (my === token) o.onEnd && o.onEnd(false); };
+          o.onSegment && o.onSegment(i - 1);
+          speechSynthesis.speak(u);
+        };
+        next();
+      });
+    }
+    return { supported, play, stop, say: (text, rate, onEnd) => play([{ who: '', text }], { rate, onEnd }) };
+  })();
+
+  /* A standalone sentence (plus neighbours for sentence-sized options) for a passage gap, so it can be practised alone later. */
+  function gapContext(text, idx, wide) {
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    const k = sentences.findIndex((s) => s.includes('{' + idx + '}'));
+    const parts = wide ? [sentences[k - 1], sentences[k], sentences[k + 1]] : [sentences[k]];
+    return parts.filter(Boolean).join(' ').replace(new RegExp('\\{' + idx + '\\}'), '___').replace(/\{\d+\}/g, '…');
+  }
+  function gapItem(item, i) {
+    const g = item.gaps[i], q = gapContext(item.text, i + 1, item.mode === 'mcq');
+    if (item.mode === 'mcq') return { type: 'mcq', q, options: g.options, answer: g.answer, why: g.why };
+    const hint = item.mode === 'wf' ? ` <span class="muted">(${g.base.toUpperCase()})</span>` : '';
+    return { type: 'gap', q: q.replace('___', '___' + hint), answers: g.answers, why: g.why };
+  }
+
+  /* Each renderer returns { el, check() -> [{ ok, given, item }] }. `item` is a standalone, re-askable question. */
   const R = {
     mcq(item, n) {
       const name = 'q' + Math.random().toString(36).slice(2);
-      const opts = item.options.map((o, i) =>
-        h('label', { class: 'opt' }, h('input', { type: 'radio', name, value: i }), h('span', { html: o })));
-      const box = h('div', { class: 'opts' }, opts);
+      const perm = shuffle(item.options.map((_, i) => i));
+      const opts = perm.map((orig) =>
+        h('label', { class: 'opt' }, h('input', { type: 'radio', name, value: orig }), h('span', { html: item.options[orig] })));
+      const box = h('div', { class: 'opts', role: 'radiogroup' }, opts);
       const el = h('div', { class: 'item' }, h('p', { class: 'q' }, h('span', { class: 'num' }, n + '.'), h('span', { html: item.q })), box);
       return {
         el, check() {
           const sel = box.querySelector('input:checked');
           const ok = !!sel && +sel.value === item.answer;
-          opts.forEach((o, i) => {
-            o.classList.toggle('right', i === item.answer);
-            o.classList.toggle('wrong', !!sel && +sel.value === i && i !== item.answer);
+          opts.forEach((o, pos) => {
+            o.classList.toggle('right', perm[pos] === item.answer);
+            o.classList.toggle('wrong', !!sel && +sel.value === perm[pos] && perm[pos] !== item.answer);
           });
           el.querySelector('.fb')?.remove();
           el.append(feedback(ok, [item.options[item.answer]], item.why));
-          return [{ ok }];
+          return [{ ok, given: sel ? item.options[+sel.value] : '', item }];
         }
       };
     },
     gap(item, n) {
-      const input = h('input', { type: 'text', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' });
+      const input = h('input', { type: 'text', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Answer ' + n });
       const parts = item.q.split('___');
       const q = h('p', { class: 'q' }, h('span', { class: 'num' }, n + '.'), h('span', { html: parts[0] }), input, h('span', { html: parts[1] || '' }));
       const el = h('div', { class: 'item' }, q);
@@ -60,12 +124,12 @@
           input.classList.toggle('right', ok); input.classList.toggle('wrong', !ok);
           el.querySelector('.fb')?.remove();
           el.append(feedback(ok, item.answers.slice(0, 2), item.why));
-          return [{ ok }];
+          return [{ ok, given: input.value.trim(), item }];
         }
       };
     },
     kwt(item, n) {
-      const input = h('input', { type: 'text', class: 'wide', autocomplete: 'off', spellcheck: 'false' });
+      const input = h('input', { type: 'text', class: 'wide', autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Answer ' + n });
       const [a, b] = item.second.split('___');
       const el = h('div', { class: 'item' },
         h('p', { class: 'q' }, h('span', { class: 'num' }, n + '.'), h('span', { html: item.first })),
@@ -78,7 +142,7 @@
           input.classList.toggle('right', ok); input.classList.toggle('wrong', !ok);
           el.querySelector('.fb')?.remove();
           el.append(feedback(ok, item.answers.slice(0, 2), item.why));
-          return [{ ok }];
+          return [{ ok, given: input.value.trim(), item }];
         }
       };
     },
@@ -87,15 +151,72 @@
         item.paras.map((p, i) => h('p', { html: (item.numbered === false ? '' : `<span class="pnum">${i + 1}</span>`) + p })));
       return { el, check: () => [] };
     },
+    /* Listening player: item = { title, intro, script:[{who,text}] } */
+    audio(item) {
+      let plays = 0;
+      const status = h('span', { class: 'muted' }, '');
+      const rate = h('select', { 'aria-label': 'Speed' }, [['0.85', 'Slow'], ['1', 'Normal'], ['1.15', 'Fast']].map(([v, t]) => h('option', { value: v, selected: v === '1' }, t)));
+      const playBtn = h('button', { class: 'btn small', onclick: play }, '▶ Play');
+      const stopBtn = h('button', { class: 'btn small ghost', onclick: () => { Speech.stop(); setIdle(); } }, '■ Stop');
+      const tr = h('details', { class: 'transcript' }, h('summary', {}, 'Transcript (try without it first)'),
+        item.script.map((s) => h('p', {}, s.who ? h('strong', {}, s.who + ': ') : null, s.text)));
+      function setIdle() { playBtn.disabled = false; status.textContent = plays ? `Played ${plays} time${plays === 1 ? '' : 's'}${plays >= 2 ? ' (the exam plays it twice)' : ''}` : ''; }
+      function play() {
+        plays++; playBtn.disabled = true;
+        Speech.play(item.script, {
+          rate: +rate.value,
+          onSegment: (i) => { status.textContent = `Playing… ${i + 1}/${item.script.length}`; },
+          onEnd: (ok) => { if (ok === false && !Speech.supported) status.textContent = 'Speech is not available in this browser: read the transcript below.'; else setIdle(); }
+        });
+      }
+      const el = h('div', { class: 'card audio' },
+        item.title ? h('h3', { style: 'margin-top:0' }, item.title) : null, item.intro ? h('p', { class: 'muted', html: item.intro }) : null,
+        h('div', { class: 'row' }, playBtn, stopBtn, h('label', { class: 'muted' }, 'Speed ', rate), status),
+        !Speech.supported ? h('p', { class: 'fb' }, 'This browser cannot read text aloud, so use the transcript instead.') : null, tr);
+      el.addEventListener('quizchecked', () => { tr.open = true; Speech.stop(); });
+      return { el, check: () => [] };
+    },
+    /* Dictation: item = { text } */
+    dictation(item, n) {
+      const input = h('textarea', { rows: 2, class: 'wide', spellcheck: 'false', autocomplete: 'off', 'aria-label': 'Type what you hear ' + n });
+      const out = h('div');
+      const words = (s) => s.replace(/[’]/g, "'").split(/\s+/).filter(Boolean);
+      const key = (w) => w.toLowerCase().replace(/[^a-z0-9']/g, '');
+      const el = h('div', { class: 'item' },
+        h('p', { class: 'q' }, h('span', { class: 'num' }, n + '.'), 'Listen and type what you hear.'),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn small', onclick: () => Speech.say(item.text, 1) }, '▶ Play'),
+          h('button', { class: 'btn small ghost', onclick: () => Speech.say(item.text, 0.7) }, '▶ Slowly')),
+        input, out);
+      return {
+        el, check() {
+          const t = words(item.text), g = words(input.value);
+          const L = Array.from({ length: t.length + 1 }, () => new Array(g.length + 1).fill(0));
+          for (let i = t.length - 1; i >= 0; i--) for (let j = g.length - 1; j >= 0; j--)
+            L[i][j] = key(t[i]) === key(g[j]) ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+          const parts = []; let i = 0, j = 0;
+          while (i < t.length || j < g.length) {
+            if (i < t.length && j < g.length && key(t[i]) === key(g[j])) { parts.push(`<span class="dok">${t[i]}</span>`); i++; j++; }
+            else if (j < g.length && (i >= t.length || L[i][j + 1] >= L[i + 1][j])) { parts.push(`<s class="dextra">${g[j]}</s>`); j++; }
+            else { parts.push(`<span class="dmiss">${t[i]}</span>`); i++; }
+          }
+          const acc = L[0][0] / Math.max(t.length, g.length, 1);
+          const ok = acc >= 0.9;
+          out.innerHTML = '';
+          out.append(h('div', { class: 'fb' + (ok ? ' good' : ''), html: `<b>${Math.round(acc * 100)}% of the words.</b> Green = correct, red = missed, struck-through = extra.<br>` + parts.join(' ') }));
+          return [{ ok, given: input.value.trim(), item: null }];
+        }
+      };
+    },
     passage(item, n) {
       const mode = item.mode; // cloze | wf | mcq
-      const ctrls = item.gaps.map((g) => {
+      const ctrls = item.gaps.map((g, i) => {
         if (mode === 'mcq') {
-          const sel = h('select', {}, h('option', { value: '' }, '–'), g.options.map((o, i) => h('option', { value: i }, o)));
-          return { node: sel, get: () => sel.value };
+          const sel = h('select', { 'aria-label': 'Gap ' + (i + 1) }, h('option', { value: '' }, '–'), g.options.map((o, k) => h('option', { value: k }, o)));
+          return { node: sel, get: () => sel.value, text: () => (sel.value === '' ? '' : g.options[+sel.value]) };
         }
-        const inp = h('input', { type: 'text', autocomplete: 'off', spellcheck: 'false', style: 'min-width:120px' });
-        return { node: inp, get: () => inp.value };
+        const inp = h('input', { type: 'text', autocomplete: 'off', spellcheck: 'false', style: 'min-width:120px', 'aria-label': 'Gap ' + (i + 1) });
+        return { node: inp, get: () => inp.value, text: () => inp.value.trim() };
       });
       const passage = h('div', { class: 'passage' });
       item.text.split(/(\{\d+\})/).forEach((seg) => {
@@ -118,14 +239,15 @@
             const fb = feedback(ok, shown, g.why);
             fb.prepend(h('b', {}, (i + 1) + '. '));
             list.append(fb);
-            return { ok };
+            return { ok, given: ctrls[i].text(), item: gapItem(item, i) };
           });
         }
       };
     }
   };
 
-  /* Renders a set of items with a "Check answers" button; reports the score once per attempt. */
+  /* Renders a set of items with a "Check answers" button; reports the score once per attempt.
+     opts: onScore(correct, total, results), onRetry(), source: { topic, label, href } to log mistakes. */
   function quiz(items, opts) {
     opts = opts || {};
     const wrap = h('div');
@@ -133,31 +255,40 @@
     let n = 0;
     items.forEach((it) => {
       let r;
-      if (it.type === 'text') r = R.text(it);
+      if (it.type === 'text' || it.type === 'audio') r = R[it.type](it);
       else { r = R[it.type](it, ++n); if (it.type === 'passage') n += it.gaps.length - 1; }
       rendered.push(r); wrap.append(r.el);
     });
+    const hasQuestions = n > 0;
     const result = h('div', { class: 'card', style: 'display:none' });
     const btn = h('button', { class: 'btn', onclick: check }, 'Check answers');
     const again = h('button', { class: 'btn ghost', onclick: () => opts.onRetry && opts.onRetry() }, 'Try again');
     let done = false;
     function check() {
       const res = rendered.flatMap((r) => r.check());
+      if (!res.length) return;
       const correct = res.filter((x) => x.ok).length;
-      if (!done) { done = true; opts.onScore && opts.onScore(correct, res.length, res); }
+      if (!done) {
+        done = true;
+        if (opts.source && window.Store && Store.logResults) Store.logResults(res, opts.source);
+        opts.onScore && opts.onScore(correct, res.length, res);
+      }
+      rendered.forEach((r) => r.el.dispatchEvent(new CustomEvent('quizchecked')));
       const pct = Math.round((100 * correct) / res.length);
+      const wrong = res.length - correct;
       result.style.display = '';
       result.innerHTML = '';
       result.append(h('div', { class: 'score' }, `${correct} / ${res.length}  (${pct}%)`),
         h('p', { class: 'muted' }, pct >= 80 ? 'Strong. Read any explanation you missed, then move on.' :
           pct >= 50 ? 'Good progress. Read the explanations: they tell you why, not just what.' :
             'This topic needs another look. Re-read the lesson idea, then try again.'),
+        wrong && opts.source ? h('p', { class: 'muted' }, `${wrong} mistake${wrong === 1 ? '' : 's'} saved. `, h('a', { href: '#/mistakes' }, 'Review them with explanations')) : null,
         h('div', { class: 'row' }, again));
       result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-    wrap.append(h('div', { class: 'row', style: 'margin-top:14px' }, btn), result);
+    if (hasQuestions) wrap.append(h('div', { class: 'row', style: 'margin-top:14px' }, btn), result);
     return wrap;
   }
 
-  window.Engine = { h, quiz, norm, matches };
+  window.Engine = { h, quiz, norm, matches, Speech, shuffle };
 })();
