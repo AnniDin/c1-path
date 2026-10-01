@@ -42,7 +42,7 @@
         { options: ['miss', 'drop', 'lose', 'fail'], answer: 2, why: '<em>Lose colour</em>. <em>Miss</em>, <em>drop</em> and <em>fail</em> do not collocate with <em>colour</em> in this sense.' },
         { options: ['likely', 'apt', 'prone', 'tending'], answer: 2, why: '<em>Prone to</em> + noun = likely to suffer from. <em>Likely</em> and <em>apt</em> take an infinitive, not <em>to</em> + noun.' },
         { options: ['despite', 'unless', 'whereas', 'provided'], answer: 3, why: '<em>Provided</em> (that) = on condition that. <em>Unless</em> would reverse the meaning.' },
-        { options: ['held', 'set', 'laid', 'got'], answer: 1, why: '<em>Set up a scheme</em> = establish it.' },
+        { options: ['held', 'set', 'laid', 'sent'], answer: 1, why: '<em>Set up a scheme</em> = establish it.' },
         { options: ['assist', 'aid', 'help', 'support'], answer: 2, why: '<em>Help (to) do something</em>. <em>Assist</em>, <em>aid</em> and <em>support</em> cannot be followed by an infinitive in this way.' },
         { options: ['Otherwise', 'Moreover', 'Consequently', 'Nevertheless'], answer: 3, why: '<em>Nevertheless</em> = despite what has just been said (reefs have been lost). The others give the wrong logical link.' },
         { options: ['matter', 'importance', 'essence', 'urgency'], answer: 2, why: 'The fixed phrase is <em>time is of the essence</em> = speed is vital.' }
@@ -54,11 +54,11 @@
       gaps: [
         { options: ['earned', 'won', 'enjoyed', 'gained'], answer: 2, why: '<em>Enjoy a boom</em> is the natural collocation for growth in popularity.' },
         { options: ['On', 'By', 'In', 'At'], answer: 1, why: '<em>By and large</em> = mostly, in general.' },
-        { options: ['held', 'sent', 'put', 'left'], answer: 2, why: '<em>Put off</em> = discourage. <em>Be put off by</em> is the passive form.' },
+        { options: ['given', 'sent', 'put', 'left'], answer: 2, why: '<em>Put off</em> = discourage. <em>Be put off by</em> is the passive form.' },
         { options: ['skips', 'shortcuts', 'lifts', 'cuts'], answer: 1, why: '<em>There are no shortcuts to success</em> is a common expression.' },
         { options: ['much', 'so', 'just', 'very'], answer: 2, why: '<em>Just as … as</em> = equally. <em>So</em> and <em>very</em> cannot be followed by <em>as</em> like this.' },
-        { options: ['make', 'have', 'run', 'get'], answer: 2, why: 'The fixed phrase is <em>run the risk of</em>.' },
-        { options: ['In', 'At', 'On', 'By'], answer: 2, why: 'We say <em>on the morning of</em> a particular day.' },
+        { options: ['make', 'hold', 'run', 'get'], answer: 2, why: 'The fixed phrase is <em>run the risk of</em>.' },
+        { options: ['In', 'At', 'On', 'For'], answer: 2, why: 'We say <em>on the morning of</em> a particular day.' },
         { options: ['worthy', 'valuable', 'worth', 'worthwhile'], answer: 2, why: '<em>Worth it</em>: <em>worth</em> is followed directly by a pronoun. <em>Worthwhile</em> cannot take <em>it</em>.' }
       ]
     }] }
@@ -72,7 +72,7 @@
       text: 'Chocolate, {1} is now enjoyed all over the world, was first prepared as a bitter drink in Central America. It was not {2} the sixteenth century that Europeans tasted it, and even then it remained a luxury for the wealthy. Sugar was added {3} make the drink more palatable, and it soon became fashionable at court. Early makers, most {4} them small family firms, worked entirely by hand. Demand grew {5} rapidly that machines were eventually introduced. Solid bars appeared only in the nineteenth century, and they quickly became an everyday treat. Buyers today expect to be told exactly {6} their chocolate comes from, {7} it is dark, milk or white. Were it not {8} the cocoa farmers, of course, there would be no industry at all.',
       gaps: [
         { answers: ['which'], why: 'Non-defining relative clause after a comma, referring to <em>chocolate</em>. <em>That</em> cannot follow a comma.' },
-        { answers: ['until', 'till'], why: 'Cleft with <em>not until</em>: <em>It was not until the sixteenth century that…</em>' },
+        { answers: ['until', 'till', 'before'], why: 'Cleft with <em>not until</em>: <em>It was not until the sixteenth century that…</em>' },
         { answers: ['to'], why: 'Infinitive of purpose: <em>added to make</em> = in order to make.' },
         { answers: ['of'], why: '<em>Most of</em> + pronoun (<em>most of them</em>).' },
         { answers: ['so'], why: '<em>So … that</em> shows result: demand grew so rapidly that…' },
@@ -85,7 +85,7 @@
       type: 'passage', mode: 'cloze', title: 'The gap year',
       text: 'Every year, thousands of young people take a gap year, {1} they travel or work overseas before starting university. Some do so {2} gain experience for their careers, while others simply want a break from studying. Volunteering, {3} particular, has become popular, as it allows participants to make a real difference. Those {4} take part often say that the experience changed their outlook. Not only {5} they learn practical skills, but they also become more independent. The danger is {6} projects can end up benefiting the volunteers more than the communities they {7} supposed to help. {8} this reason, responsible organisations check carefully that each project meets a genuine local need. Returning volunteers are often asked to share their experiences with the next group, which helps everyone to learn from past mistakes.',
       gaps: [
-        { answers: ['when'], why: '<em>When</em> = the period during which. (<em>During which</em> would be two words.)' },
+        { answers: ['when', 'whereby'], why: '<em>When</em> = the period during which; <em>whereby</em> = by which arrangement. (<em>During which</em> would be two words.)' },
         { answers: ['to'], why: '<em>Do so to gain</em> = do so in order to gain (infinitive of purpose).' },
         { answers: ['in'], why: 'Fixed phrase: <em>in particular</em>.' },
         { answers: ['who', 'that'], why: 'Relative pronoun for people as subject of <em>take part</em>: <em>those who</em> (or, less formally, <em>those that</em>).' },
@@ -166,7 +166,7 @@
         { base: 'environment', answers: ['environmentally'], why: 'An adverb modifying <em>friendly</em>: <em>environmentally friendly</em>.' },
         { base: 'desire', answers: ['undesirable'], why: 'An adjective before <em>side effects</em> with a negative meaning: <em>un-</em> + <em>desir(e)</em> + <em>-able</em>.' },
         { base: 'inhabit', answers: ['inhabitants'], why: 'A plural noun for people, subject of the plural verb <em>notice</em>.' },
-        { base: 'reason', answers: ['unreasonably'], why: 'An adverb modifying <em>high</em> with a negative meaning: <em>un-</em> + <em>reason</em> + <em>-ably</em>.' },
+        { base: 'excess', answers: ['excessively'], why: 'An adverb modifying <em>high</em>: <em>excess</em> → <em>excessive</em> → <em>excessively</em> = too high.' },
         { base: 'durable', answers: ['durability'], why: 'An uncountable noun after <em>greater</em>: <em>durability</em>.' }
       ]
     }] },
@@ -195,11 +195,11 @@
       { type: 'kwt', first: '"I didn\'t break the vase," said Tom.', key: 'denied', second: 'Tom ___ the vase.', answers: ['denied breaking', 'denied having broken'], why: '<em>Deny</em> + <em>-ing</em> (or <em>having</em> + participle).' },
       { type: 'kwt', first: 'People expect the new bridge to open in May.', key: 'expected', second: 'The new bridge ___ open in May.', answers: ['is expected to'], why: 'Passive reporting structure: <em>is expected to</em> + infinitive.' },
       { type: 'kwt', first: 'They are painting the school hall at the moment.', key: 'being', second: 'The school hall ___ painted at the moment.', answers: ['is being'], why: 'Present continuous passive: <em>is being</em> + past participle.' },
-      { type: 'kwt', first: 'Someone should have told me about the change.', key: 'been', second: 'I ___ about the change.', answers: ['should have been told', 'ought to have been told', 'should\'ve been told'], why: 'Past passive with a modal of criticism: <em>should have been told</em>.' }
+      { type: 'kwt', first: 'Someone should have told me about the change.', key: 'been', second: 'I ___ about the change.', answers: ['should have been told', 'ought to have been told', 'should\'ve been told', 'should have been informed', 'ought to have been informed', 'should\'ve been informed'], why: 'Past passive with a modal of criticism: <em>should have been told</em>.' }
     ] },
     { title: 'Set 5: Conditionals and wishes', items: [
       { type: 'kwt', first: 'I regret not booking earlier.', key: 'wish', second: 'I ___ earlier.', answers: ['wish I had booked', 'wish I\'d booked'], why: '<em>Wish</em> + past perfect expresses regret about the past.' },
-      { type: 'kwt', first: 'Lock the door, or someone might get in.', key: 'unless', second: 'Someone might get in ___ the door.', answers: ['unless you lock', 'unless we lock'], why: '<em>Unless</em> = if not; it is followed by a present tense.' },
+      { type: 'kwt', first: 'Lock the door, or someone might get in.', key: 'unless', second: 'Someone might get in ___ the door.', answers: ['unless you lock', 'unless we lock', 'unless you have locked', 'unless we have locked'], why: '<em>Unless</em> = if not; it is followed by a present tense.' },
       { type: 'kwt', first: 'We should have left ages ago.', key: 'time', second: 'It is ___ left.', answers: ['high time we', 'high time that we', 'about time we', 'about time that we'], why: '<em>It is (high) time</em> + subject + past simple.' },
       { type: 'kwt', first: 'I would take that job in your position.', key: 'were', second: 'If I ___ take that job.', answers: ['were you, I\'d', 'were you, I would', 'were you I\'d', 'were you I would'], why: '<em>If I were you</em> is the fixed phrase for giving advice.' },
       { type: 'kwt', first: 'Without your help, we would have failed.', key: 'not', second: 'If it ___ for your help, we would have failed.', answers: ['had not been', 'hadn\'t been'], why: '<em>If it had not been for</em> + noun = but for; third conditional.' },
@@ -207,48 +207,48 @@
     ] },
     { title: 'Set 6: Inversion', items: [
       { type: 'kwt', first: 'As soon as she sat down, the phone rang.', key: 'hardly', second: '___ down when the phone rang.', answers: ['Hardly had she sat'], why: '<em>Hardly had</em> + subject + past participle … <em>when</em>.' },
-      { type: 'kwt', first: 'You must not open this door under any circumstances.', key: 'circumstances', second: 'Under ___ open this door.', answers: ['no circumstances must you', 'no circumstances should you', 'no circumstances may you'], why: '<em>Under no circumstances</em> triggers inversion: modal + subject + verb.' },
-      { type: 'kwt', first: 'I only realised my mistake when I got home.', key: 'until', second: 'Not ___ home did I realise my mistake.', answers: ['until I got', 'until I arrived', 'until I reached', 'until I came', 'until I returned', 'until I went'], why: '<em>Not until</em> + clause is followed by inversion in the main clause (<em>did I realise</em>).' },
-      { type: 'kwt', first: 'The company lost money, and it also lost its reputation.', key: 'only', second: 'Not ___ lost money, but it also lost its reputation.', answers: ['only did the company'], why: '<em>Not only</em> at the start of a clause requires an auxiliary before the subject.' },
-      { type: 'kwt', first: 'We seldom see such generosity.', key: 'rarely', second: '___ such generosity.', answers: ['Rarely do we see', 'Rarely do you see', 'Rarely do people see', 'Rarely does one see'], why: 'Negative adverbs such as <em>rarely</em> at the start take inversion: <em>Rarely do we see</em>.' },
-      { type: 'kwt', first: 'If you need any help, call me.', key: 'should', second: '___ any help, call me.', answers: ['Should you need', 'Should you require'], why: 'Formal inverted conditional: <em>Should you need</em> = if you need.' }
+      { type: 'kwt', first: 'You must not open this door under any circumstances.', key: 'circumstances', second: 'Under ___ open this door.', answers: ['no circumstances must you', 'no circumstances should you', 'no circumstances may you', 'no circumstances can you', 'no circumstances shall you', 'no circumstances are you to'], why: '<em>Under no circumstances</em> triggers inversion: modal + subject + verb.' },
+      { type: 'kwt', first: 'I only realised my mistake when I got home.', key: 'until', second: 'Not ___ home did I realise my mistake.', answers: ['until I got', 'until I arrived', 'until I reached', 'until I came', 'until I returned', 'until I went', 'until I was'], why: '<em>Not until</em> + clause is followed by inversion in the main clause (<em>did I realise</em>).' },
+      { type: 'kwt', first: 'The company lost money, and it also lost its reputation.', key: 'only', second: 'Not ___ money, but it also lost its reputation.', answers: ['only did the company lose', 'only did it lose'], why: '<em>Not only</em> at the start of a clause requires an auxiliary before the subject.' },
+      { type: 'kwt', first: 'We seldom see such generosity.', key: 'rarely', second: '___ such generosity.', answers: ['Rarely do we see', 'Rarely do you see', 'Rarely do people see', 'Rarely does one see', 'Rarely do we witness', 'Rarely do we encounter'], why: 'Negative adverbs such as <em>rarely</em> at the start take inversion: <em>Rarely do we see</em>.' },
+      { type: 'kwt', first: 'If you need any help, call me.', key: 'should', second: '___ any help, call me.', answers: ['Should you need', 'Should you require', 'Should you want', 'Should you ever need'], why: 'Formal inverted conditional: <em>Should you need</em> = if you need.' }
     ] },
     { title: 'Set 7: Modals of deduction and certainty', items: [
       { type: 'kwt', first: 'I\'m sure she was joking when she said that.', key: 'must', second: 'She ___ joking when she said that.', answers: ['must have been'], why: '<em>Must have</em> + past participle = certain deduction about the past.' },
-      { type: 'kwt', first: 'Perhaps they missed the train.', key: 'might', second: 'They ___ the train.', answers: ['might have missed', 'might\'ve missed'], why: '<em>Might have</em> + past participle = a past possibility.' },
+      { type: 'kwt', first: 'Perhaps they missed the train.', key: 'might', second: 'They ___ the train.', answers: ['might have missed', 'might\'ve missed', 'might well have missed'], why: '<em>Might have</em> + past participle = a past possibility.' },
       { type: 'kwt', first: 'I am sure the parcel will arrive tomorrow.', key: 'bound', second: 'The parcel ___ arrive tomorrow.', answers: ['is bound to'], why: '<em>Be bound to</em> + infinitive = certain to happen.' },
-      { type: 'kwt', first: 'It is quite probable that the meeting will be cancelled.', key: 'likely', second: 'The meeting is ___ cancelled.', answers: ['likely to be', 'very likely to be'], why: '<em>Be likely to</em> + infinitive (here passive: <em>to be cancelled</em>).' },
-      { type: 'kwt', first: 'It is possible that the flight has been delayed.', key: 'may', second: 'The flight ___ delayed.', answers: ['may have been'], why: '<em>May have been</em> + participle = possibility about the present result of a past event.' },
+      { type: 'kwt', first: 'It is quite probable that the meeting will be cancelled.', key: 'likely', second: 'The meeting is ___ cancelled.', answers: ['likely to be', 'very likely to be', 'quite likely to be', 'highly likely to be'], why: '<em>Be likely to</em> + infinitive (here passive: <em>to be cancelled</em>).' },
+      { type: 'kwt', first: 'It is possible that the flight has been delayed.', key: 'may', second: 'The flight ___ delayed.', answers: ['may have been', 'may well have been'], why: '<em>May have been</em> + participle = possibility about the present result of a past event.' },
       { type: 'kwt', first: 'I\'m certain he wasn\'t at the party; I would have noticed him.', key: 'been', second: 'He ___ at the party; I would have noticed him.', answers: ['can\'t have been', 'cannot have been', 'couldn\'t have been', 'could not have been'], why: '<em>Can\'t have been</em> = negative certainty about the past.' }
     ] },
     { title: 'Set 8: Participle clauses and comparison', items: [
       { type: 'kwt', first: 'As I didn\'t know what to do, I asked for advice.', key: 'knowing', second: '___ what to do, I asked for advice.', answers: ['Not knowing'], why: 'Negative participle clause: <em>Not knowing</em> = because I did not know.' },
-      { type: 'kwt', first: 'After she had finished her degree, she moved abroad.', key: 'having', second: '___ her degree, she moved abroad.', answers: ['Having finished'], why: 'A perfect participle clause shows one action before another: <em>Having finished</em>.' },
-      { type: 'kwt', first: 'As you practise more, your fluency improves.', key: 'more', second: 'The ___, the better your fluency becomes.', answers: ['more you practise'], why: 'Double comparative: <em>The more …, the better …</em>' },
-      { type: 'kwt', first: 'That phone is much more expensive than this one.', key: 'nearly', second: 'This phone is not ___ expensive as that one.', answers: ['nearly as'], why: '<em>Not nearly as … as</em> = much less … than.' },
-      { type: 'kwt', first: 'Nothing is better than a hot bath after a long walk.', key: 'best', second: 'A hot bath after a long walk ___ thing.', answers: ['is the best', 'is simply the best', 'is easily the best', 'is by far the best'], why: 'A negative comparison becomes a superlative: <em>the best thing</em>.' },
+      { type: 'kwt', first: 'After she had finished her degree, she moved abroad.', key: 'having', second: '___ her degree, she moved abroad.', answers: ['Having finished', 'Having completed'], why: 'A perfect participle clause shows one action before another: <em>Having finished</em>.' },
+      { type: 'kwt', first: 'As you practise more, your fluency improves.', key: 'more', second: 'The ___, the better your fluency becomes.', answers: ['more you practise', 'more you practice', 'more often you practise'], why: 'Double comparative: <em>The more …, the better …</em>' },
+      { type: 'kwt', first: 'That phone is much more expensive than this one.', key: 'nearly', second: 'This phone is not ___ expensive as that one.', answers: ['nearly as', 'nearly so'], why: '<em>Not nearly as … as</em> = much less … than.' },
+      { type: 'kwt', first: 'Nothing is better than a hot bath after a long walk.', key: 'best', second: 'A hot bath after a long walk ___ thing.', answers: ['is the best', 'is simply the best', 'is easily the best', 'is by far the best', 'is the very best', '\'s the best'], why: 'A negative comparison becomes a superlative: <em>the best thing</em>.' },
       { type: 'kwt', first: 'The film was so boring that we left halfway.', key: 'such', second: 'It was ___ film that we left halfway.', answers: ['such a boring'], why: '<em>Such a</em> + adjective + noun, whereas <em>so</em> is used with an adjective alone.' }
     ] },
     { title: 'Set 9: Linkers and verb patterns', items: [
       { type: 'kwt', first: 'He is rich, but he isn\'t happy.', key: 'though', second: 'Rich ___, he isn\'t happy.', answers: ['though he is', 'though he may be'], why: 'Concession with fronted adjective: <em>Rich though he is</em>.' },
-      { type: 'kwt', first: 'Although she felt ill, she went to work.', key: 'fact', second: '___ she felt ill, she went to work.', answers: ['Despite the fact that', 'Notwithstanding the fact that'], why: '<em>Despite</em> needs a noun phrase, so a clause needs <em>the fact that</em>.' },
+      { type: 'kwt', first: 'Although she felt ill, she went to work.', key: 'fact', second: '___ she felt ill, she went to work.', answers: ['Despite the fact that', 'Notwithstanding the fact that', 'Despite the fact', 'Notwithstanding the fact', 'Regardless of the fact that'], why: '<em>Despite</em> needs a noun phrase, so a clause needs <em>the fact that</em>.' },
       { type: 'kwt', first: 'The match was cancelled because of the storm.', key: 'account', second: 'The match was cancelled ___ the storm.', answers: ['on account of'], why: '<em>On account of</em> + noun = because of.' },
       { type: 'kwt', first: 'My brother loves cities, but I prefer the countryside.', key: 'whereas', second: 'My brother loves cities, ___ prefer the countryside.', answers: ['whereas I'], why: '<em>Whereas</em> contrasts two facts within one sentence.' },
       { type: 'kwt', first: 'I\'m sorry that I told him the secret.', key: 'regret', second: 'I ___ him the secret.', answers: ['regret telling', 'regret having told'], why: '<em>Regret</em> + <em>-ing</em> refers to a past action you are sorry about.' },
-      { type: 'kwt', first: 'She said she would definitely help us.', key: 'promised', second: 'She ___ us.', answers: ['promised to help'], why: '<em>Promise</em> + <em>to</em> + infinitive.' }
+      { type: 'kwt', first: 'She said she would definitely help us.', key: 'promised', second: 'She ___ us.', answers: ['promised to help', 'promised she would help', 'promised that she would help'], why: '<em>Promise</em> + <em>to</em> + infinitive.' }
     ] },
     { title: 'Set 10: Phrasal verbs and prepositions', items: [
-      { type: 'kwt', first: 'They cancelled the trip because of the storm.', key: 'off', second: 'The trip ___ because of the storm.', answers: ['was called off', 'had to be called off'], why: '<em>Call off</em> = cancel; here in the passive.' },
+      { type: 'kwt', first: 'They cancelled the trip because of the storm.', key: 'off', second: 'The trip ___ because of the storm.', answers: ['was called off', 'had to be called off', 'had been called off', 'has been called off', 'got called off'], why: '<em>Call off</em> = cancel; here in the passive.' },
       { type: 'kwt', first: 'I can\'t tolerate his rudeness any longer.', key: 'up', second: 'I can\'t ___ his rudeness any longer.', answers: ['put up with'], why: '<em>Put up with</em> = tolerate.' },
       { type: 'kwt', first: 'It took me a while to recover from the flu.', key: 'over', second: 'It took me a while to ___ the flu.', answers: ['get over'], why: '<em>Get over</em> = recover from an illness or a shock.' },
       { type: 'kwt', first: 'She blamed her brother for the mistake.', key: 'responsible', second: 'She held her brother ___ the mistake.', answers: ['responsible for'], why: '<em>Hold someone responsible for</em> = blame.' },
-      { type: 'kwt', first: 'Sam is very good at persuading people.', key: 'gift', second: 'Sam ___ persuading people.', answers: ['has a gift for'], why: '<em>Have a gift for</em> + <em>-ing</em> = have a natural talent for.' },
-      { type: 'kwt', first: 'We were all very impressed by her speech.', key: 'impression', second: 'Her speech ___ on all of us.', answers: ['made an impression', 'made a good impression', 'made a great impression', 'left an impression'], why: '<em>Make an impression on</em> someone = affect them strongly.' }
+      { type: 'kwt', first: 'Sam is very good at persuading people.', key: 'gift', second: 'Sam ___ persuading people.', answers: ['has a gift for', 'has the gift of', 'has a real gift for', 'has a great gift for', 'has got a gift for'], why: '<em>Have a gift for</em> + <em>-ing</em> = have a natural talent for.' },
+      { type: 'kwt', first: 'We were all very impressed by her speech.', key: 'impression', second: 'Her speech ___ on all of us.', answers: ['made an impression', 'made a good impression', 'made a great impression', 'left an impression', 'made a strong impression', 'made a deep impression', 'made a lasting impression', 'made a big impression', 'made quite an impression', 'made a positive impression', 'left a lasting impression'], why: '<em>Make an impression on</em> someone = affect them strongly.' }
     ] },
     { title: 'Set 11: Mixed structures', items: [
-      { type: 'kwt', first: '"Why don\'t you apply for the job?" Tom said to me.', key: 'suggested', second: 'Tom ___ for the job.', answers: ['suggested I apply', 'suggested that I apply', 'suggested I should apply', 'suggested that I should apply', 'suggested I applied', 'suggested that I applied'], why: '<em>Suggest</em> is followed by a <em>that</em> clause with the subjunctive, <em>should</em> or a past tense, but never by <em>to</em> + infinitive.' },
+      { type: 'kwt', first: '"Why don\'t you apply for the job?" Tom said to me.', key: 'suggested', second: 'Tom ___ for the job.', answers: ['suggested I apply', 'suggested that I apply', 'suggested I should apply', 'suggested that I should apply', 'suggested I applied', 'suggested that I applied', 'suggested my applying'], why: '<em>Suggest</em> is followed by a <em>that</em> clause with the subjunctive, <em>should</em> or a past tense, but never by <em>to</em> + infinitive.' },
       { type: 'kwt', first: 'She is too young to drive.', key: 'enough', second: 'She is not ___ drive.', answers: ['old enough to'], why: '<em>Enough</em> follows an adjective: <em>old enough to</em>.' },
-      { type: 'kwt', first: 'She started learning the piano five years ago.', key: 'been', second: 'She ___ the piano for five years.', answers: ['has been learning'], why: 'Present perfect continuous with <em>for</em> shows an activity continuing up to now.' },
+      { type: 'kwt', first: 'She started learning the piano five years ago.', key: 'been', second: 'She ___ the piano for five years.', answers: ['has been learning', '\'s been learning'], why: 'Present perfect continuous with <em>for</em> shows an activity continuing up to now.' },
       { type: 'kwt', first: '"Where do you live?" she asked me.', key: 'where', second: 'She asked me ___.', answers: ['where I lived', 'where I live'], why: 'Reported question: statement word order, no <em>do</em>, and usually a backshift of tense.' },
       { type: 'kwt', first: 'I don\'t mind which team wins.', key: 'matter', second: 'It doesn\'t ___ me which team wins.', answers: ['matter to'], why: '<em>Matter to</em> someone = be important to them.' },
       { type: 'kwt', first: 'Nobody in the team runs faster than Kai.', key: 'fastest', second: 'Kai is ___ in the team.', answers: ['the fastest', 'the fastest runner'], why: 'Superlative: <em>the fastest</em> replaces <em>nobody … faster than</em>.' }

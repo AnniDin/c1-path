@@ -189,3 +189,8 @@ textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .annot { margin: 4px 0 8px 14px; padding: 6px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 8px 8px 0; font-size: .92rem; }
 details > summary { cursor: pointer; font-weight: 600; }
 details.card { padding: 12px 16px; }
+
+.aifb { border-color: var(--accent); }
+.voices { margin-top: 10px; }
+.voices select { max-width: 100%; }
+input[type=password] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }

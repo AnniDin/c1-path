@@ -18,6 +18,53 @@
   const fmtDate = (ts) => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
   /* =====================================================================
+     AI FEEDBACK (optional, learner's own API key)
+     ===================================================================== */
+  const SCORE_LABELS = { content: 'Content', communicative: 'Communicative achievement', organisation: 'Organisation', language: 'Language', grammar_vocabulary: 'Grammar and vocabulary', discourse: 'Discourse management', interaction: 'Interaction' };
+  function aiCard() {
+    const key = h('input', { type: 'password', class: 'wide', placeholder: 'sk-ant-…', autocomplete: 'off', 'aria-label': 'Anthropic API key' });
+    const model = h('select', { 'aria-label': 'Model', onchange: (e) => AI.setModel(e.target.value) }, AI.MODELS.map(([v, t]) => h('option', { value: v, selected: v === AI.model() }, t)));
+    const status = h('p', { class: 'muted' }, AI.configured() ? `A key ending ${AI.keyHint()} is saved in this browser.` : 'No key saved. The site works fully without one.');
+    const show = (t, bad) => { status.textContent = t; status.className = bad ? 'a-warn' : 'muted'; };
+    return cardBlock('AI feedback (optional)',
+      h('p', { class: 'muted' }, 'Writing, Speaking and mistake explanations can get examiner-style feedback from Claude. It uses your own Anthropic API key: create one at console.anthropic.com and set a low monthly spend limit for it. Each request costs a few cents or less.'),
+      h('div', { class: 'callout warn' }, h('strong', {}, 'Privacy. '), 'The key is stored only in this browser and sent only to api.anthropic.com. Only the text you ask feedback on is sent. Do not save a key on a shared computer, and remove it if you stop using it.'),
+      key, h('div', { class: 'row', style: 'margin:8px 0' }, model,
+        h('button', { class: 'btn small', onclick: () => { if (!key.value.trim()) return show('Paste a key first.', true); AI.setKey(key.value); key.value = ''; show(`Saved (ending ${AI.keyHint()}). Press Test to check it.`); } }, 'Save key'),
+        h('button', { class: 'btn small ghost', onclick: async () => { show('Testing…'); try { await AI.test(); show('The key works.'); } catch (e) { show(e.message, true); } } }, 'Test'),
+        h('button', { class: 'btn small ghost', onclick: () => { AI.setKey(''); show('Key removed.'); } }, 'Remove key')),
+      status);
+  }
+  A.aiCard = aiCard;
+
+  function feedbackPanel(d, title) {
+    const li = (arr) => h('ul', {}, (arr || []).map((x) => h('li', {}, String(x))));
+    const box = h('div', { class: 'card aifb' }, h('h3', { style: 'margin-top:0' }, title || 'AI feedback'),
+      h('p', { class: 'muted' }, 'A second opinion from an AI model, not an official mark. Check anything that surprises you.'));
+    if (d.level) box.append(h('p', {}, h('strong', {}, 'Estimated level: '), String(d.level)));
+    Object.entries(d.scores || {}).forEach(([k, v]) => { const n = Math.max(0, Math.min(5, +v || 0)); box.append(h('div', { class: 'trow' }, h('span', {}, SCORE_LABELS[k] || k), bar(n / 5, n >= 4 ? 'ok' : n >= 3 ? 'warn' : 'bad'), h('span', {}, n + '/5'))); });
+    if (d.summary) box.append(h('p', {}, String(d.summary)));
+    if ((d.strengths || []).length) box.append(h('h3', {}, 'Strengths'), li(d.strengths));
+    if ((d.corrections || []).length) box.append(h('h3', {}, 'Corrections'), h('div', { class: 'tablewrap' }, h('table', {}, h('thead', {}, h('tr', {}, ['You wrote', 'Better', 'Why'].map((t) => h('th', {}, t)))),
+      h('tbody', {}, d.corrections.map((c) => h('tr', {}, h('td', {}, String(c.original || '')), h('td', {}, String(c.better || '')), h('td', {}, String(c.why || ''))))))));
+    if ((d.improvements || []).length) box.append(h('h3', {}, 'Next steps'), li(d.improvements));
+    if (d.upgrade) box.append(h('h3', {}, 'A stronger version'), h('p', { class: 'notetext' }, String(d.upgrade)));
+    box.append(h('button', { class: 'btn small ghost', onclick: () => { Store.addNote({ title: (title || 'AI feedback') + ' ' + fmtDate(Date.now()), tag: 'Writing', text: [d.summary, '', 'Corrections:', ...(d.corrections || []).map((c) => `- ${c.original} → ${c.better} (${c.why})`), '', 'Next steps:', ...(d.improvements || []).map((x) => '- ' + x)].join('\n') }); toast('Saved to notebook'); } }, 'Save to notebook'));
+    return box;
+  }
+  /* A button that runs `job()` (returns feedback data) and shows the result in `target`. */
+  function aiButton(label, target, job, title) {
+    if (!AI.configured()) return h('span', { class: 'muted' }, 'AI feedback: ', link('#/progress', 'add your API key'), ' (optional)');
+    const b = h('button', { class: 'btn ghost', onclick: async () => {
+      b.disabled = true; target.replaceChildren(h('p', { class: 'muted' }, 'Reading your work… this takes a few seconds.'));
+      try { target.replaceChildren(feedbackPanel(await job(), title)); }
+      catch (e) { target.replaceChildren(h('p', { class: 'fb' }, e.message)); }
+      b.disabled = false;
+    } }, label);
+    return b;
+  }
+
+  /* =====================================================================
      MISTAKES
      ===================================================================== */
   const MGROUPS = [
@@ -43,17 +90,22 @@
       return sort === 'repeated' ? all.sort((a, b) => b.count - a.count || b.ts - a.ts) : all;
     }
     function card(m) {
-      const it = m.item;
+      const it = m.item, extra = h('div');
       return h('div', { class: 'card mistake' },
         h('div', { class: 'row', style: 'justify-content:space-between' },
           h('div', {}, link(m.href, m.label, 'tag'), m.count > 1 ? h('span', { class: 'chip' }, `missed ×${m.count}`) : null, h('span', { class: 'chip' }, fmtDate(m.ts))),
           h('div', { class: 'row' },
             h('button', { class: 'btn small ghost', onclick: () => { Store.addNote({ title: 'Mistake: ' + m.label, text: `${strip(promptHtml(it))}\nMy answer: ${m.given || '(blank)'}\nCorrect: ${correctText(it)}\n${strip(it.why || '')}`, tag: 'Mistakes', href: '#/mistakes' }); toast('Saved to notebook'); } }, '＋ Notebook'),
+            AI.configured() ? h('button', { class: 'btn small ghost', onclick: async (e) => {
+              e.target.disabled = true; extra.textContent = 'Thinking…';
+              try { extra.textContent = await AI.explain(it, m.given); extra.className = 'fb good notetext'; } catch (err) { extra.textContent = err.message; extra.className = 'fb'; }
+              e.target.disabled = false;
+            } }, 'Explain more') : null,
             h('button', { class: 'btn small ghost', onclick: () => { Store.removeMistake(m.id); draw(); } }, 'Got it'))),
         h('p', { class: 'q', html: promptHtml(it) }),
         h('div', { class: 'fb' }, h('b', {}, 'Your answer: '), m.given || '(blank)'),
         h('div', { class: 'fb good' }, h('b', {}, 'Correct: '), correctText(it)),
-        h('div', { class: 'why', html: '<b>Why:</b> ' + (it.why || '') }));
+        h('div', { class: 'why', html: '<b>Why:</b> ' + (it.why || '') }), extra);
     }
     function draw() {
       const all = Store.mistakes();
@@ -187,7 +239,7 @@
         tile('#/skills/listening', 'Listening', 'Eight recordings read aloud by your browser, with exam-style questions, plus dictation.', `${lDone}/${L.length} done`),
         tile('#/skills/speaking', 'Speaking', 'Parts 1 to 4 with prompts, a timer, a voice recorder and a self-assessment.', `${sDone}/${S.length} sets done`),
         tile('#/skills/writing', 'Writing', 'Exam-style tasks, a writing area with word count and text analysis, and model answers.', `${wDone}/${W.length} tasks done`)),
-      h('div', { class: 'callout warn' }, h('strong', {}, 'Honest limits. '), 'This site cannot mark your speaking or writing. It gives you what you need to improve without a teacher: timed practice, models to compare with, criteria to assess yourself against, and an analyser that spots weak points. If you can, share your recordings and texts with a teacher or language exchange partner too.'));
+      h('div', { class: 'callout warn' }, h('strong', {}, 'Honest limits. '), 'No website can give you an official mark. Here, Speaking and Writing come with analysers that spot weak points, models to compare with and criteria to assess yourself against. ', AI.configured() ? 'AI feedback is switched on.' : h('span', {}, 'For examiner-style feedback you can optionally ', link('#/progress', 'add your own AI key'), '. '), ' If you can, also share your recordings and texts with a teacher or language partner.'));
   }
 
   /* =====================================================================
@@ -202,8 +254,9 @@
       sectionHead('Recordings'),
       h('div', { class: 'grid' }, L.map((x) => h('a', { class: 'card', href: '#/skills/listening/' + x.id },
         h('div', {}, A.scoreChip('listen:' + x.id) || h('span', { class: 'chip' }, 'new')), h('h3', { style: 'margin:.4em 0 .2em' }, x.title), h('p', { class: 'muted', style: 'margin:0' }, x.format)))),
-      sectionHead('Dictation', 'Train your ear for connected speech.'),
-      h('a', { class: 'card', href: '#/skills/dictation' }, h('h3', { style: 'margin:0 0 .2em' }, 'Listen and type'), h('p', { class: 'muted', style: 'margin:0' }, 'Six sentences from the vocabulary you are learning. You hear each one and type it; the app shows exactly which words you missed.')));
+      sectionHead('Dictation and your own audio', 'Train your ear for connected speech.'),
+      h('a', { class: 'card', href: '#/skills/listening/own' }, h('h3', { style: 'margin:0 0 .2em' }, 'Practise with your own audio'), h('p', { class: 'muted', style: 'margin:0' }, 'Load a real recording (a past exam track, a podcast, a video soundtrack): slow it down, loop a difficult passage, write what you hear and compare it with the transcript.')),
+      h('a', { class: 'card', style: 'margin-top:14px', href: '#/skills/dictation' }, h('h3', { style: 'margin:0 0 .2em' }, 'Listen and type'), h('p', { class: 'muted', style: 'margin:0' }, 'Six sentences from the vocabulary you are learning. You hear each one and type it; the app shows exactly which words you missed.')));
   }
 
   function listeningSet(id) {
@@ -220,12 +273,50 @@
       uf || h('div', { class: 'pager' }, link('#/skills/listening', 'All recordings', 'btn ghost small')));
   }
 
+  function ownAudio() {
+    let url = null, a = null, b = null, loop = false;
+    const file = h('input', { type: 'file', accept: 'audio/*,video/*', 'aria-label': 'Audio file' });
+    const player = h('audio', { controls: true, style: 'width:100%;display:none;margin-top:10px' });
+    const rate = h('select', { 'aria-label': 'Speed', onchange: () => { player.playbackRate = +rate.value; } }, [0.6, 0.75, 0.9, 1, 1.15, 1.3].map((v) => h('option', { value: v, selected: v === 1 }, v + '×')));
+    const loopInfo = h('span', { class: 'muted' }, 'Set A and B to repeat a short passage.');
+    const heard = h('textarea', { rows: 6, class: 'wide', placeholder: 'Type what you hear…', 'aria-label': 'What you understood' });
+    const official = h('textarea', { rows: 6, class: 'wide', placeholder: 'Paste the official transcript here (optional)…', 'aria-label': 'Official transcript' });
+    const out = h('div');
+    file.addEventListener('change', () => {
+      if (url) URL.revokeObjectURL(url);
+      if (!file.files[0]) return;
+      url = URL.createObjectURL(file.files[0]); player.src = url; player.style.display = ''; a = b = null; loop = false; loopInfo.textContent = 'Set A and B to repeat a short passage.';
+    });
+    player.addEventListener('timeupdate', () => { if (loop && b != null && a != null && player.currentTime >= b) player.currentTime = a; });
+    const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+    A.cleanup.push(() => { player.pause(); if (url) URL.revokeObjectURL(url); });
+    view(back('#/skills/listening', 'Listening'), h('h1', {}, 'Practise with your own audio'),
+      h('p', { class: 'lead' }, 'Use a real recording: the file stays on your computer and is never uploaded. Slow it down, loop what you cannot catch, write it out, and compare with the transcript.'),
+      cardBlock(null, file, player,
+        h('div', { class: 'row', style: 'margin-top:10px' }, h('label', { class: 'muted' }, 'Speed ', rate),
+          h('button', { class: 'btn small ghost', onclick: () => { a = player.currentTime; loopInfo.textContent = `A = ${fmt(a)}${b != null ? ', B = ' + fmt(b) : ''}`; } }, 'Set A here'),
+          h('button', { class: 'btn small ghost', onclick: () => { b = player.currentTime; loopInfo.textContent = `A = ${a != null ? fmt(a) : '–'}, B = ${fmt(b)}`; } }, 'Set B here'),
+          h('button', { class: 'btn small', onclick: (e) => { loop = !loop; if (loop && a != null) player.currentTime = a; e.target.textContent = loop ? 'Loop: on' : 'Loop: off'; } }, 'Loop: off'),
+          loopInfo)),
+      h('h3', {}, 'What I heard'), heard, h('h3', {}, 'Official transcript'), official,
+      h('div', { class: 'row', style: 'margin-top:10px' },
+        h('button', { class: 'btn', onclick: () => {
+          if (!official.value.trim()) { out.replaceChildren(h('p', { class: 'fb' }, 'Paste the transcript to compare.')); return; }
+          const d = Engine.diffWords(official.value, heard.value);
+          out.replaceChildren(h('div', { class: 'fb' + (d.acc >= 0.9 ? ' good' : ''), html: `<b>${Math.round(d.acc * 100)}% of the words.</b> Green = heard, red = missed, struck-through = extra.<br>` + d.html }));
+        } }, 'Compare'),
+        h('button', { class: 'btn ghost', onclick: () => { Store.addNote({ title: 'My listening notes', text: heard.value, tag: 'Listening', href: '#/skills/listening/own' }); toast('Saved to notebook'); } }, 'Save to notebook')),
+      out);
+  }
+
   function dictation() {
     const started = A.allCards.filter((c) => Store.card(c.id));
-    const pool = (started.length >= 8 ? started : A.allCards).map((c) => c.ex.replace(/\[\[|\]\]/g, '')).filter((s) => { const n = s.split(/\s+/).length; return n >= 5 && n <= 16; });
-    const items = sample(pool, 6).map((text) => ({ type: 'dictation', text }));
+    const okLen = (s) => { const n = s.split(/\s+/).length; return n >= 5 && n <= 16; };
+    const pool = (started.length >= 8 ? started : A.allCards).map((c) => c.ex.replace(/\[\[|\]\]/g, '')).filter(okLen);
+    const spoken = (C1.listening || []).flatMap((l) => l.script.flatMap((x) => x.text.split(/(?<=[.!?])\s+/))).filter(okLen);
+    const items = sample(pool, 3).concat(sample(spoken, 3)).map((text) => ({ type: 'dictation', text }));
     view(back('#/skills/listening', 'Listening'), h('h1', {}, 'Dictation'),
-      h('p', { class: 'muted' }, 'Play each sentence, type what you hear, then check. You can replay as often as you like. 90% of the words counts as correct.'),
+      h('p', { class: 'muted' }, 'Three sentences come from your vocabulary and three from the listening recordings. Play each sentence, type what you hear, then check. You can replay as often as you like. 90% of the words counts as correct.'),
       !Speech.supported ? h('div', { class: 'callout bad' }, 'This browser cannot read text aloud, so dictation is unavailable here.') : null,
       quiz(items, { onRetry: dictation, onScore: (c, t) => Store.record('dictation', c, t) }));
   }
@@ -252,31 +343,95 @@
     return h('div', { class: 'timer row' }, label ? h('span', { class: 'muted' }, label) : null, out, btn, reset);
   }
 
-  function recorder() {
-    let rec = null, stream = null, chunks = [];
+  const FILLERS = ['um', 'uh', 'er', 'erm', 'you know', 'i mean', 'sort of', 'kind of', 'basically', 'like'];
+
+  function analyseSpeech(text, seconds, segments, part) {
+    const words = (text.toLowerCase().match(/[a-z]+(?:'[a-z]+)?/g) || []);
+    const rows = [], row = (label, value, note, status) => rows.push({ label, value, note, status: status || '' });
+    row('Words', String(words.length), part === 2 ? 'A one-minute long turn is usually about 130–170 words.' : '', part === 2 ? (words.length >= 110 && words.length <= 200 ? 'ok' : 'warn') : '');
+    if (seconds > 5) {
+      const wpm = Math.round(words.length / (seconds / 60));
+      row('Speed', `${wpm} words per minute (${Math.round(seconds)} s)`, wpm < 90 ? 'Slow or hesitant: prepare chunks of language and keep going.' : wpm > 190 ? 'Very fast: slow down so you are easy to follow.' : 'A natural pace (about 110–170 is typical).', wpm < 90 || wpm > 190 ? 'warn' : 'ok');
+    }
+    const joined = ' ' + words.join(' ') + ' ';
+    const fill = FILLERS.map((f) => [f, (joined.match(new RegExp(' ' + f + ' ', 'g')) || []).length]).filter(([, n]) => n);
+    const nf = fill.reduce((a, [, n]) => a + n, 0);
+    row('Filler words', nf ? fill.map(([f, n]) => `${f} ×${n}`).join(', ') : 'none found', nf > words.length / 25 ? 'Quite a few: replace with a short pause or a phrase like "let me think".' : 'Fine.', nf > words.length / 25 ? 'warn' : 'ok');
+    const reps = []; for (let k = 1; k < words.length; k++) if (words[k] === words[k - 1] && words[k].length < 6) reps.push(words[k]);
+    if (reps.length) row('Repeated words', reps.slice(0, 6).join(', '), 'Repetition usually signals searching for the next word.', 'warn');
+    const types = new Set(words); row('Vocabulary variety', words.length ? Math.round(100 * types.size / words.length) + '%' : '–', '');
+    const linkRows = Object.entries(LINKERS).map(([cat, list]) => [cat, list.filter((l) => new RegExp('(^|[^a-z])' + l + '([^a-z]|$)', 'i').test(text))]).filter(([, u]) => u.length);
+    const struct = STRUCTS.filter(([, re]) => re.test(text)).map((x) => x[0]);
+    const weak = (segments || []).filter((x) => x.conf && x.conf < 0.85 && x.text).sort((x, y) => x.conf - y.conf).slice(0, 3);
+    return { rows, linkRows, struct, weak };
+  }
+
+  /* Recorder + live transcript (browser speech recognition) + analysis + optional AI feedback for one part. */
+  function speechCoach(partNo, promptText, setTitle) {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let rec = null, stream = null, chunks = [], recog = null, recording = false, segments = [], t0 = 0, seconds = 0;
     const status = h('span', { class: 'muted' }, 'Record yourself, then listen back and assess.');
     const audio = h('audio', { controls: true, style: 'display:none;max-width:100%' });
     const dl = h('a', { class: 'btn small ghost', style: 'display:none', download: 'my-recording.webm' }, 'Download');
     const btn = h('button', { class: 'btn small', onclick: toggle }, '● Record');
+    const transcript = h('textarea', { rows: 5, placeholder: SR ? 'Your words appear here while you speak. Fix recognition mistakes before analysing.' : 'This browser has no speech recognition (try Chrome or Edge). Type or paste what you said to analyse it.', 'aria-label': 'Transcript' });
+    const out = h('div'), aiOut = h('div');
+
+    function startRecog() {
+      if (!SR) return;
+      try {
+        recog = new SR(); recog.lang = 'en-GB'; recog.continuous = true; recog.interimResults = true;
+        recog.onresult = (e) => {
+          let interim = '';
+          for (let k = e.resultIndex; k < e.results.length; k++) {
+            const r = e.results[k];
+            if (r.isFinal) segments.push({ text: r[0].transcript.trim(), conf: r[0].confidence }); else interim += r[0].transcript;
+          }
+          transcript.value = segments.map((x) => x.text).join(' ') + (interim ? ' ' + interim : '');
+        };
+        recog.onend = () => { if (recording) { try { recog.start(); } catch (e) { /* already started */ } } };
+        recog.onerror = (e) => { if (e.error === 'not-allowed') status.textContent = 'Speech recognition was blocked: allow the microphone.'; };
+        recog.start();
+      } catch (e) { recog = null; }
+    }
     async function toggle() {
-      if (rec && rec.state === 'recording') { rec.stop(); return; }
-      if (!navigator.mediaDevices || !window.MediaRecorder) { status.textContent = 'Recording is not available in this browser or context (it needs localhost or https).'; return; }
+      if (recording) { recording = false; seconds = (Date.now() - t0) / 1000; if (recog) { try { recog.stop(); } catch (e) { /* ignore */ } } if (rec && rec.state === 'recording') rec.stop(); btn.textContent = '● Record again'; return; }
+      if (!navigator.mediaDevices || !window.MediaRecorder) { status.textContent = 'Recording is not available here (it needs localhost or https).'; return; }
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        chunks = []; rec = new MediaRecorder(stream);
+        chunks = []; segments = []; transcript.value = ''; rec = new MediaRecorder(stream);
         rec.ondataavailable = (e) => chunks.push(e.data);
         rec.onstop = () => {
           stream.getTracks().forEach((t) => t.stop());
           const url = URL.createObjectURL(new Blob(chunks, { type: rec.mimeType || 'audio/webm' }));
           audio.src = url; audio.style.display = ''; dl.href = url; dl.style.display = '';
-          btn.textContent = '● Record again'; status.textContent = 'Listen back: where did you hesitate, repeat words or make grammar slips?';
+          status.textContent = 'Listen back, check the transcript, then press Analyse.';
         };
-        rec.start(); btn.textContent = '■ Stop'; status.textContent = 'Recording… speak now.';
+        rec.start(); recording = true; t0 = Date.now(); btn.textContent = '■ Stop'; status.textContent = 'Recording… speak now.';
+        startRecog();
       } catch (e) { status.textContent = 'Microphone not available: ' + (e.name === 'NotAllowedError' ? 'permission was denied.' : e.message); }
     }
-    A.cleanup.push(() => { if (rec && rec.state === 'recording') rec.stop(); if (stream) stream.getTracks().forEach((t) => t.stop()); });
+    A.cleanup.push(() => { recording = false; if (recog) { try { recog.stop(); } catch (e) { /* ignore */ } } if (rec && rec.state === 'recording') rec.stop(); if (stream) stream.getTracks().forEach((t) => t.stop()); });
+
+    function analyse() {
+      const text = transcript.value.trim();
+      if (text.split(/\s+/).length < 8) { out.replaceChildren(h('p', { class: 'fb' }, 'Record an answer or type at least a few sentences first.')); return; }
+      const r = analyseSpeech(text, seconds, segments, partNo);
+      out.replaceChildren(cardBlock('Analysis of your answer',
+        h('p', { class: 'muted' }, 'Based on an automatic transcript without punctuation, so treat it as a rough guide. It cannot judge pronunciation.'),
+        h('div', { class: 'tablewrap' }, h('table', {}, h('tbody', {}, r.rows.map((x) => h('tr', {}, h('th', {}, x.label), h('td', {}, x.value), h('td', { class: x.status === 'warn' ? 'a-warn' : x.status === 'ok' ? 'a-ok' : '' }, x.note)))))),
+        h('h3', {}, 'Linking words'), r.linkRows.length ? h('ul', {}, r.linkRows.map(([c, u]) => h('li', {}, h('strong', {}, c + ': '), u.join(', ')))) : h('p', { class: 'a-warn' }, 'No linking words found: connect your ideas (however, as a result, on top of that…).'),
+        r.struct.length ? h('p', {}, h('strong', {}, 'Structures spotted: '), r.struct.join(', ')) : null,
+        r.weak.length ? h('div', {}, h('h3', {}, 'Parts the recogniser was least sure about'), h('p', { class: 'muted' }, 'This can point to unclear pronunciation, or to background noise. Listen to these bits again.'), h('ul', {}, r.weak.map((x) => h('li', {}, `"${x.text}" (${Math.round(x.conf * 100)}% confidence)`)))) : null));
+      aiOut.replaceChildren();
+    }
+    const stats = () => { const r = analyseSpeech(transcript.value, seconds, segments, partNo); return r.rows.map((x) => `${x.label}: ${x.value}`).join('; '); };
     return h('div', { class: 'recorder' }, h('div', { class: 'row' }, btn, status, dl), audio,
-      h('p', { class: 'muted', style: 'font-size:.85rem;margin:4px 0 0' }, 'Recordings stay in this page only and are lost when you leave it, unless you download them.'));
+      h('p', { class: 'muted', style: 'font-size:.85rem;margin:4px 0' }, 'Recordings stay in this page and are lost when you leave it, unless you download them.'),
+      transcript,
+      h('div', { class: 'row', style: 'margin-top:8px' }, h('button', { class: 'btn small', onclick: analyse }, 'Analyse my answer'),
+        aiButton('AI feedback on this answer', aiOut, () => AI.speaking(`${setTitle}, Part ${partNo}`, partNo + ': ' + promptText, transcript.value, stats()), 'AI feedback: Speaking Part ' + partNo)),
+      out, aiOut);
   }
 
   const speakBtn = (text, label) => h('button', { class: 'btn small ghost', onclick: () => Speech.say(text, 0.95) }, label || '▶ Hear it');
@@ -329,6 +484,7 @@
       4: () => h('div', {}, h('p', { class: 'muted' }, 'Broader questions about the topic. Give an opinion, a reason and an example or a contrast.'), timer(240, 'Suggested time'),
         h('ol', {}, set.part4.map((q) => h('li', {}, q, ' ', speakBtn(q, '▶ Hear the question')))))
     };
+    const promptFor = (n) => (n === 1 ? set.part1.join(' / ') : n === 2 ? `${set.part2.task} (Photograph A: ${set.part2.photoA} Photograph B: ${set.part2.photoB})` : n === 3 ? `${set.part3.centre} Options: ${set.part3.options.join(', ')}. ${set.part3.decision}` : set.part4.join(' / '));
     const crit = (S.guide && S.guide.criteria) || [];
     const prev = Store.skill('speaking:' + id) || {};
     const ratings = Object.assign({}, prev.self || {});
@@ -338,7 +494,7 @@
     function show(n) {
       cur = n; A.cleanup.splice(0).forEach((f) => f());
       tabs.replaceChildren(...[1, 2, 3, 4].map((k) => h('button', { class: 'tab' + (k === cur ? ' on' : ''), role: 'tab', onclick: () => show(k) }, 'Part ' + k)));
-      body.replaceChildren(panels[n](), recorder());
+      body.replaceChildren(panels[n](), speechCoach(n, promptFor(n), set.title));
     }
     const selfBox = cardBlock('Self-assessment', h('p', { class: 'muted' }, 'After listening back, rate yourself honestly: 1 = needs a lot of work, 5 = confident at C1.'),
       ...crit.map((c) => h('div', { class: 'trow' }, h('span', {}, c.name), h('div', { class: 'row' }, [1, 2, 3, 4, 5].map((v) => {
@@ -448,7 +604,7 @@
     const area = h('textarea', { class: 'writearea', rows: 16, placeholder: 'Write your answer here. It saves automatically.', 'aria-label': 'Your answer' });
     area.value = saved ? saved.text : '';
     const counter = h('span', { class: 'muted' }), savedMsg = h('span', { class: 'muted' }, saved ? 'Draft restored.' : '');
-    const analysis = h('div'), modelBox = h('div');
+    const analysis = h('div'), modelBox = h('div'), aiOut = h('div');
     let timerBox;
     const count = () => (area.value.match(/\S+/g) || []).length;
     function paint() {
@@ -498,8 +654,9 @@
         h('details', { class: 'card' }, h('summary', {}, 'Plan your answer'), h('ol', {}, t.plan.map((p) => h('li', { html: p })))),
         h('details', { class: 'card' }, h('summary', {}, 'Useful language'), t.language.map((g) => h('div', {}, h('strong', {}, g.h), h('ul', {}, g.items.map((i) => h('li', {}, i))))))),
       timerBox, area, h('div', { class: 'row', style: 'justify-content:space-between' }, counter, savedMsg),
-      h('div', { class: 'row', style: 'margin:10px 0' }, h('button', { class: 'btn', onclick: runAnalysis }, 'Analyse my text'), h('button', { class: 'btn ghost', onclick: showModel }, 'Show model answer')),
-      analysis, modelBox, selfBox,
+      h('div', { class: 'row', style: 'margin:10px 0' }, h('button', { class: 'btn', onclick: runAnalysis }, 'Analyse my text'), h('button', { class: 'btn ghost', onclick: showModel }, 'Show model answer'),
+        aiButton('AI feedback', aiOut, async () => { if (count() < 60) throw new Error('Write at least 60 words first.'); return AI.writing(t, area.value); }, 'AI feedback: ' + t.title)),
+      analysis, aiOut, modelBox, selfBox,
       uf || h('div', { class: 'pager' }, link('#/skills/writing', 'All tasks', 'btn ghost small'), link('#/skills/writing/guide', 'Guide', 'btn ghost small')));
     paint();
   }
@@ -509,7 +666,7 @@
   A.routes.notebook = () => notebook();
   A.routes.skills = (b, c) => {
     if (!b) return skillsHome();
-    if (b === 'listening') return c ? listeningSet(c) : listeningList();
+    if (b === 'listening') return c === 'own' ? ownAudio() : c ? listeningSet(c) : listeningList();
     if (b === 'dictation') return dictation();
     if (b === 'speaking') return c === 'guide' ? speakingGuide() : c ? speakingSet(c) : speakingList();
     if (b === 'writing') return c === 'guide' ? writingGuide() : c ? writingTask(c) : writingList();

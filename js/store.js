@@ -1,7 +1,7 @@
 /* Progress storage (localStorage with in-memory fallback), streaks and spaced repetition. */
 (function () {
   const KEY = 'c1path.v1';
-  const fresh = () => ({ stats: {}, days: {}, cards: {}, newToday: {}, lessons: {}, scores: {}, placement: null, theme: null, mistakes: {}, notes: [], drafts: {}, skills: {}, goal: 20 });
+  const fresh = () => ({ stats: {}, days: {}, cards: {}, newToday: {}, lessons: {}, scores: {}, placement: null, theme: null, mistakes: {}, notes: [], drafts: {}, skills: {}, goal: 20, voices: { a: '', b: '' } });
   let mem = null;
 
   function load() {
@@ -102,6 +102,7 @@
     saveDraft(id, text) { state.drafts[id] = { text, ts: Date.now(), words: (text.trim().match(/\S+/g) || []).length }; save(); },
     skill(key) { return state.skills[key] || null; },
     setSkill(key, data) { state.skills[key] = Object.assign({}, state.skills[key], data, { ts: Date.now() }); save(); },
+    setVoice(slot, name) { state.voices = Object.assign({ a: '', b: '' }, state.voices, { [slot]: name }); save(); },
     goal() { return state.goal || 20; },
     setGoal(n) { state.goal = n; save(); },
     todayCount() { return state.days[dayStr()] || 0; },

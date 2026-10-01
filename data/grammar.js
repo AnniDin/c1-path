@@ -28,7 +28,7 @@ C1.grammar = [
   quiz: [
     { type: 'mcq', q: 'Never ___ such a beautiful sunset.', options: ['I have seen', 'have I seen', 'did I saw', 'I saw'], answer: 1, why: '<em>Never</em> is fronted, so the auxiliary <em>have</em> comes before the subject, and the main verb stays a participle.' },
     { type: 'mcq', q: 'No sooner had the film started ___ the power went out.', options: ['than', 'when', 'that', 'then'], answer: 0, why: '<em>No sooner</em> is a comparative idea (sooner <em>than</em>). <em>Hardly/scarcely</em> pair with <em>when</em>.' },
-    { type: 'gap', q: 'Rarely ___ she complain about her workload.', answers: ['does'], why: 'There is no auxiliary in <em>She rarely complains</em>, so <em>do</em> is added (in the right form) as in a question, and the verb becomes base form.' },
+    { type: 'gap', q: 'Rarely ___ she complain about her workload.', answers: ['does', 'did'], why: 'There is no auxiliary in <em>She rarely complains</em>, so <em>do</em> is added (in the right form) as in a question, and the verb becomes base form. <em>Does</em> (habit) or <em>did</em> (a past occasion) both fit, because the sentence gives no time clue.' },
     { type: 'mcq', q: 'Only after the results were published ___ how badly they had done.', options: ['they realised', 'did they realise', 'they did realise', 'realised they'], answer: 1, why: 'The main clause follows <em>Only after…</em>, so it takes question order: <em>did they realise</em>.' },
     { type: 'kwt', first: 'I did not realise at all that the shop was about to close.', key: 'little', second: '___ that the shop was about to close.', answers: ['Little did I realise', 'Little did I know'], why: '<em>Little</em> here means "not at all". Fronted, it triggers inversion: <em>Little did I realise</em>.' },
     { type: 'mcq', q: 'Not only ___ late, but he also forgot the documents.', options: ['he was', 'was he', 'did he was', 'he did'], answer: 1, why: '<em>Not only</em> starts the sentence, so the verb <em>be</em> moves before the subject: <em>was he</em>. (<em>Be</em> needs no <em>do</em>.)' }
@@ -62,8 +62,8 @@ C1.grammar = [
   quiz: [
     { type: 'mcq', q: 'If I ___ harder at school, I would have a better job now.', options: ['worked', 'had worked', 'would work', 'have worked'], answer: 1, why: 'The studying was in the past (past perfect), the result is now (would + infinitive): a mixed conditional.' },
     { type: 'mcq', q: '___ you need any help, please contact reception.', options: ['Would', 'Had', 'Should', 'Were'], answer: 2, why: '<em>Should you need</em> = <em>If you should need</em>: a formal, slightly unlikely possibility.' },
-    { type: 'gap', q: 'Had it not been for your support, I ___ given up long ago.', answers: ['would have'], why: 'An inverted unreal-past conditional needs <em>would have</em> + participle in the result.' },
-    { type: 'mcq', q: 'If she ___ so stubborn, she would have accepted the offer.', options: ['weren\'t', 'hadn\'t been', 'wouldn\'t be', 'isn\'t'], answer: 0, why: 'Stubbornness is a general trait (unreal present: <em>weren\'t</em>), but the result was one past event (<em>would have accepted</em>).' },
+    { type: 'gap', q: 'Had it not been for your support, I ___ given up long ago.', answers: ['would have', 'would\'ve', '\'d have', 'might have', 'could have'], why: 'An inverted unreal-past conditional needs a perfect modal in the result: usually <em>would have</em> + participle (<em>might/could have</em> also work).' },
+    { type: 'mcq', q: '___ I taken your advice at the time, I wouldn\'t be in this mess now.', options: ['Have', 'Had', 'Were', 'Would'], answer: 1, why: 'Inverted unreal-past condition (<em>If I had taken</em> = <em>Had I taken</em>) with a present result (<em>wouldn\'t be</em>): a mixed conditional.' },
     { type: 'kwt', first: 'I\'ll lend you the money only if you promise to pay it back.', key: 'provided', second: 'I\'ll lend you the money ___ to pay it back.', answers: ['provided you promise', 'provided that you promise'], why: '<em>Provided (that)</em> means "only if", and it takes a present tense for a real future condition.' },
     { type: 'mcq', q: 'Which sentence is correct?', options: ['If I would have known, I would have told you.', 'If I had known, I would have told you.', 'If I knew, I would have told you.', 'If I have known, I would tell you.'], answer: 1, why: 'Unreal past = past perfect in the <em>if</em> clause. <em>Would</em> never goes there.' }
   ]
@@ -95,7 +95,7 @@ C1.grammar = [
     { type: 'mcq', q: 'It wasn\'t until midnight ___ the storm died down.', options: ['when', 'which', 'that', 'than'], answer: 2, why: 'In an it-cleft, the focus is followed by <em>that</em> (or <em>who</em> for people).' },
     { type: 'gap', q: 'What she did ___ to ignore the message completely.', answers: ['was'], why: 'The wh-clause "What she did" is past, so <em>be</em> is <em>was</em>.' },
     { type: 'mcq', q: 'The reason I left the company is ___ I was bored.', options: ['because', 'that', 'why', 'for'], answer: 1, why: 'After <em>The reason … is</em> we use <em>that</em>. <em>Because</em> repeats the meaning of <em>reason</em>.' },
-    { type: 'kwt', first: 'Maria was the only person to notice the mistake.', key: 'it', second: '___ noticed the mistake.', answers: ['It was only Maria who', 'It was Maria alone who'], why: 'An it-cleft: <em>It was</em> + focus + <em>who</em> + rest.' },
+    { type: 'kwt', first: 'Maria was the only person to notice the mistake.', key: 'it', second: '___ noticed the mistake.', answers: ['It was only Maria who', 'It was Maria alone who', 'It was only Maria that', 'It was Maria alone that'], why: 'An it-cleft: <em>It was</em> + focus + <em>who</em> + rest.' },
     { type: 'mcq', q: 'All I want ___ a quiet evening.', options: ['is', 'are', 'be', 'being'], answer: 0, why: '<em>All I want</em> is a singular headline, so <em>is</em> equals "a quiet evening".' }
   ]
 },
@@ -120,9 +120,9 @@ C1.grammar = [
   quiz: [
     { type: 'mcq', q: 'The company is believed ___ millions last year.', options: ['to lose', 'to have lost', 'losing', 'to be losing'], answer: 1, why: 'The losing happened before the belief, so use the perfect infinitive <em>to have lost</em>.' },
     { type: 'mcq', q: 'I had my car ___ yesterday.', options: ['repair', 'repaired', 'repairing', 'to repair'], answer: 1, why: 'Causative <em>have + object + past participle</em>.' },
-    { type: 'gap', q: 'The new bridge ___ built at the moment.', answers: ['is being'], why: 'Present continuous passive: <em>is being</em> + participle.' },
+    { type: 'gap', q: 'The new bridge ___ built at the moment.', answers: ['is being', '\'s being'], why: 'Present continuous passive: <em>is being</em> + participle.' },
     { type: 'mcq', q: 'The accident ___ at about six o\'clock.', options: ['was happened', 'happened', 'has been happened', 'got happened'], answer: 1, why: '<em>Happen</em> is intransitive: it has no object, so it cannot be made passive.' },
-    { type: 'kwt', first: 'Someone stole my bike outside the library.', key: 'had', second: 'I ___ stolen outside the library.', answers: ['had my bike'], why: '<em>Have + object + participle</em> also describes something unpleasant that happens to you.' },
+    { type: 'kwt', first: 'Someone stole my bike outside the library.', key: 'had', second: 'I ___ stolen outside the library.', answers: ['had my bike', 'had my bicycle'], why: '<em>Have + object + participle</em> also describes something unpleasant that happens to you.' },
     { type: 'mcq', q: 'It is thought that the painting was stolen in 1990. = The painting ___ in 1990.', options: ['is thought to steal', 'is thought to have been stolen', 'thought to be stolen', 'is thinking to be stolen'], answer: 1, why: 'Earlier time + passive meaning → <em>to have been stolen</em>.' }
   ]
 },
@@ -153,8 +153,8 @@ C1.grammar = [
     { type: 'mcq', q: 'I\'m not sure, but she ___ have left already.', options: ['must', 'might', 'can\'t', 'needn\'t'], answer: 1, why: '"Not sure" = a possibility: <em>might have</em>.' },
     { type: 'mcq', q: 'He looks delighted and he studied for weeks. He ___ the exam.', options: ['must have passed', 'can\'t have passed', 'might pass', 'should pass'], answer: 0, why: 'A strong deduction about the past: <em>must have</em> + participle.' },
     { type: 'gap', q: 'The streets are wet. You are almost certain: it ___ have rained during the night.', answers: ['must'], why: 'Strong positive deduction about the past = <em>must have</em>.' },
-    { type: 'mcq', q: 'You ___ have bought a present. It wasn\'t necessary, although it\'s lovely.', options: ['needn\'t', 'mustn\'t', 'can\'t', 'shouldn\'t'], answer: 0, why: '<em>Needn\'t have done</em> = you did it, but it was unnecessary.' },
-    { type: 'kwt', first: 'I\'m sure she didn\'t see us.', key: 'can\'t', second: 'She ___ seen us.', answers: ['can\'t have', 'cannot have'], why: 'Negative certainty about the past: <em>can\'t have</em> + participle.' }
+    { type: 'mcq', q: 'You ___ have bought a present. It wasn\'t necessary, although it\'s lovely.', options: ['needn\'t', 'mustn\'t', 'can\'t', 'wouldn\'t'], answer: 0, why: '<em>Needn\'t have done</em> = you did it, but it was unnecessary.' },
+    { type: 'kwt', first: 'I\'m sure she didn\'t see us.', key: 'can\'t', second: 'She ___ seen us.', answers: ['can\'t have'], why: 'Negative certainty about the past: <em>can\'t have</em> + participle.' }
   ]
 },
 {
@@ -230,7 +230,7 @@ C1.grammar = [
   exam: `<p>Multiple-choice cloze and open cloze test auxiliary choice all the time (<em>had, been, have, will</em>). Writing rewards precise tenses: careful use of perfect forms marks a C1 text.</p>`,
   quiz: [
     { type: 'mcq', q: 'By this time next year, I ___ my degree.', options: ['will complete', 'will have completed', 'am completing', 'will be complete'], answer: 1, why: '"By" a future point = future perfect: the action is finished before then.' },
-    { type: 'mcq', q: 'She\'s exhausted because she ___ all day.', options: ['works', 'has worked', 'has been working', 'is working'], answer: 2, why: 'An activity in progress up to now with a visible effect: present perfect continuous.' },
+    { type: 'mcq', q: 'She\'s exhausted because she ___ all day.', options: ['works', 'had worked', 'has been working', 'is working'], answer: 2, why: 'An activity in progress up to now with a visible effect: present perfect continuous.' },
     { type: 'mcq', q: 'This time tomorrow we ___ on a beach.', options: ['will lie', 'will be lying', 'will have lain', 'are lain'], answer: 1, why: 'In progress at a specific future moment: future continuous.' },
     { type: 'mcq', q: 'I ___ him for years, but I still don\'t understand him.', options: ['am knowing', 'have been knowing', 'have known', 'know'], answer: 2, why: '<em>Know</em> is a state verb, so no continuous. <em>For years</em> up to now needs the present perfect.' },
     { type: 'gap', q: 'By the time we got there, the film ___ already started.', answers: ['had'], why: 'The film started before the moment we arrived: past perfect.' },

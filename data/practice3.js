@@ -144,7 +144,7 @@ C1.practice.push({
       ] },
       { type: 'mcq', q: `What is the writer's view of the idea that food waste is mainly a household problem?`,
         options: [`It is appealing but leaves out much of the picture.`, `It is false and was invented by retailers.`, `It has made people feel less guilty than they should.`, `It is accurate but unhelpful.`],
-        answer: 0, why: `"Comforting" explains the appeal, and "at best, incomplete" gives the criticism. He does not call it false (B), does not say it reduces guilt (C: it actually recommends guilt), and does not concede it is accurate (D).` },
+        answer: 0, why: `"Comforting" explains the appeal, and "at best, incomplete" gives the criticism. He does not call it false (B), does not say it leaves people too little guilt (C: the writer says the framing makes people feel responsible, and that guilt is not the answer), and does not concede it is accurate (D).` },
       { type: 'mcq', q: `What does the writer suggest about growers, wholesalers and supermarkets in paragraph 2?`,
         options: [`They waste food deliberately to keep prices high.`, `They are unaware how much food is thrown away.`, `They mostly ignore the incentives created by the market.`, `They are reacting sensibly to the pressures placed on them.`],
         answer: 3, why: `They are "responding, not unreasonably, to the incentives they face". So they are not deliberately wasteful (A), the text does not say they are unaware (B), and the incentives are the very thing driving their behaviour (C).` },

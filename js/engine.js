@@ -32,11 +32,17 @@
   const Speech = (() => {
     const supported = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
     let token = 0;
+    /* English voices, best first: neural/natural voices, then British ones. */
+    function allVoices() {
+      const score = (v) => (/natural|neural|online|premium|enhanced/i.test(v.name) ? 4 : 0) + (/en[-_]GB/i.test(v.lang) ? 2 : 0) + (/en[-_]US|en[-_]AU|en[-_]IE/i.test(v.lang) ? 1 : 0);
+      return speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang)).map((v, i) => [v, i]).sort((a, b) => score(b[0]) - score(a[0]) || a[1] - b[1]).map((x) => x[0]);
+    }
     function voicesNow() {
-      const vs = speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang));
-      const gb = vs.filter((v) => /en[-_]GB/i.test(v.lang));
+      const vs = allVoices(), gb = vs.filter((v) => /en[-_]GB/i.test(v.lang));
       return gb.length >= 2 ? gb : vs;
     }
+    const pref = (slot) => ((window.Store && Store.state.voices) || {})[slot] || '';
+    function listVoices(cb) { ready(() => cb(allVoices())); }
     function ready(cb) {
       if (!supported) return;
       if (speechSynthesis.getVoices().length) return cb();
@@ -62,9 +68,11 @@
           let k = speakers.indexOf(seg.who || ''); if (k < 0) { speakers.push(seg.who || ''); k = speakers.length - 1; }
           const u = new SpeechSynthesisUtterance(seg.text);
           u.lang = 'en-GB';
-          if (vs.length) u.voice = vs[k % vs.length];
+          const chosen = k < 2 ? speechSynthesis.getVoices().find((v) => v.name === pref(k === 0 ? 'a' : 'b')) : null;
+          if (chosen) u.voice = chosen; else if (vs.length) u.voice = vs[k % vs.length];
           u.rate = o.rate || 1;
-          if (vs.length < 2 || speakers.length > vs.length) u.pitch = [1, 0.82, 1.15][k % 3];
+          const sameVoice = k > 0 && (chosen ? chosen === speechSynthesis.getVoices().find((v) => v.name === pref('a')) : vs.length < 2 || speakers.length > vs.length);
+          if (sameVoice) u.pitch = [1, 0.82, 1.15][k % 3];
           u.onend = () => setTimeout(next, 250);
           u.onerror = () => { if (my === token) o.onEnd && o.onEnd(false); };
           o.onSegment && o.onSegment(i - 1);
@@ -73,8 +81,25 @@
         next();
       });
     }
-    return { supported, play, stop, say: (text, rate, onEnd) => play([{ who: '', text }], { rate, onEnd }) };
+    return { supported, play, stop, listVoices, say: (text, rate, onEnd) => play([{ who: '', text }], { rate, onEnd }) };
   })();
+
+  /* Word-level comparison of what was typed against a target text. */
+  function diffWords(targetText, typedText) {
+    const words = (s) => s.replace(/[’]/g, "'").split(/\s+/).filter(Boolean);
+    const key = (w) => w.toLowerCase().replace(/[^a-z0-9']/g, '');
+    const t = words(targetText), g = words(typedText);
+    const L = Array.from({ length: t.length + 1 }, () => new Array(g.length + 1).fill(0));
+    for (let i = t.length - 1; i >= 0; i--) for (let j = g.length - 1; j >= 0; j--)
+      L[i][j] = key(t[i]) === key(g[j]) ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+    const parts = []; let i = 0, j = 0;
+    while (i < t.length || j < g.length) {
+      if (i < t.length && j < g.length && key(t[i]) === key(g[j])) { parts.push(`<span class="dok">${t[i]}</span>`); i++; j++; }
+      else if (j < g.length && (i >= t.length || L[i][j + 1] >= L[i + 1][j])) { parts.push(`<s class="dextra">${g[j]}</s>`); j++; }
+      else { parts.push(`<span class="dmiss">${t[i]}</span>`); i++; }
+    }
+    return { html: parts.join(' '), acc: L[0][0] / Math.max(t.length, g.length, 1) };
+  }
 
   /* A standalone sentence (plus neighbours for sentence-sized options) for a passage gap, so it can be practised alone later. */
   function gapContext(text, idx, wide) {
@@ -169,10 +194,18 @@
           onEnd: (ok) => { if (ok === false && !Speech.supported) status.textContent = 'Speech is not available in this browser: read the transcript below.'; else setIdle(); }
         });
       }
+      const voiceBox = h('details', { class: 'voices' }, h('summary', {}, 'Voices'));
+      Speech.listVoices((vs) => {
+        const names = vs.map((v) => v.name), cur = (window.Store && Store.state.voices) || {};
+        const mk = (slot, label) => h('label', { class: 'muted' }, label + ' ', h('select', { onchange: (e) => { Store.setVoice(slot, e.target.value); } },
+          h('option', { value: '' }, 'Automatic'), vs.map((v) => h('option', { value: v.name, selected: cur[slot] === v.name }, v.name + ' (' + v.lang + ')'))));
+        voiceBox.append(h('p', { class: 'muted' }, names.some((n) => /natural|neural|online/i.test(n)) ? 'Natural-sounding voices were found and are used automatically.' : 'Tip: Microsoft Edge offers much more natural voices (names containing "Natural") than most browsers.'),
+          h('div', { class: 'row' }, mk('a', 'First speaker'), mk('b', 'Second speaker'), h('button', { class: 'btn small ghost', onclick: () => Speech.play([{ who: 'A', text: 'This is the first voice.' }, { who: 'B', text: 'And this is the second voice.' }], { rate: 1 }) }, 'Test')));
+      });
       const el = h('div', { class: 'card audio' },
         item.title ? h('h3', { style: 'margin-top:0' }, item.title) : null, item.intro ? h('p', { class: 'muted', html: item.intro }) : null,
         h('div', { class: 'row' }, playBtn, stopBtn, h('label', { class: 'muted' }, 'Speed ', rate), status),
-        !Speech.supported ? h('p', { class: 'fb' }, 'This browser cannot read text aloud, so use the transcript instead.') : null, tr);
+        !Speech.supported ? h('p', { class: 'fb' }, 'This browser cannot read text aloud, so use the transcript instead.') : null, voiceBox, tr);
       el.addEventListener('quizchecked', () => { tr.open = true; Speech.stop(); });
       return { el, check: () => [] };
     },
@@ -180,8 +213,6 @@
     dictation(item, n) {
       const input = h('textarea', { rows: 2, class: 'wide', spellcheck: 'false', autocomplete: 'off', 'aria-label': 'Type what you hear ' + n });
       const out = h('div');
-      const words = (s) => s.replace(/[’]/g, "'").split(/\s+/).filter(Boolean);
-      const key = (w) => w.toLowerCase().replace(/[^a-z0-9']/g, '');
       const el = h('div', { class: 'item' },
         h('p', { class: 'q' }, h('span', { class: 'num' }, n + '.'), 'Listen and type what you hear.'),
         h('div', { class: 'row' },
@@ -190,20 +221,10 @@
         input, out);
       return {
         el, check() {
-          const t = words(item.text), g = words(input.value);
-          const L = Array.from({ length: t.length + 1 }, () => new Array(g.length + 1).fill(0));
-          for (let i = t.length - 1; i >= 0; i--) for (let j = g.length - 1; j >= 0; j--)
-            L[i][j] = key(t[i]) === key(g[j]) ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
-          const parts = []; let i = 0, j = 0;
-          while (i < t.length || j < g.length) {
-            if (i < t.length && j < g.length && key(t[i]) === key(g[j])) { parts.push(`<span class="dok">${t[i]}</span>`); i++; j++; }
-            else if (j < g.length && (i >= t.length || L[i][j + 1] >= L[i + 1][j])) { parts.push(`<s class="dextra">${g[j]}</s>`); j++; }
-            else { parts.push(`<span class="dmiss">${t[i]}</span>`); i++; }
-          }
-          const acc = L[0][0] / Math.max(t.length, g.length, 1);
+          const d = diffWords(item.text, input.value), acc = d.acc, parts = [d.html];
           const ok = acc >= 0.9;
           out.innerHTML = '';
-          out.append(h('div', { class: 'fb' + (ok ? ' good' : ''), html: `<b>${Math.round(acc * 100)}% of the words.</b> Green = correct, red = missed, struck-through = extra.<br>` + parts.join(' ') }));
+          out.append(h('div', { class: 'fb' + (ok ? ' good' : ''), html: `<b>${Math.round(acc * 100)}% of the words.</b> Green = correct, red = missed, struck-through = extra.<br>` + parts[0] }));
           return [{ ok, given: input.value.trim(), item: null }];
         }
       };
@@ -290,5 +311,5 @@
     return wrap;
   }
 
-  window.Engine = { h, quiz, norm, matches, Speech, shuffle };
+  window.Engine = { h, quiz, norm, matches, Speech, shuffle, diffWords };
 })();

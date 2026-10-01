@@ -102,7 +102,7 @@ C1.writing = {
           'Opening: reason for writing and reference to what prompted it',
           'Body paragraphs: your main points, each with support or examples',
           'Final paragraph: what you suggest or request',
-          'Sign-off: Yours faithfully (no name) or Yours sincerely (with name), then your name'
+          'Sign-off: Yours faithfully (if you used Dear Sir or Madam) or Yours sincerely (if you used a name), then your name'
         ],
         openers: [
           'I am writing in response to your article/editorial of …, in which you claim that …',
@@ -364,7 +364,7 @@ C1.writing = {
       ],
       notes: [
         { para: 0, text: 'Opening with a general truth, <em>It is widely accepted that</em>, and then a cleft sentence, <em>What is less clear is whether</em>, to introduce the question.' },
-        { para: 1, text: 'Notice the passive infinitive after a relative clause: <em>Staff who are expected to answer emails</em> and the collocation <em>can hardly be blamed for</em>.' },
+        { para: 1, text: 'Notice the passive with an infinitive inside a relative clause: <em>Staff who are expected to answer emails</em> and the collocation <em>can hardly be blamed for</em>.' },
         { para: 1, text: '<em>not only … but also</em> joins two benefits inside one clause, a way of adding a second advantage with more weight than "and".' },
         { para: 2, text: 'The topic sentence <em>Providing facilities is another matter</em> uses a gerund subject and a short idiomatic phrase to switch point.' },
         { para: 2, text: 'Concession with <em>may sound generous, but</em>, then <em>of little use to people who are simply too exhausted … to take advantage of them</em>.' },
@@ -419,7 +419,7 @@ C1.writing = {
         { para: 3, text: 'A non-defining relative clause adds detail without a new sentence: <em>The site, which has stood empty for almost five years</em>.' },
         { para: 3, text: '<em>would be invited to run</em> / <em>could rent … for a nominal fee</em>: modal verbs of proposal keep the text tentative but practical. <em>thereby reducing</em> is a participle clause of result.' },
         { para: 5, text: 'Inverted conditional: <em>Were the garden to go ahead</em> is a formal alternative to "If the garden went ahead".' },
-        { para: 5, text: 'Reduced relative and participle clause, <em>Planting trees and flowers would improve</em>, with a gerund subject. Also <em>habitat for bees and birds, which are increasingly rare</em>.' },
+        { para: 5, text: 'A gerund as subject, <em>Planting trees and flowers would improve</em>, and a non-defining relative clause, <em>habitat for bees and birds, which are increasingly rare</em>.' },
         { para: 5, text: 'The colon in <em>Equally important is the social value:</em> introduces a second type of benefit, and <em>might otherwise never meet</em> is a neat use of "otherwise".' },
         { para: 7, text: 'Negative inversion with <em>Not only could half of this sum be raised … but volunteers would also</em> adds a persuasive financial argument.' },
         { para: 7, text: 'The subjunctive after recommend, <em>I therefore recommend that the council approve</em>, is a mark of formal British English (should approve is also correct). <em>on the understanding that</em> sets a condition.' }
@@ -611,8 +611,8 @@ C1.writing = {
       ],
       model: [
         '<strong>Fire, noise and fun: Alicante’s Hogueras</strong>',
-        'Every June, the Mediterranean city of Alicante celebrates the summer solstice with a week-long festival of enormous papier-mâché sculptures, fireworks and street parties. Having attended for the past three years, I can confirm that it is as spectacular as it is exhausting.',
-        'What sets the Hogueras apart is the sheer scale of the spectacle. Each neighbourhood builds a satirical monument, some of them taller than a five-storey building, and on the final night they are set alight in a blaze that lights up the whole city. Equally memorable are the daily firework displays on the beach, which are among the most impressive I have ever seen.',
+        'Every June, the Mediterranean city of Alicante celebrates the summer solstice with a festival of enormous papier-mâché sculptures, fireworks and street parties. Having attended for the past three years, I can confirm that it is as spectacular as it is exhausting.',
+        'What sets the Hogueras apart is the sheer scale of the spectacle. Each neighbourhood builds a satirical monument, some of them taller than a five-storey building, and on the final night they are set alight in a blaze that lights up the whole city. Equally memorable are the firework displays on the beach, which are among the most impressive I have ever seen.',
         'That said, the festival is not for the faint-hearted. The noise starts at eight in the morning and rarely stops before dawn, and accommodation is both scarce and overpriced. Visitors who dislike crowds would be well advised to avoid the main square after midnight.',
         'Nevertheless, the warmth of the locals more than makes up for these drawbacks. Strangers will happily invite you to share a table, and the food, particularly the grilled sardines, is outstanding. Indeed, some of my fondest memories are of impromptu singing in the street at two in the morning.',
         'All in all, I would thoroughly recommend the festival to anyone with energy to spare. Book your room well in advance, pack earplugs and, above all, go with an open mind.'
@@ -622,7 +622,7 @@ C1.writing = {
         { para: 1, text: 'Perfect participle clause as a credential: <em>Having attended for the past three years, I can confirm that</em>. It establishes authority at once.' },
         { para: 1, text: 'Parallel comparison: <em>as spectacular as it is exhausting</em> gives a verdict (good and bad) in a single phrase.' },
         { para: 2, text: 'Wh-cleft for emphasis: <em>What sets the Hogueras apart is the sheer scale of the spectacle</em>. The strongest point comes first in the paragraph.' },
-        { para: 2, text: 'Inversion with a complement: <em>Equally memorable are the daily firework displays</em>, and a superlative with a post-modifier, <em>among the most impressive I have ever seen</em>.' },
+        { para: 2, text: 'Inversion with a complement: <em>Equally memorable are the firework displays</em>, and a superlative with a post-modifier, <em>among the most impressive I have ever seen</em>.' },
         { para: 3, text: 'Idiom as a polite signal of weakness: <em>not for the faint-hearted</em>. <em>That said</em> introduces the criticism fairly.' },
         { para: 3, text: 'Soft advice with <em>would be well advised to avoid</em> is more tactful than "you must".' },
         { para: 4, text: 'The phrasal expression <em>more than makes up for</em> balances the criticism and keeps a positive overall tone.' },
