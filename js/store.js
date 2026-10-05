@@ -1,7 +1,7 @@
 /* Progress storage (localStorage with in-memory fallback), streaks and spaced repetition. */
 (function () {
   const KEY = 'c1path.v1';
-  const fresh = () => ({ stats: {}, days: {}, cards: {}, newToday: {}, lessons: {}, scores: {}, placement: null, theme: null, mistakes: {}, notes: [], drafts: {}, skills: {}, goal: 20, voices: { a: '', b: '' } });
+  const fresh = () => ({ stats: {}, days: {}, cards: {}, newToday: {}, lessons: {}, scores: {}, placement: null, theme: null, mistakes: {}, notes: [], drafts: {}, skills: {}, goal: 20, voices: { a: '', b: '' }, dev: '', own: { stats: {}, days: {}, newToday: {} }, peers: {}, tomb: {} });
   let mem = null;
 
   function load() {
@@ -12,9 +12,32 @@
     return mem || fresh();
   }
   let state = load();
+  const listeners = [];
+  /* Each device counts its own answers (own) and remembers the latest counts it received from the others (peers);
+     the totals shown in the app (stats, days, newToday) are always own + peers, so merging never double-counts or loses answers. */
+  const clone = (o) => JSON.parse(JSON.stringify(o || {}));
+  function migrate() {
+    if (!state.dev) {
+      state.dev = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      state.own = { stats: clone(state.stats), days: clone(state.days), newToday: clone(state.newToday) };
+    }
+    state.peers = state.peers || {}; state.tomb = state.tomb || {};
+  }
+  function recompute() {
+    const stats = {}, days = {}, nt = {};
+    [state.own].concat(Object.values(state.peers)).forEach((p) => {
+      Object.keys(p.stats || {}).forEach((k) => { const a = stats[k] || (stats[k] = { c: 0, t: 0 }); a.c += p.stats[k].c; a.t += p.stats[k].t; });
+      Object.keys(p.days || {}).forEach((k) => { days[k] = (days[k] || 0) + p.days[k]; });
+      Object.keys(p.newToday || {}).forEach((k) => { nt[k] = (nt[k] || 0) + p.newToday[k]; });
+    });
+    state.stats = stats; state.days = days; state.newToday = nt;
+  }
+  const bury = (kind, id) => { state.tomb[kind + ':' + id] = Date.now(); };
+  migrate();
   function save() {
     mem = state;
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+    listeners.forEach((f) => { try { f(); } catch (e) { /* ignore */ } });
   }
 
   const dayStr = (d) => (d || new Date()).toLocaleDateString('sv'); // YYYY-MM-DD, local time
@@ -28,6 +51,9 @@
       const s = state.stats[topic] || (state.stats[topic] = { c: 0, t: 0 });
       s.c += correct; s.t += total;
       state.days[dayStr()] = (state.days[dayStr()] || 0) + total;
+      const o = state.own.stats[topic] || (state.own.stats[topic] = { c: 0, t: 0 });
+      o.c += correct; o.t += total;
+      state.own.days[dayStr()] = (state.own.days[dayStr()] || 0) + total;
       save();
     },
     accuracy(topic) {
@@ -56,27 +82,38 @@
     importData(json) {
       const d = JSON.parse(json);
       if (!d || typeof d !== 'object' || !d.stats || !d.days) throw new Error('Not a C1 Path backup');
-      state = Object.assign(fresh(), d); save();
+      state = Object.assign(fresh(), d); migrate(); recompute(); save();
     },
 
-    /* Merge another device's data into this one. Nothing is lost on either side; conflicts keep the more advanced value.
-       Deleted notes and mistakes can come back, because deletions are not recorded. */
+    /* Merge another device's data into this one. Nothing is lost on either side: counts are kept per device and added up,
+       the more advanced result wins for cards, scores and lessons, notes are combined, and deletions are remembered. */
     mergeData(json) {
       const d = typeof json === 'string' ? JSON.parse(json) : json;
       if (!d || typeof d !== 'object' || !d.stats || !d.days) throw new Error('Not a C1 Path backup');
-      const f = fresh(), r = Object.assign(f, d), s = state;
+      const r = Object.assign(fresh(), d), s = state;
       const each = (o, fn) => Object.keys(o || {}).forEach((k) => fn(k, o[k]));
-      each(r.stats, (k, v) => { if (!s.stats[k] || v.t > s.stats[k].t) s.stats[k] = v; });
-      each(r.days, (k, v) => { s.days[k] = Math.max(s.days[k] || 0, v); });
-      each(r.newToday, (k, v) => { s.newToday[k] = Math.max(s.newToday[k] || 0, v); });
+      const weight = (p) => Object.values((p && p.stats) || {}).reduce((a, x) => a + x.t, 0) + Object.keys((p && p.days) || {}).length;
+      // per-device counters
+      const incoming = Object.assign({}, r.peers);
+      incoming[r.dev || 'legacy'] = r.own && r.dev ? r.own : { stats: r.stats, days: r.days, newToday: r.newToday };
+      each(incoming, (id, p) => {
+        if (id === s.dev) { if (weight(p) > weight(s.own)) s.own = clone(p); return; } // restoring this device from its own backup
+        if (!s.peers[id] || weight(p) > weight(s.peers[id])) s.peers[id] = clone(p);
+      });
+      recompute();
+      // deletions: remember the newest, then drop anything that was deleted after it was last changed
+      each(r.tomb, (k, v) => { s.tomb[k] = Math.max(s.tomb[k] || 0, v); });
+      const cutoff = Date.now() - 90 * 86400000;
+      each(s.tomb, (k, v) => { if (v < cutoff) delete s.tomb[k]; });
       each(r.cards, (k, v) => { const c = s.cards[k]; if (!c || v.box > c.box || (v.box === c.box && v.due > c.due)) s.cards[k] = v; });
       each(r.lessons, (k, v) => { if (v) s.lessons[k] = v; });
       each(r.scores, (k, v) => { if (!s.scores[k] || v.p > s.scores[k].p) s.scores[k] = v; });
       each(r.mistakes, (k, v) => { if (!s.mistakes[k] || v.ts > s.mistakes[k].ts) s.mistakes[k] = v; });
+      each(s.mistakes, (k, v) => { if ((s.tomb['m:' + k] || 0) >= v.ts) delete s.mistakes[k]; });
       each(r.drafts, (k, v) => { if (!s.drafts[k] || v.ts > s.drafts[k].ts) s.drafts[k] = v; });
       each(r.skills, (k, v) => { if (!s.skills[k] || (v.ts || 0) > (s.skills[k].ts || 0)) s.skills[k] = v; });
-      const ids = new Set(s.notes.map((n) => n.id));
-      (r.notes || []).forEach((n) => { if (!ids.has(n.id)) s.notes.push(n); else { const i = s.notes.findIndex((x) => x.id === n.id); if (n.ts > s.notes[i].ts) s.notes[i] = n; } });
+      (r.notes || []).forEach((n) => { const i = s.notes.findIndex((x) => x.id === n.id); if (i < 0) s.notes.push(n); else if (n.ts > s.notes[i].ts) s.notes[i] = n; });
+      s.notes = s.notes.filter((n) => (s.tomb['n:' + n.id] || 0) < n.ts);
       if (r.placement && (!s.placement || r.placement.date > s.placement.date)) s.placement = r.placement;
       save();
     },
@@ -99,7 +136,7 @@
           };
         } else if (m) {
           m.right = (m.right || 0) + 1;
-          if (m.right >= 2) delete state.mistakes[id];
+          if (m.right >= 2) { delete state.mistakes[id]; bury('m', id); }
         }
       });
       const ids = Object.keys(state.mistakes);
@@ -107,8 +144,8 @@
       save();
     },
     mistakes() { return Object.values(state.mistakes).sort((a, b) => b.ts - a.ts); },
-    removeMistake(id) { delete state.mistakes[id]; save(); },
-    clearMistakes() { state.mistakes = {}; save(); },
+    removeMistake(id) { delete state.mistakes[id]; bury('m', id); save(); },
+    clearMistakes() { Object.keys(state.mistakes).forEach((id) => bury('m', id)); state.mistakes = {}; save(); },
 
     /* ---- notebook ---- */
     notes() { return state.notes.slice().sort((a, b) => b.ts - a.ts); },
@@ -117,7 +154,7 @@
       state.notes.push(note); save(); return note;
     },
     updateNote(id, patch) { const n = state.notes.find((x) => x.id === id); if (n) { Object.assign(n, patch, { ts: Date.now() }); save(); } },
-    deleteNote(id) { state.notes = state.notes.filter((x) => x.id !== id); save(); },
+    deleteNote(id) { state.notes = state.notes.filter((x) => x.id !== id); bury('n', id); save(); },
 
     /* ---- writing drafts, skills self-assessment, daily goal ---- */
     draft(id) { return state.drafts[id] || null; },
@@ -131,7 +168,8 @@
     markLesson(id) { state.lessons[id] = true; save(); },
     setPlacement(p) { state.placement = p; save(); },
     setTheme(t) { state.theme = t; save(); },
-    reset() { state = fresh(); save(); },
+    reset() { state = fresh(); migrate(); save(); },
+    onChange(fn) { listeners.push(fn); },
 
     /* ---- spaced repetition (Leitner boxes) ---- */
     INTERVALS: [0, 1, 2, 4, 7, 14, 30, 60],
@@ -147,7 +185,7 @@
       else c.box = Math.max(1, c.box);
       c.due = rating === 0 ? dayStr() : addDays(Store.INTERVALS[c.box]);
       state.cards[id] = c;
-      if (isNew) state.newToday[dayStr()] = (state.newToday[dayStr()] || 0) + 1;
+      if (isNew) { state.newToday[dayStr()] = (state.newToday[dayStr()] || 0) + 1; state.own.newToday[dayStr()] = (state.own.newToday[dayStr()] || 0) + 1; }
       save();
       return c;
     },

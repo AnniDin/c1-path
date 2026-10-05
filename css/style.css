@@ -243,3 +243,9 @@ section > h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .08em
 .linkbtn { background: none; border: 0; font: inherit; font-size: .8rem; color: var(--muted); cursor: pointer; padding: 0; text-decoration: underline; }
 .linkbtn:hover { color: var(--accent); }
 #notes input[type=text], #notes select { min-width: 0; padding: 6px 8px; }
+
+/* sync */
+.sdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; background: var(--muted); }
+.sdot.ok { background: var(--ok); } .sdot.busy { background: var(--warn-bar); } .sdot.paused { background: var(--warn-bar); } .sdot.error { background: var(--bad); }
+details > summary { margin: 10px 0 6px; }
+details textarea { margin-top: 8px; }
