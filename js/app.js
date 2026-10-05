@@ -107,6 +107,13 @@ window.App = { routes: {}, cleanup: [] };
       next ? link(next.href, 'Next: ' + next.label + ' →', 'btn small') : link('#/course/' + u.id, 'Back to the unit', 'btn small'));
   }
   const uq = () => (unitCtx ? '?u=' + unitCtx : '');
+  /* "Part of the course" crumb, shown when a page was opened from the Library instead of from a unit. */
+  function partOf(kind, id, set) {
+    if (unitCtx) return h('span');
+    const hits = C1.course.filter((u) => u.steps.some((st) => st.t === kind && st.id === id && (set == null || st.set === set)));
+    if (!hits.length) return h('span');
+    return h('p', { class: 'crumbs' }, 'In the course: ', hits.flatMap((u, i) => [i ? ', ' : '', link(`#/course/${u.id}`, u.title)]));
+  }
 
   /* ---------- question builders for mixed reviews ---------- */
   const sample = (arr, n) => shuffle(arr).slice(0, n);
@@ -183,7 +190,7 @@ window.App = { routes: {}, cleanup: [] };
       weak.length ? h('section', {}, h('h2', {}, 'Needs work'),
         weak.map(([k, a]) => h('div', { class: 'trow' }, link(topicHref(k), topicLabels[k] || k), bar(a, 'bad'), h('span', {}, pct(a) + '%'))),
         h('p', { class: 'muted' }, 'Topics below 75% after at least 5 answers.')) : null,
-      h('p', { class: 'muted' }, link('#/progress', 'Full progress →')));
+      h('p', { class: 'muted' }, link('#/progress', 'Review and progress →')));
   }
 
   /* ---------- progress ---------- */
@@ -203,7 +210,16 @@ window.App = { routes: {}, cleanup: [] };
       try { Store.importData(await file.files[0].text()); alert('Progress restored.'); progress(); }
       catch (e) { alert('Could not read that file: ' + e.message); }
     });
-    view(h('h1', {}, 'Progress'),
+    const dueN = dueIds().length, freshN = Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length)), mistN = Store.mistakes().length;
+    const act = (t, d, href, cta) => h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), link(href, cta, 'btn small' + ' ghost'));
+    view(h('h1', {}, 'Review'),
+      h('p', { class: 'lead' }, 'Go back over what you have studied: cards that are due, questions you got wrong, and how you are doing overall.'),
+      h('section', {}, h('h2', {}, 'Do now'),
+        act('Flashcards', `${dueN} due · ${freshN} new today`, '#/review', 'Review'),
+        act('My mistakes', mistN ? `${mistN} to learn, each with its explanation` : 'Nothing saved. Wrong answers will appear here.', '#/mistakes', 'Open'),
+        act('Mixed review', 'A few questions from grammar, vocabulary and rewriting', '#/course/mix', 'Start'),
+        act('Placement test', Store.state.placement ? `Last result: ${Store.state.placement.summary}` : '24 questions, B1 to C1', '#/placement', Store.state.placement ? 'Retake' : 'Start')),
+      h('h2', {}, 'Progress'),
       h('div', { class: 'stats' },
         h('div', { class: 'stat' }, h('b', {}, Store.streak()), h('span', {}, 'day streak')),
         h('div', { class: 'stat' }, h('b', {}, Store.totalAnswered()), h('span', {}, 'answers so far')),
@@ -259,7 +275,7 @@ window.App = { routes: {}, cleanup: [] };
 
   /* ---------- grammar ---------- */
   function grammarList() {
-    view(back('#/toolkit', 'Toolkit'), h('h1', {}, 'Grammar'),
+    view(back('#/toolkit', 'Library'), h('h1', {}, 'Grammar'),
       h('p', { class: 'lead' }, 'Each lesson begins with the reason the structure exists. Once you see the reason, the rules stop being arbitrary. Lessons are grouped by theme; work top to bottom or jump to what you need.'),
       ...GRAMMAR_CATS.map((cat) => {
         const list = grammar.filter((g) => g.category === cat.name);
@@ -282,7 +298,7 @@ window.App = { routes: {}, cleanup: [] };
     if (g.traps) toc.push(['Common traps', 'traps']);
     if (g.exam) toc.push(['In the exams', 'exam']);
     toc.push(['Practice', 'practice']);
-    box.append(unitBack() || back('#/grammar', 'All grammar'),
+    box.append(unitBack() || back('#/grammar', 'All grammar'), partOf('grammar', id),
       h('div', {}, h('span', { class: 'tag' }, g.category || 'Grammar'), h('span', { class: 'tag' }, g.level), Store.state.lessons[id] ? h('span', { class: 'tag ok' }, 'Read')
         : h('button', { class: 'btn small ghost', onclick: (e) => { Store.markLesson(id); e.target.replaceWith(h('span', { class: 'tag ok' }, 'Read')); } }, 'Mark as read')),
       h('h1', {}, g.title), h('p', { class: 'lead' }, g.tagline),
@@ -334,7 +350,7 @@ window.App = { routes: {}, cleanup: [] };
             h('span', { class: 'tag' + (cardsSeen(g.id) === g.cards.length ? ' ok' : '') }, `${cardsSeen(g.id)}/${g.cards.length} started`),
             h('h3', { style: 'margin:.5em 0 .2em' }, g.title), h('p', { class: 'muted', style: 'margin:0' }, g.short)))));
     });
-    view(back('#/toolkit', 'Toolkit'), h('h1', {}, 'Vocabulary'),
+    view(back('#/toolkit', 'Library'), h('h1', {}, 'Vocabulary'),
       h('p', { class: 'lead' }, 'Phrasal verbs, collocations, idioms and topic language, grouped by the idea that connects them. Learn the idea and dozens of items become guessable.'),
       h('div', { class: 'card' }, h('h3', { style: 'margin-top:0' }, 'Daily practice'),
         h('p', {}, `${due} due · ${fresh} new available today · ${allCards.length} items in total`),
@@ -347,7 +363,7 @@ window.App = { routes: {}, cleanup: [] };
     if (!g) return notFound();
     const i = C1.vocab.indexOf(g), pv = C1.vocab[i - 1], nx = C1.vocab[i + 1];
     const uf = unitFooter('vocab', id);
-    view(unitBack() || back('#/vocab', 'Vocabulary'), h('div', {}, h('span', { class: 'tag' }, g.section || 'Vocabulary')), h('h1', {}, g.title),
+    view(unitBack() || back('#/vocab', 'Vocabulary'), partOf('vocab', id), h('div', {}, h('span', { class: 'tag' }, g.section || 'Vocabulary')), h('h1', {}, g.title),
       h('div', { class: 'callout' }, h('strong', {}, 'The idea'), h('div', { html: g.idea })),
       h('div', { class: 'row' }, link('#/review/' + g.id + uq(), 'Study with flashcards', 'btn'), link('#/vquiz/' + g.id + uq(), 'Quick quiz', 'btn ghost')),
       h('div', { class: 'card' }, g.cards.map((c) => cardView(Object.assign({ groupTitle: g.title }, c)))),
@@ -420,7 +436,7 @@ window.App = { routes: {}, cleanup: [] };
 
   /* ---------- practice (Use of English and Reading) ---------- */
   function practiceList() {
-    view(back('#/toolkit', 'Toolkit'), h('h1', {}, 'Practice'),
+    view(back('#/toolkit', 'Library'), h('h1', {}, 'Practice'),
       h('p', { class: 'lead' }, 'Exam-style tasks with a strategy for each. Read the strategy first: every task tests one specific skill. Your best score on each set is remembered.'),
       ...PRACTICE_SECTIONS.map((sec) => {
         const list = sec.ids.map((id) => C1.practice.find((p) => p.id === id)).filter(Boolean);
@@ -448,7 +464,7 @@ window.App = { routes: {}, cleanup: [] };
     const s = p.sets[setIdx];
     if (!s) return notFound();
     const uf = unitFooter('practice', id, setIdx);
-    view(unitBack() || back('#/practice/' + id, p.title), h('h1', {}, s.title), h('p', { class: 'muted' }, p.instruction),
+    view(unitBack() || back('#/practice/' + id, p.title), partOf('practice', id, setIdx), h('h1', {}, s.title), h('p', { class: 'muted' }, p.instruction),
       quiz(s.items, { source: { topic: 'u-' + id, label: p.title + ' · ' + s.title, href: `#/practice/${id}/${setIdx}` }, onRetry: () => practiceType(id, setIdx), onScore: (c, t) => { Store.record('u-' + id, c, t); Store.setScore(setKey(id, setIdx), c, t); } }),
       uf || h('div', { class: 'pager' },
         setIdx > 0 ? link(`#/practice/${id}/${setIdx - 1}`, '← Previous set', 'btn ghost small') : h('span'),
@@ -521,21 +537,29 @@ window.App = { routes: {}, cleanup: [] };
     const gRead = grammar.filter((x) => Store.state.lessons[x.id]).length;
     const seen = allCards.filter((c) => Store.card(c.id)).length;
     const pDone = practiceTypes.reduce((a, p) => a + setsDone(p), 0), pTot = practiceTypes.reduce((a, p) => a + p.sets.length, 0);
+    const sk = App.skillStats ? App.skillStats() : { l: [0, 0], s: [0, 0], w: [0, 0] };
     const tile = (href, title, desc, stat) => h('a', { class: 'card', href }, h('h3', { style: 'margin:0 0 .2em' }, title), h('p', { class: 'muted', style: 'margin:0 0 8px' }, desc), h('span', { class: 'tag' }, stat));
-    view(h('h1', {}, 'Toolkit'),
-      h('p', { class: 'lead' }, 'Study one area at a time. Pick grammar, vocabulary or exam tasks and go as deep as you like. Use this when you know exactly what you need to work on.'),
+    view(h('h1', {}, 'Library'),
+      h('p', { class: 'lead' }, 'Everything on the site, by area, to study in any order. The ', link('#/course', 'Course'), ' uses these same pieces in a fixed sequence; come here when you know what you need.'),
+      sectionHead('Language', 'Understand how English works.'),
       h('div', { class: 'grid' },
         tile('#/grammar', 'Grammar', `${grammar.length} lessons in four themes, each explaining why the structure exists.`, `${gRead}/${grammar.length} read`),
-        tile('#/vocab', 'Vocabulary', 'Phrasal verbs, collocations, idioms and topic language, with flashcards and quizzes.', `${seen}/${allCards.length} started`),
-        tile('#/practice', 'Exam practice', 'Use of English tasks and reading comprehension, with a strategy for each type.', `${pDone}/${pTot} sets done`)),
-      sectionHead('Quick tools'),
-      h('div', { class: 'row' }, link('#/review', 'Flashcard review', 'btn'), link('#/vquiz', 'Vocabulary quiz', 'btn ghost'), link('#/course/mix', 'Mixed review', 'btn ghost'), link('#/placement', 'Placement test', 'btn ghost')));
+        tile('#/vocab', 'Vocabulary', 'Phrasal verbs, collocations, idioms and topic language, with flashcards and quizzes.', `${seen}/${allCards.length} started`)),
+      sectionHead('Exam papers', 'Practise each paper of the exam.'),
+      h('div', { class: 'grid' },
+        tile('#/practice', 'Use of English and Reading', 'Exam-style tasks with a strategy for each type.', `${pDone}/${pTot} sets done`),
+        tile('#/skills/listening', 'Listening', 'Recordings read aloud by your browser, with exam-style questions, plus dictation.', `${sk.l[0]}/${sk.l[1]} done`),
+        tile('#/skills/speaking', 'Speaking', 'Parts 1 to 4 with prompts, a timer, a recorder and a self-assessment.', `${sk.s[0]}/${sk.s[1]} sets done`),
+        tile('#/skills/writing', 'Writing', 'Exam-style tasks with a word count, text analysis and model answers.', `${sk.w[0]}/${sk.w[1]} tasks done`)),
+      App.limitsNote ? App.limitsNote() : null,
+      sectionHead('Reference and tools'),
+      h('div', { class: 'row' }, link('#/exams', 'The exams explained', 'btn ghost'), link('#/placement', 'Placement test', 'btn ghost'), link('#/vquiz', 'Vocabulary quiz', 'btn ghost'), link('#/review', 'Flashcards', 'btn ghost')));
   }
 
   /* ---------- exams ---------- */
   function exams() {
     const E = C1.exams;
-    view(h('h1', {}, 'The exams'), h('p', { class: 'lead', html: E.intro }),
+    view(back('#/toolkit', 'Library'), h('h1', {}, 'The exams'), h('p', { class: 'lead', html: E.intro }),
       h('div', { class: 'callout warn', html: E.caution }),
       ...E.exams.map((ex) => h('div', {},
         h('h2', {}, ex.name), h('p', { html: ex.summary }),
@@ -552,15 +576,16 @@ window.App = { routes: {}, cleanup: [] };
   function route() {
     App.cleanup.splice(0).forEach((f) => f());
     Engine.Speech.stop();
-    const nm = Store.mistakes().length, badge = document.getElementById('mbadge');
-    if (badge) badge.textContent = nm ? String(nm) : '';
+    const todo = Store.mistakes().length + dueIds().length, badge = document.getElementById('mbadge');
+    if (badge) badge.textContent = todo ? String(todo) : '';
     const [pathPart, query] = location.hash.replace(/^#\/?/, '').split('?');
     unitCtx = new URLSearchParams(query || '').get('u');
     if (unitCtx && !unitById(unitCtx)) unitCtx = null;
     const parts = pathPart.split('/').filter(Boolean).map(decodeURIComponent);
     const [a, b, c] = parts;
-    const inToolkit = ['grammar', 'vocab', 'practice', 'review', 'vquiz'].includes(a);
-    const navKey = !a ? 'home' : inToolkit ? (unitCtx ? 'course' : 'toolkit') : a;
+    const inLibrary = ['grammar', 'vocab', 'practice', 'vquiz', 'skills', 'exams', 'toolkit'].includes(a);
+    const inReview = ['review', 'mistakes', 'progress', 'placement'].includes(a);
+    const navKey = !a ? 'home' : unitCtx && a !== 'course' ? 'course' : inLibrary ? 'toolkit' : inReview ? 'progress' : a;
     document.querySelectorAll('#nav a').forEach((el) => el.classList.toggle('active', el.dataset.r === navKey));
     if (!a) return home();
     if (a === 'course') return b === 'mix' ? dailyMix() : c === 'review' ? unitReview(b) : b ? unitPage(b) : courseList();
@@ -589,7 +614,7 @@ window.App = { routes: {}, cleanup: [] };
 
   window.App = Object.assign(window.App, {
     view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
-    unitBack, unitFooter, uq, setKey, scoreChip, start: route, route
+    unitBack, unitFooter, uq, partOf, setKey, scoreChip, start: route, route
   });
   Object.defineProperty(window.App, 'unitCtx', { get: () => unitCtx });
 })();

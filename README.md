@@ -19,10 +19,9 @@ Push to GitHub and enable Pages on the `main` branch (root folder). Nothing else
 ## Two ways to study
 
 - **Course**: eight themed units (work, technology, health, nature, cities, education, society, culture). Each combines vocabulary, grammar and exam practice, ends with a mixed review, and there is a general mixed review for revising everything.
-- **Toolkit**: go straight to one area: grammar, vocabulary (flashcards and quizzes) or exam practice.
-- **Skills**: Listening (recordings read aloud by the browser, plus dictation), Speaking (timer, recorder, self-assessment) and Writing (workspace with word count, text analyser, annotated models). Each unit of the Course also includes one listening set, one speaking set and one writing task.
+- **Library**: every area on one page, to study in any order: grammar, vocabulary (flashcards and quizzes), Use of English and Reading, Listening (recordings read aloud by the browser, plus dictation), Speaking (timer, recorder, self-assessment) and Writing (workspace with word count, text analyser, annotated models), plus the exam guide.
 - **Optional AI feedback** (Progress page): paste your own Anthropic API key to get examiner-style feedback on writing and speaking and extra explanations of mistakes. The key stays in your browser (never in the progress backup) and is sent only to api.anthropic.com.
-- **Mistakes** and **Notes**: every wrong answer is saved with its explanation and re-asked until you get it right twice; your own notes live in a drawer that opens from the Notes button (or Alt+N) on every page, and can be docked beside the page on wide screens.
+- **Review** (flashcards due, mistakes, mixed review, progress) and **Notes**: every wrong answer is saved with its explanation and re-asked until you get it right twice; your own notes live in a drawer that opens from the Notes button (or Alt+N) on every page, and can be docked beside the page on wide screens.
 
 Both use the same content; a unit is just an ordered path through it. `validate()` reports any lesson, vocabulary group or practice set that no unit uses.
 

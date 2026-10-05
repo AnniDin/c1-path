@@ -118,7 +118,7 @@
       document.getElementById('mbadge').textContent = all.length ? String(all.length) : '';
     }
     const n = Store.mistakes().length;
-    view(h('h1', {}, 'My mistakes'),
+    view(back('#/progress', 'Review'), h('h1', {}, 'My mistakes'),
       h('p', { class: 'lead' }, 'Every question you answered wrongly is saved here with the correct answer and the reason. A mistake disappears after you answer it correctly twice in a row, so this list shows what you still need to learn.'),
       h('div', { class: 'row' },
         n ? link('#/mistakes/practice', `Practise ${Math.min(n, 10)} of them`, 'btn') : null,
@@ -251,30 +251,22 @@
     if (getPin() && wide()) toggle(true);
   }
 
-  /* =====================================================================
-     SKILLS HOME
-     ===================================================================== */
-  function skillsHome() {
+  A.limitsNote = () => h('div', { class: 'callout warn' }, h('strong', {}, 'Honest limits. '), 'No website can give you an official mark. Speaking and Writing come with analysers that spot weak points, models to compare with and criteria to assess yourself against. ', AI.configured() ? 'AI feedback is switched on. ' : h('span', {}, 'For examiner-style feedback you can optionally ', link('#/progress', 'add your own AI key'), '. '), 'If you can, also share your recordings and texts with a teacher or language partner.');
+  A.skillStats = () => {
     const L = C1.listening || [], W = (C1.writing || {}).tasks || [], S = (C1.speaking || {}).sets || [];
-    const lDone = L.filter((x) => Store.score('listen:' + x.id)).length;
-    const wDone = W.filter((x) => (Store.skill('writing:' + x.id) || {}).done).length;
-    const sDone = S.filter((x) => (Store.skill('speaking:' + x.id) || {}).done).length;
-    const tile = (href, title, desc, stat) => h('a', { class: 'card', href }, h('h3', { style: 'margin:0 0 .2em' }, title), h('p', { class: 'muted', style: 'margin:0 0 8px' }, desc), h('span', { class: 'tag' }, stat));
-    view(h('h1', {}, 'Skills'),
-      h('p', { class: 'lead' }, 'The exam papers that are not about grammar: Listening, Speaking and Writing. They need a different kind of practice. Listening uses your browser\'s voices, Speaking gives you a timer and a recorder, and Writing gives you a workspace with an analyser and annotated models.'),
-      h('div', { class: 'grid' },
-        tile('#/skills/listening', 'Listening', 'Eight recordings read aloud by your browser, with exam-style questions, plus dictation.', `${lDone}/${L.length} done`),
-        tile('#/skills/speaking', 'Speaking', 'Parts 1 to 4 with prompts, a timer, a voice recorder and a self-assessment.', `${sDone}/${S.length} sets done`),
-        tile('#/skills/writing', 'Writing', 'Exam-style tasks, a writing area with word count and text analysis, and model answers.', `${wDone}/${W.length} tasks done`)),
-      h('div', { class: 'callout warn' }, h('strong', {}, 'Honest limits. '), 'No website can give you an official mark. Here, Speaking and Writing come with analysers that spot weak points, models to compare with and criteria to assess yourself against. ', AI.configured() ? 'AI feedback is switched on.' : h('span', {}, 'For examiner-style feedback you can optionally ', link('#/progress', 'add your own AI key'), '. '), ' If you can, also share your recordings and texts with a teacher or language partner.'));
-  }
+    return {
+      l: [L.filter((x) => Store.score('listen:' + x.id)).length, L.length],
+      s: [S.filter((x) => (Store.skill('speaking:' + x.id) || {}).done).length, S.length],
+      w: [W.filter((x) => (Store.skill('writing:' + x.id) || {}).done).length, W.length]
+    };
+  };
 
   /* =====================================================================
      LISTENING
      ===================================================================== */
   function listeningList() {
     const L = C1.listening || [];
-    view(back('#/skills', 'Skills'), h('h1', {}, 'Listening'),
+    view(back('#/toolkit', 'Library'), h('h1', {}, 'Listening'),
       h('p', { class: 'lead' }, 'Each recording is read aloud by your browser\'s text-to-speech voices. Listen first without the transcript, answer, then read the transcript to see what you missed.'),
       !Speech.supported ? h('div', { class: 'callout bad' }, 'This browser cannot read text aloud. You can still do the tasks from the transcripts, or try Chrome or Edge.') : null,
       h('div', { class: 'callout' }, h('strong', {}, 'How to practise. '), h('ol', {}, h('li', {}, 'Read the questions first and underline the key words.'), h('li', {}, 'Play the recording. The real exam plays it twice, so allow yourself two plays.'), h('li', {}, 'Answer, check, then open the transcript and find the evidence for every answer, including the ones you got right.'))),
@@ -291,7 +283,7 @@
     if (!l) return notFound();
     const items = [{ type: 'audio', title: l.title, intro: l.intro, script: l.script }].concat(l.questions);
     const uf = A.unitFooter('listening', id);
-    view(A.unitBack() || back('#/skills/listening', 'Listening'), h('div', {}, h('span', { class: 'tag' }, l.format), h('span', { class: 'tag' }, l.examPart)),
+    view(A.unitBack() || back('#/skills/listening', 'Listening'), A.partOf('listening', id), h('div', {}, h('span', { class: 'tag' }, l.format), h('span', { class: 'tag' }, l.examPart)),
       h('h1', {}, l.title), l.skills ? h('p', { class: 'muted' }, 'Trains: ' + l.skills) : null,
       quiz(items, {
         source: { topic: 'listen', label: 'Listening · ' + l.title, href: '#/skills/listening/' + id },
@@ -468,7 +460,7 @@
      ===================================================================== */
   function speakingList() {
     const S = (C1.speaking || {}).sets || [];
-    view(back('#/skills', 'Skills'), h('h1', {}, 'Speaking'),
+    view(back('#/toolkit', 'Library'), h('h1', {}, 'Speaking'),
       h('p', { class: 'lead' }, 'Speak aloud, out loud, every time. Each set follows the four parts of the exam with a timer and a recorder so you can listen back to yourself.'),
       h('div', { class: 'row' }, link('#/skills/speaking/guide', 'Guide: the 4 parts, criteria and useful phrases', 'btn ghost')),
       sectionHead('Practice sets'),
@@ -530,7 +522,7 @@
       })), h('span'))),
       h('button', { class: 'btn', onclick: () => { Store.setSkill('speaking:' + id, { done: true, self: ratings }); toast('Set marked as done'); } }, 'Mark this set as done'));
     const uf = A.unitFooter('speaking', id);
-    view(A.unitBack() || back('#/skills/speaking', 'Speaking'), h('h1', {}, set.title), tabs, body, selfBox,
+    view(A.unitBack() || back('#/skills/speaking', 'Speaking'), A.partOf('speaking', id), h('h1', {}, set.title), tabs, body, selfBox,
       uf || h('div', { class: 'pager' }, link('#/skills/speaking', 'All sets', 'btn ghost small'), link('#/skills/speaking/guide', 'Guide', 'btn ghost small')));
     show(1);
   }
@@ -600,7 +592,7 @@
 
   function writingList() {
     const W = (C1.writing || {}).tasks || [];
-    view(back('#/skills', 'Skills'), h('h1', {}, 'Writing'),
+    view(back('#/toolkit', 'Library'), h('h1', {}, 'Writing'),
       h('p', { class: 'lead' }, 'Write a full text under exam conditions, check it with the analyser, then compare it with an annotated model. Your draft is saved in this browser as you type.'),
       h('div', { class: 'row' }, link('#/skills/writing/guide', 'Guide: criteria, text types and checklist', 'btn ghost')),
       sectionHead('Tasks'),
@@ -675,7 +667,7 @@
 
     timerBox = timer((t.minutes || 45) * 60, 'Exam time');
     const uf = A.unitFooter('writing', id);
-    view(A.unitBack() || back('#/skills/writing', 'Writing'), h('div', {}, h('span', { class: 'tag' }, t.genre[0].toUpperCase() + t.genre.slice(1)), h('span', { class: 'tag' }, `${t.min}–${t.max} words`)),
+    view(A.unitBack() || back('#/skills/writing', 'Writing'), A.partOf('writing', id), h('div', {}, h('span', { class: 'tag' }, t.genre[0].toUpperCase() + t.genre.slice(1)), h('span', { class: 'tag' }, `${t.min}–${t.max} words`)),
       h('h1', {}, t.title), h('div', { class: 'card' }, h('div', { html: t.prompt }), t.points && t.points.length ? h('ul', {}, t.points.map((p) => h('li', { html: p }))) : null),
       h('div', { class: 'grid' },
         h('details', { class: 'card' }, h('summary', {}, 'Plan your answer'), h('ol', {}, t.plan.map((p) => h('li', { html: p })))),
@@ -692,7 +684,7 @@
   A.routes.mistakes = (b) => (b === 'practice' ? mistakePractice() : mistakes());
   A.routes.notebook = () => { A.openNotes && A.openNotes(); location.replace('#/'); };
   A.routes.skills = (b, c) => {
-    if (!b) return skillsHome();
+    if (!b) { location.replace('#/toolkit'); return; }
     if (b === 'listening') return c === 'own' ? ownAudio() : c ? listeningSet(c) : listeningList();
     if (b === 'dictation') return dictation();
     if (b === 'speaking') return c === 'guide' ? speakingGuide() : c ? speakingSet(c) : speakingList();
