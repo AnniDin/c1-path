@@ -91,7 +91,7 @@
     /* ---- notebook ---- */
     notes() { return state.notes.slice().sort((a, b) => b.ts - a.ts); },
     addNote(n) {
-      const note = { id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title: n.title || '', text: n.text || '', tag: n.tag || 'Other', href: n.href || '', ts: Date.now() };
+      const note = { id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title: n.title || '', text: n.text || '', tag: n.tag || 'Other', href: n.href || '', source: n.source || '', ts: Date.now() };
       state.notes.push(note); save(); return note;
     },
     updateNote(id, patch) { const n = state.notes.find((x) => x.id === id); if (n) { Object.assign(n, patch, { ts: Date.now() }); save(); } },

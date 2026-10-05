@@ -149,37 +149,41 @@ window.App = { routes: {}, cleanup: [] };
     if (nc) steps.push([`Course · ${nc.u.title}`, `Step ${nc.i + 1} of ${nc.total}: ${nc.info.kind.toLowerCase()} · ${nc.info.label}`, nc.info.href, 'Continue']);
     steps.push(['Mixed review', 'A few questions from grammar, vocabulary and rewriting', '#/course/mix', 'Start']);
 
-    const today = cardBlock('Today', steps.length ? steps.slice(0, 4).map(([t, d, href, cta]) =>
-      h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), link(href, cta, 'btn small'))) : h('p', {}, 'You are fully up to date. Come back tomorrow for your review.'));
+    const [first, ...rest] = steps;
+    const hero = h('section', { class: 'hero' },
+      h('p', { class: 'eyebrow' }, st.placement || Store.totalAnswered() ? 'Next up' : 'Start here'),
+      h('h1', {}, first[0]),
+      h('p', { class: 'lead' }, first[1]),
+      link(first[2], first[3], 'btn'));
 
     const gDone = grammar.filter((g) => st.lessons[g.id]).length;
     const seen = allCards.filter((c) => Store.card(c.id)).length;
     const pTotal = practiceTypes.reduce((a, p) => a + p.sets.length, 0);
     const pDone = practiceTypes.reduce((a, p) => a + setsDone(p), 0);
-    const row = (label, href, done, total) => h('div', { class: 'pathrow' }, h('div', {}, h('a', { href }, label), h('div', { class: 'muted' }, `${done} of ${total}`), bar(total ? done / total : 0)), h('strong', {}, pct(total ? done / total : 0) + '%'));
     const uDone = C1.course.filter((u) => unitDone(u) === unitSteps(u).length).length;
-    const path = cardBlock('Your path',
-      row('Course units completed', '#/course', uDone, C1.course.length),
-      row('Grammar lessons read', '#/grammar', gDone, grammar.length),
-      row('Vocabulary items started', '#/vocab', seen, allCards.length),
-      row('Practice sets completed', '#/practice', pDone, pTotal));
+    const row = (label, href, done, total) => h('a', { class: 'prow', href }, h('span', {}, label), bar(total ? done / total : 0), h('span', { class: 'muted' }, `${done}/${total}`));
 
     const acc = (() => { const t = Store.totalAnswered(); const c = Object.values(st.stats).reduce((a, s) => a + s.c, 0); return t ? pct(c / t) + '%' : '–'; })();
     const weak = Object.entries(st.stats).filter(([, s]) => s.t >= 5).map(([k, s]) => [k, s.c / s.t]).filter(([, a]) => a < 0.75).sort((a, b) => a[1] - b[1]).slice(0, 3);
+    const fig = (n, label) => h('div', {}, h('b', {}, n), h('span', {}, label));
 
-    view(h('h1', {}, 'Understand it. Then use it.'),
-      h('p', { class: 'lead' }, 'Practice for Cambridge C1 Advanced, Linguaskill and CertAcles. Every topic starts with the idea behind the language, so you reason your way to the answer instead of memorising rules.'),
-      h('div', { class: 'stats' },
-        h('div', { class: 'stat' }, h('b', {}, Store.streak()), h('span', {}, 'day streak')),
-        h('div', { class: 'stat' }, h('b', {}, Store.totalAnswered()), h('span', {}, 'answers so far')),
-        h('div', { class: 'stat' }, h('b', {}, acc), h('span', {}, 'overall accuracy')),
-        h('div', { class: 'stat' }, h('b', {}, due), h('span', {}, 'cards due today'))),
-      cardBlock(null, h('div', { class: 'row', style: 'justify-content:space-between;margin-bottom:8px' }, h('strong', {}, 'Daily goal'),
-        h('span', { class: 'muted' }, `${Store.todayCount()} / ${Store.goal()} answers`)), bar(Math.min(1, Store.todayCount() / Store.goal()), Store.todayCount() >= Store.goal() ? 'ok' : '')),
-      today, path,
-      weak.length ? cardBlock('Needs work', weak.map(([k, a]) => h('div', { class: 'trow' }, link(topicHref(k), topicLabels[k] || k), bar(a, 'bad'), h('span', {}, pct(a) + '%'))),
+    view(hero,
+      h('div', { class: 'figures' },
+        fig(Store.streak(), 'day streak'),
+        fig(`${Store.todayCount()}/${Store.goal()}`, 'answers today'),
+        fig(acc, 'accuracy'),
+        fig(due, 'cards due')),
+      rest.length ? h('section', {}, h('h2', {}, 'Also on the list'),
+        rest.slice(0, 3).map(([t, d, href, cta]) => h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), link(href, cta, 'btn small ghost')))) : null,
+      h('section', {}, h('h2', {}, 'Where you are'),
+        row('Course units', '#/course', uDone, C1.course.length),
+        row('Grammar lessons', '#/grammar', gDone, grammar.length),
+        row('Vocabulary items', '#/vocab', seen, allCards.length),
+        row('Practice sets', '#/practice', pDone, pTotal)),
+      weak.length ? h('section', {}, h('h2', {}, 'Needs work'),
+        weak.map(([k, a]) => h('div', { class: 'trow' }, link(topicHref(k), topicLabels[k] || k), bar(a, 'bad'), h('span', {}, pct(a) + '%'))),
         h('p', { class: 'muted' }, 'Topics below 75% after at least 5 answers.')) : null,
-      h('p', { class: 'muted' }, link('#/progress', 'See full progress →')));
+      h('p', { class: 'muted' }, link('#/progress', 'Full progress →')));
   }
 
   /* ---------- progress ---------- */
@@ -300,13 +304,13 @@ window.App = { routes: {}, cleanup: [] };
       h('div', {}, h('span', { class: 'hl' }, c.phrase), ' ', h('span', { class: 'tag' }, c.kind), showGroup ? h('span', { class: 'muted' }, ' ' + c.groupTitle) : null),
       h('div', {}, c.meaning),
       h('div', { class: 'eg', html: c.ex.replace(/\[\[(.+?)\]\]/g, '<em>$1</em>') }),
-      c.logic ? h('div', { class: 'muted' }, '💡 ' + c.logic) : null,
+      c.logic ? h('div', { class: 'muted' }, '' + c.logic) : null,
       h('button', {
         class: 'btn small ghost', style: 'margin-top:6px', onclick: (e) => {
           Store.addNote({ title: c.phrase, text: `${c.meaning}\n${c.ex.replace(/\[\[|\]\]/g, '')}${c.logic ? '\n' + c.logic : ''}`, tag: 'Vocabulary', href: '#/vocab/' + (c.group || '') });
-          e.target.textContent = 'Saved to notebook ✓'; e.target.disabled = true;
+          e.target.textContent = 'Saved ✓'; e.target.disabled = true;
         }
-      }, '＋ Notebook'));
+      }, '＋ Note'));
   }
 
   function vocab() {
@@ -399,7 +403,7 @@ window.App = { routes: {}, cleanup: [] };
         front.replaceChildren(
           h('div', { class: 'big hl' }, c.phrase), h('div', {}, c.meaning),
           h('div', { class: 'eg', html: c.ex.replace(/\[\[(.+?)\]\]/g, '<em>$1</em>') }),
-          c.logic ? h('div', { class: 'callout' }, '💡 ' + c.logic) : null,
+          c.logic ? h('div', { class: 'callout' }, '' + c.logic) : null,
           h('div', { class: 'rate' }, [['Again', 0], ['Hard', 1], ['Good', 2], ['Easy', 3]].map(([label, r]) =>
             h('button', { class: 'btn', 'data-rate': r, onclick: () => rateIt(r) }, label, h('small', {}, Store.intervalLabel(id, r))))));
       }

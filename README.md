@@ -22,7 +22,7 @@ Push to GitHub and enable Pages on the `main` branch (root folder). Nothing else
 - **Toolkit**: go straight to one area: grammar, vocabulary (flashcards and quizzes) or exam practice.
 - **Skills**: Listening (recordings read aloud by the browser, plus dictation), Speaking (timer, recorder, self-assessment) and Writing (workspace with word count, text analyser, annotated models). Each unit of the Course also includes one listening set, one speaking set and one writing task.
 - **Optional AI feedback** (Progress page): paste your own Anthropic API key to get examiner-style feedback on writing and speaking and extra explanations of mistakes. The key stays in your browser (never in the progress backup) and is sent only to api.anthropic.com.
-- **Mistakes** and **Notebook**: every wrong answer is saved with its explanation and re-asked until you get it right twice; the notebook (also reachable from the ✎ button or Alt+N) holds your own notes.
+- **Mistakes** and **Notes**: every wrong answer is saved with its explanation and re-asked until you get it right twice; your own notes live in a drawer that opens from the Notes button (or Alt+N) on every page, and can be docked beside the page on wide screens.
 
 Both use the same content; a unit is just an ordered path through it. `validate()` reports any lesson, vocabulary group or practice set that no unit uses.
 
@@ -39,7 +39,7 @@ Both use the same content; a unit is just an ordered path through it. `validate(
 - `js/store.js` – progress, streaks, spaced repetition (Leitner boxes)
 - `js/engine.js` – exercise rendering, checking and feedback
 - `js/ai.js` – optional AI feedback client (bring your own key)
-- `js/app.js` – core views and router; `js/skills.js` – mistakes, notebook and the skills views; `js/main.js` – start-up and service worker
+- `js/app.js` – core views and router; `js/skills.js` – mistakes, the notes drawer and the skills views; `js/main.js` – start-up and service worker
 - `sw.js`, `manifest.webmanifest`, `icons/` – offline use and installability (served over http(s) only)
 
 Content lives in plain `.js` files (not JSON) so the site also works when opened straight from disk.

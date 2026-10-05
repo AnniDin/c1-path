@@ -1,4 +1,4 @@
-/* C1 Path – mistakes log, notebook and the Skills section (listening, writing, speaking). */
+/* C1 Path – mistakes log, notes drawer and the Skills section (listening, writing, speaking). */
 (function () {
   const { h, quiz, Speech } = Engine;
   const A = window.App;
@@ -49,7 +49,7 @@
       h('tbody', {}, d.corrections.map((c) => h('tr', {}, h('td', {}, String(c.original || '')), h('td', {}, String(c.better || '')), h('td', {}, String(c.why || ''))))))));
     if ((d.improvements || []).length) box.append(h('h3', {}, 'Next steps'), li(d.improvements));
     if (d.upgrade) box.append(h('h3', {}, 'A stronger version'), h('p', { class: 'notetext' }, String(d.upgrade)));
-    box.append(h('button', { class: 'btn small ghost', onclick: () => { Store.addNote({ title: (title || 'AI feedback') + ' ' + fmtDate(Date.now()), tag: 'Writing', text: [d.summary, '', 'Corrections:', ...(d.corrections || []).map((c) => `- ${c.original} → ${c.better} (${c.why})`), '', 'Next steps:', ...(d.improvements || []).map((x) => '- ' + x)].join('\n') }); toast('Saved to notebook'); } }, 'Save to notebook'));
+    box.append(h('button', { class: 'btn small ghost', onclick: () => { Store.addNote({ title: (title || 'AI feedback') + ' ' + fmtDate(Date.now()), tag: 'Writing', text: [d.summary, '', 'Corrections:', ...(d.corrections || []).map((c) => `- ${c.original} → ${c.better} (${c.why})`), '', 'Next steps:', ...(d.improvements || []).map((x) => '- ' + x)].join('\n') }); toast('Saved to notes'); } }, 'Save to notes'));
     return box;
   }
   /* A button that runs `job()` (returns feedback data) and shows the result in `target`. */
@@ -95,7 +95,7 @@
         h('div', { class: 'row', style: 'justify-content:space-between' },
           h('div', {}, link(m.href, m.label, 'tag'), m.count > 1 ? h('span', { class: 'chip' }, `missed ×${m.count}`) : null, h('span', { class: 'chip' }, fmtDate(m.ts))),
           h('div', { class: 'row' },
-            h('button', { class: 'btn small ghost', onclick: () => { Store.addNote({ title: 'Mistake: ' + m.label, text: `${strip(promptHtml(it))}\nMy answer: ${m.given || '(blank)'}\nCorrect: ${correctText(it)}\n${strip(it.why || '')}`, tag: 'Mistakes', href: '#/mistakes' }); toast('Saved to notebook'); } }, '＋ Notebook'),
+            h('button', { class: 'btn small ghost', onclick: () => { Store.addNote({ title: 'Mistake: ' + m.label, text: `${strip(promptHtml(it))}\nMy answer: ${m.given || '(blank)'}\nCorrect: ${correctText(it)}\n${strip(it.why || '')}`, tag: 'Mistakes', href: '#/mistakes' }); toast('Saved to notes'); } }, '＋ Note'),
             AI.configured() ? h('button', { class: 'btn small ghost', onclick: async (e) => {
               e.target.disabled = true; extra.textContent = 'Thinking…';
               try { extra.textContent = await AI.explain(it, m.given); extra.className = 'fb good notetext'; } catch (err) { extra.textContent = err.message; extra.className = 'fb'; }
@@ -137,37 +137,70 @@
   }
 
   /* =====================================================================
-     NOTEBOOK
+     NOTES: a drawer available on every page (Alt+N), dockable on wide screens
      ===================================================================== */
   const TAGS = ['Grammar', 'Vocabulary', 'Writing', 'Listening', 'Speaking', 'Mistakes', 'Other'];
   const tagSelect = (val) => h('select', { 'aria-label': 'Tag' }, TAGS.map((t) => h('option', { value: t, selected: t === val }, t)));
 
-  function notebook() {
-    let cur = 'All', query = '';
-    const list = h('div');
-    const chips = h('div', { class: 'toc' });
-    const title = h('input', { type: 'text', class: 'wide', placeholder: 'Title (optional)', 'aria-label': 'Note title' });
+  function setupNotes() {
+    const root = document.body;
+    let cur = 'All', query = '', open = false;
+    const pinKey = 'c1path.notes.pin';
+    const getPin = () => { try { return localStorage.getItem(pinKey) === '1'; } catch (e) { return false; } };
+    const setPin = (v) => { try { localStorage.setItem(pinKey, v ? '1' : '0'); } catch (e) { /* optional */ } };
+    const wide = () => matchMedia('(min-width: 1180px)').matches;
+
+    const text = h('textarea', { rows: 4, 'aria-label': 'Note text', placeholder: 'A rule in your own words, a new expression, a question…' });
     const tag = tagSelect('Other');
-    const text = h('textarea', { rows: 5, class: 'wide', placeholder: 'Write a note: a rule in your own words, a new expression, a question for your teacher…', 'aria-label': 'Note text' });
+    const ctx = h('div', { class: 'muted notes-ctx' });
+    const list = h('div', { class: 'notes-list' });
+    const filter = h('select', { 'aria-label': 'Filter by tag', onchange: (e) => { cur = e.target.value; draw(); } });
+    const search = h('input', { type: 'text', placeholder: 'Search notes', 'aria-label': 'Search notes', oninput: (e) => { query = e.target.value; draw(); } });
+    const pinBtn = h('button', { class: 'icon-btn', title: 'Dock beside the page', 'aria-label': 'Dock notes beside the page', onclick: () => { setPin(!getPin()); apply(); } }, '▯');
+    const panel = h('aside', { id: 'notes', 'aria-label': 'Notes', 'aria-hidden': 'true' },
+      h('div', { class: 'notes-head' }, h('h2', {}, 'Notes'), h('div', { class: 'row' }, pinBtn, h('button', { class: 'icon-btn', 'aria-label': 'Close notes', onclick: () => toggle(false) }, '✕'))),
+      h('div', { class: 'notes-new' }, text,
+        h('div', { class: 'row' }, tag, h('button', { class: 'btn small', onclick: save }, 'Save'), h('span', { class: 'muted' }, 'Ctrl+Enter')),
+        ctx),
+      h('div', { class: 'notes-tools' }, search, filter),
+      list,
+      h('div', { class: 'notes-foot' }, h('button', { class: 'btn small ghost', onclick: exportMd }, 'Download as Markdown')));
+    const handle = document.getElementById('qnote');
+    handle.append(h('span', { id: 'notes-count', class: 'badge' }));
+    root.append(panel);
+
+    const here = () => ({ href: location.hash || '#/', label: ((document.querySelector('#app h1') || {}).textContent || '').trim() });
+    function refreshCtx() {
+      const p = here();
+      ctx.textContent = p.label ? 'Linked to: ' + p.label : '';
+    }
+    function save() {
+      if (!text.value.trim()) { text.focus(); return; }
+      const p = here();
+      Store.addNote({ title: '', text: text.value.trim(), tag: tag.value, href: p.href, source: p.label });
+      text.value = ''; text.focus();
+    }
+    text.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); save(); } });
 
     function noteCard(n) {
-      const el = h('div', { class: 'card note' });
+      const el = h('article', { class: 'note' });
       function show() {
-        el.replaceChildren(
-          h('div', { class: 'row', style: 'justify-content:space-between' },
-            h('div', {}, h('span', { class: 'tag' }, n.tag), h('span', { class: 'chip' }, fmtDate(n.ts)), n.href ? link(n.href, 'source', 'chip') : null),
-            h('div', { class: 'row' },
-              h('button', { class: 'btn small ghost', onclick: edit }, 'Edit'),
-              h('button', { class: 'btn small ghost', onclick: () => { if (confirm('Delete this note?')) { Store.deleteNote(n.id); draw(); } } }, 'Delete'))),
-          n.title ? h('h3', { style: 'margin:.4em 0' }, n.title) : null,
-          h('div', { class: 'notetext' }, n.text));
+        el.replaceChildren(...[
+          n.title ? h('h3', {}, n.title) : null,
+          h('div', { class: 'notetext' }, n.text),
+          h('div', { class: 'note-meta' },
+            h('span', { class: 'tag' }, n.tag), h('span', { class: 'muted' }, fmtDate(n.ts)),
+            n.href ? link(n.href, n.source || 'source', 'src') : null,
+            h('span', { class: 'spacer' }),
+            h('button', { class: 'linkbtn', onclick: edit }, 'Edit'),
+            h('button', { class: 'linkbtn', onclick: () => { if (confirm('Delete this note?')) { Store.deleteNote(n.id); draw(); } } }, 'Delete'))].filter(Boolean));
       }
       function edit() {
-        const t = h('input', { type: 'text', class: 'wide', value: n.title }), g = tagSelect(n.tag), b = h('textarea', { rows: 6, class: 'wide' }, n.text);
-        el.replaceChildren(t, h('div', { style: 'margin:8px 0' }, g), b, h('div', { class: 'row', style: 'margin-top:8px' },
+        const t = h('input', { type: 'text', placeholder: 'Title (optional)', value: n.title }), g = tagSelect(n.tag), b = h('textarea', { rows: 5 }, n.text);
+        el.replaceChildren(t, b, h('div', { class: 'row' }, g,
           h('button', { class: 'btn small', onclick: () => { Store.updateNote(n.id, { title: t.value.trim(), tag: g.value, text: b.value }); draw(); } }, 'Save'),
           h('button', { class: 'btn small ghost', onclick: draw }, 'Cancel')));
-        b.value = n.text; t.value = n.title; b.focus();
+        b.value = n.text; b.focus();
       }
       show();
       return el;
@@ -176,52 +209,46 @@
       const all = Store.notes();
       const q = query.trim().toLowerCase();
       const shown = all.filter((n) => (cur === 'All' || n.tag === cur) && (!q || (n.title + ' ' + n.text).toLowerCase().includes(q)));
-      chips.replaceChildren(...['All'].concat(TAGS).map((t) => h('a', { href: '#', class: cur === t ? 'on' : '', onclick: (e) => { e.preventDefault(); cur = t; draw(); } },
-        `${t} (${t === 'All' ? all.length : all.filter((n) => n.tag === t).length})`)));
-      list.replaceChildren(...(shown.length ? shown.map(noteCard) : [h('p', { class: 'muted' }, all.length ? 'No notes match.' : 'Your notebook is empty. Write your first note above, or press ✎ at the top of any page to jot something down while you study.')]));
+      filter.replaceChildren(...['All'].concat(TAGS).map((t) => h('option', { value: t, selected: t === cur }, `${t} (${t === 'All' ? all.length : all.filter((n) => n.tag === t).length})`)));
+      list.replaceChildren(...(shown.length ? shown.map(noteCard) : [h('p', { class: 'muted' }, all.length ? 'No notes match.' : 'Nothing here yet. Select text on any page and press Alt+N to start a note from it.')]));
+      const c = document.getElementById('notes-count'); if (c) c.textContent = all.length ? String(all.length) : '';
     }
     function exportMd() {
-      const md = Store.notes().reverse().map((n) => `## ${n.title || 'Untitled'}\n*${n.tag} · ${fmtDate(n.ts)}*\n\n${n.text}\n`).join('\n');
-      const a = h('a', { href: URL.createObjectURL(new Blob([md], { type: 'text/markdown' })), download: 'c1-path-notebook.md' });
+      const md = Store.notes().reverse().map((n) => `## ${n.title || n.text.split('\n')[0].slice(0, 60)}\n*${n.tag} · ${fmtDate(n.ts)}*\n\n${n.text}\n`).join('\n');
+      const a = h('a', { href: URL.createObjectURL(new Blob([md], { type: 'text/markdown' })), download: 'c1-path-notes.md' });
       document.body.append(a); a.click(); a.remove();
     }
-    view(h('h1', {}, 'Notebook'),
-      h('p', { class: 'lead' }, 'Your own space for rules in your own words, new expressions and questions. Press the ✎ button at the top of any page to add a note without leaving what you are doing.'),
-      cardBlock(null, title, h('div', { style: 'margin:8px 0' }, tag), text,
-        h('div', { class: 'row', style: 'margin-top:8px' }, h('button', { class: 'btn', onclick: () => {
-          if (!text.value.trim() && !title.value.trim()) return;
-          Store.addNote({ title: title.value.trim(), text: text.value, tag: tag.value }); title.value = ''; text.value = ''; draw(); toast('Note saved');
-        } }, 'Save note'))),
-      h('div', { class: 'row', style: 'justify-content:space-between' },
-        h('input', { type: 'text', class: 'wide', placeholder: 'Search notes…', 'aria-label': 'Search notes', oninput: (e) => { query = e.target.value; draw(); } }),
-        h('button', { class: 'btn small ghost', onclick: exportMd }, 'Download as Markdown')),
-      chips, list);
-    draw();
-  }
-
-  function setupQuickNote() {
-    const dlg = h('dialog', { id: 'qn' });
-    const title = h('input', { type: 'text', class: 'wide', placeholder: 'Title (optional)', 'aria-label': 'Note title' });
-    const tag = tagSelect('Other'), text = h('textarea', { rows: 5, class: 'wide', 'aria-label': 'Note text' });
-    dlg.append(h('form', { method: 'dialog' }, h('h3', { style: 'margin-top:0' }, 'Quick note'), title, h('div', { style: 'margin:8px 0' }, tag), text,
-      h('div', { class: 'row', style: 'margin-top:10px' },
-        h('button', { class: 'btn', type: 'button', onclick: () => {
-          if (text.value.trim() || title.value.trim()) { Store.addNote({ title: title.value.trim(), text: text.value, tag: tag.value, href: location.hash }); toast('Saved to notebook'); }
-          title.value = ''; text.value = ''; dlg.close();
-        } }, 'Save'),
-        h('button', { class: 'btn ghost', type: 'button', onclick: () => dlg.close() }, 'Cancel'),
-        link('#/notebook', 'Open notebook', 'muted'))));
-    document.body.append(dlg);
-    document.getElementById('qnote').addEventListener('click', () => {
-      const sel = String(getSelection());
-      if (sel.trim() && !text.value) text.value = sel.trim();
-      if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
-      text.focus();
-    });
-    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+    function apply() {
+      const docked = open && getPin() && wide();
+      root.classList.toggle('notes-open', open);
+      root.classList.toggle('notes-docked', docked);
+      panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+      handle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      pinBtn.classList.toggle('on', getPin());
+      pinBtn.hidden = !wide();
+    }
+    function toggle(force) {
+      open = force == null ? !open : force;
+      apply();
+      if (open) {
+        const sel = String(getSelection()).trim();
+        if (sel && !text.value) text.value = sel;
+        refreshCtx(); draw(); text.focus();
+      }
+    }
+    // keep the drawer in sync when notes are added from buttons elsewhere
+    const add = Store.addNote;
+    Store.addNote = (n) => { const r = add.call(Store, Object.assign({ source: here().label }, n)); draw(); return r; };
+    window.addEventListener('hashchange', refreshCtx);
+    window.addEventListener('resize', apply);
     document.addEventListener('keydown', (e) => {
-      if (e.altKey && e.key.toLowerCase() === 'n') { e.preventDefault(); document.getElementById('qnote').click(); }
+      if (e.altKey && e.key.toLowerCase() === 'n') { e.preventDefault(); toggle(); }
+      else if (e.key === 'Escape' && open && !getPin()) toggle(false);
     });
+    handle.addEventListener('click', () => toggle());
+    A.openNotes = () => toggle(true);
+    draw(); apply();
+    if (getPin() && wide()) toggle(true);
   }
 
   /* =====================================================================
@@ -305,7 +332,7 @@
           const d = Engine.diffWords(official.value, heard.value);
           out.replaceChildren(h('div', { class: 'fb' + (d.acc >= 0.9 ? ' good' : ''), html: `<b>${Math.round(d.acc * 100)}% of the words.</b> Green = heard, red = missed, struck-through = extra.<br>` + d.html }));
         } }, 'Compare'),
-        h('button', { class: 'btn ghost', onclick: () => { Store.addNote({ title: 'My listening notes', text: heard.value, tag: 'Listening', href: '#/skills/listening/own' }); toast('Saved to notebook'); } }, 'Save to notebook')),
+        h('button', { class: 'btn ghost', onclick: () => { Store.addNote({ title: 'My listening notes', text: heard.value, tag: 'Listening', href: '#/skills/listening/own' }); toast('Saved to notes'); } }, 'Save to notes')),
       out);
   }
 
@@ -633,7 +660,7 @@
       if (count() < 60 && !confirm('Try writing your own answer first: you learn far more by comparing. Show the model anyway?')) return;
       const notes = t.notes || [];
       modelBox.replaceChildren(cardBlock('Model answer', h('p', { class: 'muted' }, 'Read it with the annotations. Compare structure, linking and word choice with your own text.'),
-        ...t.model.map((p, i) => h('div', {}, h('div', { class: 'modelp', html: p }), notes.filter((n) => n.para === i).map((n) => h('div', { class: 'annot', html: '💡 ' + n.text })))),
+        ...t.model.map((p, i) => h('div', {}, h('div', { class: 'modelp', html: p }), notes.filter((n) => n.para === i).map((n) => h('div', { class: 'annot', html: '' + n.text })))),
         h('p', { class: 'muted' }, `Approximately ${strip(t.model.join(' ')).split(/\s+/).filter(Boolean).length} words.`)));
       modelBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -644,7 +671,7 @@
         return b;
       })), h('span'))),
       h('div', { class: 'row' }, h('button', { class: 'btn', onclick: () => { Store.saveDraft(id, area.value); Store.setSkill('writing:' + id, { done: true, self: ratings }); toast('Task marked as done'); } }, 'Mark task as done'),
-        h('button', { class: 'btn ghost', onclick: () => { Store.addNote({ title: t.title + ' (draft)', text: area.value, tag: 'Writing', href: '#/skills/writing/' + id }); toast('Draft saved to notebook'); } }, 'Save draft to notebook')));
+        h('button', { class: 'btn ghost', onclick: () => { Store.addNote({ title: t.title + ' (draft)', text: area.value, tag: 'Writing', href: '#/skills/writing/' + id }); toast('Draft saved to notes'); } }, 'Save draft to notes')));
 
     timerBox = timer((t.minutes || 45) * 60, 'Exam time');
     const uf = A.unitFooter('writing', id);
@@ -663,7 +690,7 @@
 
   /* ---------- routes ---------- */
   A.routes.mistakes = (b) => (b === 'practice' ? mistakePractice() : mistakes());
-  A.routes.notebook = () => notebook();
+  A.routes.notebook = () => { A.openNotes && A.openNotes(); location.replace('#/'); };
   A.routes.skills = (b, c) => {
     if (!b) return skillsHome();
     if (b === 'listening') return c === 'own' ? ownAudio() : c ? listeningSet(c) : listeningList();
@@ -672,5 +699,5 @@
     if (b === 'writing') return c === 'guide' ? writingGuide() : c ? writingTask(c) : writingList();
     return notFound();
   };
-  setupQuickNote();
+  setupNotes();
 })();
