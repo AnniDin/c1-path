@@ -1,7 +1,7 @@
 :root {
   /* Autumn palette: parchment, ember orange, chestnut, moss, mustard */
   --bg: #f8f0e3; --surface: #fffaf1; --ink: #2f2118; --muted: #6d5846; --line: #e6d6bf;
-  --accent: #b4441a; --accent-ink: #fffaf1; --accent-soft: #f9e2cf;
+  --accent: #a63d15; --accent-ink: #fffaf1; --accent-soft: #f9e2cf;
   --ok: #4d6a22; --ok-soft: #e6eccd;
   --bad: #a3271c; --bad-soft: #f9ddd3;
   --warn: #7a5200; --warn-soft: #fbe9b7; --warn-bar: #d9962b;
