@@ -553,7 +553,49 @@ window.App = { routes: {}, cleanup: [] };
         tile('#/skills/writing', 'Writing', 'Exam-style tasks with a word count, text analysis and model answers.', `${sk.w[0]}/${sk.w[1]} tasks done`)),
       App.limitsNote ? App.limitsNote() : null,
       sectionHead('Reference and tools'),
-      h('div', { class: 'row' }, link('#/exams', 'The exams explained', 'btn ghost'), link('#/placement', 'Placement test', 'btn ghost'), link('#/vquiz', 'Vocabulary quiz', 'btn ghost'), link('#/review', 'Flashcards', 'btn ghost')));
+      h('div', { class: 'row' }, link('#/mock', 'Full test', 'btn'), link('#/exams', 'The exams explained', 'btn ghost'), link('#/placement', 'Placement test', 'btn ghost'), link('#/vquiz', 'Vocabulary quiz', 'btn ghost'), link('#/review', 'Flashcards', 'btn ghost')));
+  }
+
+  /* ---------- full test: Reading and Use of English ---------- */
+  const MOCK_PARTS = [
+    ['mcq', 'Part 1', 'Multiple-choice cloze'], ['cloze', 'Part 2', 'Open cloze'], ['wf', 'Part 3', 'Word formation'],
+    ['kwt', 'Part 4', 'Key word transformation'], ['reading', 'Part 5', 'Multiple-choice reading'], ['gapped', 'Part 7', 'Gapped text']
+  ];
+  function mockTest() {
+    const picks = MOCK_PARTS.map(([id]) => {
+      const p = C1.practice.find((x) => x.id === id);
+      const fresh = p.sets.map((_, i) => i).filter((i) => !Store.score(setKey(id, i)));
+      const pool = fresh.length ? fresh : p.sets.map((_, i) => i);
+      return { p, i: pool[Math.floor(Math.random() * pool.length)] };
+    });
+    const results = {};
+    const summary = h('div', { class: 'card', style: 'display:none' });
+    const sections = MOCK_PARTS.map(([id, part, name], k) => {
+      const { p, i } = picks[k], set = p.sets[i];
+      return h('section', {}, h('h2', {}, `${part} · ${name}`), h('p', { class: 'muted' }, p.instruction),
+        quiz(set.items, {
+          source: { topic: 'u-' + id, label: 'Full test · ' + p.title + ' · ' + set.title, href: `#/practice/${id}/${i}` },
+          onRetry: mockTest,
+          onScore: (c, t) => {
+            Store.record('u-' + id, c, t); Store.setScore(setKey(id, i), c, t);
+            results[id] = [c, t];
+            if (Object.keys(results).length === MOCK_PARTS.length) {
+              const C = Object.values(results).reduce((a, r) => a + r[0], 0), T = Object.values(results).reduce((a, r) => a + r[1], 0);
+              summary.style.display = '';
+              summary.replaceChildren(h('h2', { style: 'margin-top:0' }, `Full test: ${C} / ${T} (${pct(C / T)}%)`),
+                MOCK_PARTS.map(([pid, pt, pn]) => h('div', { class: 'trow' }, h('span', {}, `${pt} · ${pn}`), bar(results[pid][0] / results[pid][1], barCls(results[pid][0] / results[pid][1])), h('span', {}, `${results[pid][0]}/${results[pid][1]}`))),
+                h('p', { class: 'muted' }, 'Start with the part that has the lowest bar. Every wrong answer is saved in your mistakes with its explanation.'),
+                h('div', { class: 'row' }, h('button', { class: 'btn', onclick: mockTest }, 'Take another test'), link('#/mistakes', 'Review mistakes', 'btn ghost')));
+              summary.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }
+        }));
+    });
+    view(back('#/toolkit', 'Library'), h('h1', {}, 'Full test: Reading and Use of English'),
+      h('p', { class: 'lead' }, 'One task of each kind in the order of the exam paper: Parts 1 to 5 and 7. It takes about an hour. Work without looking anything up, check each part at the end of the part, and read every explanation afterwards.'),
+      App.timer ? App.timer(3600, 'Suggested time: 60 minutes') : null,
+      h('div', { class: 'callout' }, 'The real paper has eight parts and 90 minutes (Part 6 is a cross-text task not practised here). Sets you have not done yet are chosen first.'),
+      ...sections, summary);
   }
 
   /* ---------- exams ---------- */
@@ -583,7 +625,7 @@ window.App = { routes: {}, cleanup: [] };
     if (unitCtx && !unitById(unitCtx)) unitCtx = null;
     const parts = pathPart.split('/').filter(Boolean).map(decodeURIComponent);
     const [a, b, c] = parts;
-    const inLibrary = ['grammar', 'vocab', 'practice', 'vquiz', 'skills', 'exams', 'toolkit'].includes(a);
+    const inLibrary = ['grammar', 'vocab', 'practice', 'vquiz', 'skills', 'exams', 'toolkit', 'mock'].includes(a);
     const inReview = ['review', 'mistakes', 'progress', 'placement'].includes(a);
     const navKey = !a ? 'home' : unitCtx && a !== 'course' ? 'course' : inLibrary ? 'toolkit' : inReview ? 'progress' : a;
     document.querySelectorAll('#nav a').forEach((el) => el.classList.toggle('active', el.dataset.r === navKey));
@@ -599,6 +641,7 @@ window.App = { routes: {}, cleanup: [] };
     if (a === 'review') return review(b);
     if (a === 'practice') return b ? practiceType(b, c == null ? null : +c) : practiceList();
     if (a === 'exams') return exams();
+    if (a === 'mock') return mockTest();
     notFound();
   }
   window.addEventListener('hashchange', route);

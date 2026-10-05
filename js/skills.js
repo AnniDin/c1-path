@@ -252,6 +252,7 @@
   }
 
   A.limitsNote = () => h('div', { class: 'callout warn' }, h('strong', {}, 'Honest limits. '), 'No website can give you an official mark. Speaking and Writing come with analysers that spot weak points, models to compare with and criteria to assess yourself against. ', AI.configured() ? 'AI feedback is switched on. ' : h('span', {}, 'For examiner-style feedback you can optionally ', link('#/progress', 'add your own AI key'), '. '), 'If you can, also share your recordings and texts with a teacher or language partner.');
+  A.timer = timer;
   A.skillStats = () => {
     const L = C1.listening || [], W = (C1.writing || {}).tasks || [], S = (C1.speaking || {}).sets || [];
     return {
