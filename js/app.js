@@ -133,7 +133,15 @@ window.App = { routes: {}, cleanup: [] };
   }
   const kwtPool = (sets) => sets.flatMap((s) => s.items.filter((q) => q.type === 'kwt'));
 
-  function view(...nodes) { app.replaceChildren(...nodes); window.scrollTo(0, 0); app.focus({ preventScroll: true }); }
+  /* Headings that skip a level (h1 straight to h3) get an aria-level so screen readers see a clean outline. */
+  function fixHeadings() {
+    let prev = 1;
+    app.querySelectorAll('h1,h2,h3').forEach((el) => {
+      const lvl = +el.tagName[1];
+      if (lvl - prev > 1) { el.setAttribute('aria-level', String(prev + 1)); prev = prev + 1; } else prev = lvl;
+    });
+  }
+  function view(...nodes) { app.replaceChildren(...nodes); fixHeadings(); window.scrollTo(0, 0); app.focus({ preventScroll: true }); }
   const cardBlock = (title, ...kids) => h('div', { class: 'card' }, title ? h('h2', { style: 'margin-top:0' }, title) : null, ...kids);
 
   /* ---------- home ---------- */
@@ -205,7 +213,7 @@ window.App = { routes: {}, cleanup: [] };
       const list = byGroup(pre);
       return list.length ? cardBlock(name, list.map(([k, s]) => { const a = s.c / s.t; return h('div', { class: 'trow' }, link(topicHref(k), topicLabels[k] || k), bar(a, barCls(a)), h('span', {}, pct(a) + '%')); })) : null;
     });
-    const file = h('input', { type: 'file', accept: 'application/json', style: 'display:none' });
+    const file = h('input', { type: 'file', accept: 'application/json', style: 'display:none', 'aria-label': 'Choose a backup file' });
     file.addEventListener('change', async () => {
       try { Store.mergeData(await file.files[0].text()); alert('Backup merged into your progress.'); progress(); }
       catch (e) { alert('Could not read that file: ' + e.message); }
@@ -540,7 +548,22 @@ window.App = { routes: {}, cleanup: [] };
     const pDone = practiceTypes.reduce((a, p) => a + setsDone(p), 0), pTot = practiceTypes.reduce((a, p) => a + p.sets.length, 0);
     const sk = App.skillStats ? App.skillStats() : { l: [0, 0], s: [0, 0], w: [0, 0] };
     const tile = (href, title, desc, stat) => h('a', { class: 'card', href }, h('h3', { style: 'margin:0 0 .2em' }, title), h('p', { class: 'muted', style: 'margin:0 0 8px' }, desc), h('span', { class: 'tag' }, stat));
+    const results = h('div');
+    const search = h('input', { type: 'search', class: 'wide', placeholder: 'Search lessons, vocabulary and course units…', 'aria-label': 'Search the Library' });
+    search.addEventListener('input', () => {
+      const q = search.value.trim().toLowerCase();
+      results.replaceChildren();
+      if (q.length < 2) return;
+      const has = (...t) => t.join(' ').toLowerCase().includes(q);
+      const hits = []
+        .concat(grammar.filter((g) => has(g.title, g.tagline, g.category, g.idea, g.parts.map((p) => p.h + ' ' + p.body).join(' '))).map((g) => ['Grammar', g.title, g.tagline, '#/grammar/' + g.id]))
+        .concat(C1.course.filter((u) => has(u.title, u.intro)).map((u) => ['Course', u.title, u.intro.slice(0, 90) + '…', '#/course/' + u.id]))
+        .concat(C1.vocab.filter((g) => has(g.title, g.short)).map((g) => ['Vocabulary group', g.title, g.short, '#/vocab/' + g.id]))
+        .concat(allCards.filter((c) => has(c.phrase, c.meaning)).slice(0, 15).map((c) => ['Vocabulary', c.phrase, c.meaning, '#/vocab/' + c.group]));
+      results.append(h('div', { class: 'card' }, hits.length ? hits.slice(0, 25).map(([kind, t, d, href]) => h('div', { class: 'pathrow' }, h('div', {}, h('span', { class: 'tag' }, kind), h('strong', {}, t), h('div', { class: 'muted' }, d)), link(href, 'Open', 'btn small ghost'))) : h('p', { class: 'muted' }, 'No matches.')));
+    });
     view(h('h1', {}, 'Library'),
+      search, results,
       h('p', { class: 'lead' }, 'Everything on the site, by area, to study in any order. The ', link('#/course', 'Course'), ' uses these same pieces in a fixed sequence; come here when you know what you need.'),
       sectionHead('Language', 'Understand how English works.'),
       h('div', { class: 'grid' },
@@ -554,8 +577,61 @@ window.App = { routes: {}, cleanup: [] };
         tile('#/skills/writing', 'Writing', 'Exam-style tasks with a word count, text analysis and model answers.', `${sk.w[0]}/${sk.w[1]} tasks done`)),
       App.limitsNote ? App.limitsNote() : null,
       sectionHead('Reference and tools'),
-      h('div', { class: 'row' }, link('#/mock', 'Full test', 'btn'), link('#/exams', 'The exams explained', 'btn ghost'), link('#/placement', 'Placement test', 'btn ghost'), link('#/vquiz', 'Vocabulary quiz', 'btn ghost'), link('#/review', 'Flashcards', 'btn ghost')));
+      h('div', { class: 'row' }, link('#/mock', 'Full tests', 'btn'), link('#/exams', 'The exams explained', 'btn ghost'), link('#/placement', 'Placement test', 'btn ghost'), link('#/vquiz', 'Vocabulary quiz', 'btn ghost'), link('#/review', 'Flashcards', 'btn ghost')));
   }
+
+  /* ---------- full tests: hub and guided papers ---------- */
+  const pickFresh = (list, isDone, n) => {
+    const fresh = shuffle(list.filter((x) => !isDone(x))), rest = shuffle(list.filter(isDone));
+    return fresh.concat(rest).slice(0, n);
+  };
+  function guidedPaper(title, lead, minutes, steps, note) {
+    view(back('#/mock', 'Full tests'), h('h1', {}, title), h('p', { class: 'lead' }, lead),
+      App.timer ? App.timer(minutes * 60, `Suggested time: ${minutes} minutes`) : null,
+      h('div', { class: 'steps' }, steps.map((st, i) => h('div', { class: 'step' + (st.done ? ' done' : '') },
+        h('span', { class: 'dot' }, i + 1),
+        h('div', {}, h('strong', {}, st.label), st.sub ? h('div', { class: 'muted' }, st.sub) : null),
+        link(st.href, st.done ? 'Again' : 'Open', 'btn small ghost')))),
+      note ? h('div', { class: 'callout' }, note) : null,
+      h('p', { class: 'muted' }, 'Start the timer, open each task in order, and come back here for the next one. Sets you have not done yet are chosen first; press the link below for a new selection.'),
+      h('a', { class: 'btn ghost small', href: location.hash, onclick: (e) => { e.preventDefault(); route(); } }, 'New selection'));
+  }
+  function mockListening() {
+    const L = C1.listening || [];
+    const sets = pickFresh(L, (x) => !!Store.score('listen:' + x.id), 4);
+    guidedPaper('Full test: Listening', 'Four recordings, like the four parts of the exam paper. Listen once if you can, as in the exam; the audio plays through your browser, so use the play button once per recording.', 40,
+      sets.map((x, i) => ({ label: `Part ${i + 1}: ${x.title}`, sub: x.format, href: '#/skills/listening/' + x.id, done: !!Store.score('listen:' + x.id) })),
+      'Answer all the questions of one recording, then check. The real paper has four parts and about 40 minutes; here every set has its own questions and explanations.');
+  }
+  function mockWriting() {
+    const W = (C1.writing || {}).tasks || [];
+    const isDone = (x) => !!(Store.skill('writing:' + x.id) || {}).done;
+    const essay = pickFresh(W.filter((x) => x.genre === 'essay'), isDone, 1)[0];
+    const other = pickFresh(W.filter((x) => x.genre !== 'essay'), isDone, 1)[0];
+    const row = (x, label) => x && ({ label: `${label}: ${x.title}`, sub: `${x.genre[0].toUpperCase() + x.genre.slice(1)} · ${x.min}–${x.max} words`, href: '#/skills/writing/' + x.id, done: isDone(x) });
+    guidedPaper('Full test: Writing', 'Two tasks in 90 minutes, as in the exam: Part 1 is always an essay, Part 2 is a different text type. Plan for about five minutes, write, and keep five minutes to check.', 90,
+      [row(essay, 'Part 1 (essay)'), row(other, 'Part 2')].filter(Boolean),
+      'Writing cannot be marked automatically. After each task use the analyser, compare with the model, and assess yourself against the four criteria.');
+  }
+  function mockSpeaking() {
+    const S = (C1.speaking || {}).sets || [];
+    const set = pickFresh(S, (x) => !!(Store.skill('speaking:' + x.id) || {}).done, 1)[0];
+    guidedPaper('Full test: Speaking', 'The real test lasts about 15 minutes with a partner and two examiners. Practise with a friend if you can; alone, record yourself and listen back.', 15,
+      set ? [{ label: `All four parts: ${set.title}`, sub: 'Parts 1 to 4 with timer and recorder', href: '#/skills/speaking/' + set.id, done: !!(Store.skill('speaking:' + set.id) || {}).done }] : [],
+      'Speak aloud, in full sentences, and do not stop to correct yourself. Review the recording afterwards.');
+  }
+  function mockHub() {
+    const card = (href, title, desc, tag) => h('a', { class: 'card', href }, h('span', { class: 'tag' }, tag), h('h3', { style: 'margin:.4em 0 .2em' }, title), h('p', { class: 'muted', style: 'margin:0' }, desc));
+    view(back('#/toolkit', 'Library'), h('h1', {}, 'Full tests'),
+      h('p', { class: 'lead' }, 'Practise a whole exam paper under time pressure instead of one task at a time. Each test picks material you have not done yet.'),
+      h('div', { class: 'grid' },
+        card('#/mock/reading', 'Reading and Use of English', 'Parts 1 to 5 and 7 on one page, scored by part.', '60 min'),
+        card('#/mock/listening', 'Listening', 'Four recordings in a row with their questions.', '40 min'),
+        card('#/mock/writing', 'Writing', 'An essay and a second text type.', '90 min'),
+        card('#/mock/speaking', 'Speaking', 'One full set: interview, long turn, discussion.', '15 min')),
+      h('div', { class: 'callout' }, 'These tests train timing and stamina. They give no official mark. For a realistic check, do a full paper from a past-paper book too.'));
+  }
+  const mockRoute = (b) => (b === 'reading' ? mockTest() : b === 'listening' ? mockListening() : b === 'writing' ? mockWriting() : b === 'speaking' ? mockSpeaking() : mockHub());
 
   /* ---------- full test: Reading and Use of English ---------- */
   const MOCK_PARTS = [
@@ -592,7 +668,7 @@ window.App = { routes: {}, cleanup: [] };
           }
         }));
     });
-    view(back('#/toolkit', 'Library'), h('h1', {}, 'Full test: Reading and Use of English'),
+    view(back('#/mock', 'Full tests'), h('h1', {}, 'Full test: Reading and Use of English'),
       h('p', { class: 'lead' }, 'One task of each kind in the order of the exam paper: Parts 1 to 5 and 7. It takes about an hour. Work without looking anything up, check each part at the end of the part, and read every explanation afterwards.'),
       App.timer ? App.timer(3600, 'Suggested time: 60 minutes') : null,
       h('div', { class: 'callout' }, 'The real paper has eight parts and 90 minutes (Part 6 is a cross-text task not practised here). Sets you have not done yet are chosen first.'),
@@ -642,10 +718,13 @@ window.App = { routes: {}, cleanup: [] };
     if (a === 'review') return review(b);
     if (a === 'practice') return b ? practiceType(b, c == null ? null : +c) : practiceList();
     if (a === 'exams') return exams();
-    if (a === 'mock') return mockTest();
+    if (a === 'mock') return mockRoute(b);
     notFound();
   }
   window.addEventListener('hashchange', route);
+
+  const skip = document.querySelector('.skip');
+  if (skip) skip.addEventListener('click', (e) => { e.preventDefault(); app.focus(); });
 
   /* ---------- theme ---------- */
   const root = document.documentElement;
