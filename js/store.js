@@ -59,6 +59,28 @@
       state = Object.assign(fresh(), d); save();
     },
 
+    /* Merge another device's data into this one. Nothing is lost on either side; conflicts keep the more advanced value.
+       Deleted notes and mistakes can come back, because deletions are not recorded. */
+    mergeData(json) {
+      const d = typeof json === 'string' ? JSON.parse(json) : json;
+      if (!d || typeof d !== 'object' || !d.stats || !d.days) throw new Error('Not a C1 Path backup');
+      const f = fresh(), r = Object.assign(f, d), s = state;
+      const each = (o, fn) => Object.keys(o || {}).forEach((k) => fn(k, o[k]));
+      each(r.stats, (k, v) => { if (!s.stats[k] || v.t > s.stats[k].t) s.stats[k] = v; });
+      each(r.days, (k, v) => { s.days[k] = Math.max(s.days[k] || 0, v); });
+      each(r.newToday, (k, v) => { s.newToday[k] = Math.max(s.newToday[k] || 0, v); });
+      each(r.cards, (k, v) => { const c = s.cards[k]; if (!c || v.box > c.box || (v.box === c.box && v.due > c.due)) s.cards[k] = v; });
+      each(r.lessons, (k, v) => { if (v) s.lessons[k] = v; });
+      each(r.scores, (k, v) => { if (!s.scores[k] || v.p > s.scores[k].p) s.scores[k] = v; });
+      each(r.mistakes, (k, v) => { if (!s.mistakes[k] || v.ts > s.mistakes[k].ts) s.mistakes[k] = v; });
+      each(r.drafts, (k, v) => { if (!s.drafts[k] || v.ts > s.drafts[k].ts) s.drafts[k] = v; });
+      each(r.skills, (k, v) => { if (!s.skills[k] || (v.ts || 0) > (s.skills[k].ts || 0)) s.skills[k] = v; });
+      const ids = new Set(s.notes.map((n) => n.id));
+      (r.notes || []).forEach((n) => { if (!ids.has(n.id)) s.notes.push(n); else { const i = s.notes.findIndex((x) => x.id === n.id); if (n.ts > s.notes[i].ts) s.notes[i] = n; } });
+      if (r.placement && (!s.placement || r.placement.date > s.placement.date)) s.placement = r.placement;
+      save();
+    },
+
     /* ---- mistakes log ---- */
     itemId(item) {
       const str = (item.type || '') + '|' + (item.q || item.first || item.second || '') + '|' + (item.options ? item.options.join('/') : '');

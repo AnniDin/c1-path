@@ -39,6 +39,7 @@ Both use the same content; a unit is just an ordered path through it. `validate(
 - `js/store.js` – progress, streaks, spaced repetition (Leitner boxes)
 - `js/engine.js` – exercise rendering, checking and feedback
 - `js/ai.js` – optional AI feedback client (bring your own key)
+- `js/sync.js` – sync between devices without accounts (shared file or transfer code, merging both sides)
 - `js/app.js` – core views and router; `js/skills.js` – mistakes, the notes drawer and the skills views; `js/main.js` – start-up and service worker
 - `sw.js`, `manifest.webmanifest`, `icons/` – offline use and installability (served over http(s) only)
 

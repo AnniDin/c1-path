@@ -207,7 +207,7 @@ window.App = { routes: {}, cleanup: [] };
     });
     const file = h('input', { type: 'file', accept: 'application/json', style: 'display:none' });
     file.addEventListener('change', async () => {
-      try { Store.importData(await file.files[0].text()); alert('Progress restored.'); progress(); }
+      try { Store.mergeData(await file.files[0].text()); alert('Backup merged into your progress.'); progress(); }
       catch (e) { alert('Could not read that file: ' + e.message); }
     });
     const dueN = dueIds().length, freshN = Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length)), mistN = Store.mistakes().length;
@@ -230,13 +230,14 @@ window.App = { routes: {}, cleanup: [] };
       cardBlock('Last 12 weeks', heat, h('p', { class: 'muted' }, 'Darker = more answers that day. Answer at least one question to keep your streak.')),
       ...tbl, !entries.length ? h('p', { class: 'muted' }, 'Nothing here yet. Do a lesson or a practice set and your results will appear.') : null,
       App.aiCard ? App.aiCard() : null,
+      App.syncCard ? App.syncCard() : null,
       cardBlock('Your data', h('p', { class: 'muted' }, 'Everything is stored in this browser only. Export a backup before clearing browser data or switching device.'),
         h('div', { class: 'row' },
           h('button', { class: 'btn small', onclick: () => {
             const a = h('a', { href: URL.createObjectURL(new Blob([Store.exportData()], { type: 'application/json' })), download: `c1-path-backup-${Store.today()}.json` });
             document.body.append(a); a.click(); a.remove();
           } }, 'Export backup'),
-          h('button', { class: 'btn small ghost', onclick: () => file.click() }, 'Import backup'), file,
+          h('button', { class: 'btn small ghost', onclick: () => file.click() }, 'Import and merge backup'), file,
           h('button', { class: 'btn small ghost', onclick: () => { if (confirm('Erase all progress in this browser?')) { Store.reset(); progress(); } } }, 'Reset progress'))));
   }
 
