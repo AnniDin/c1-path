@@ -22,18 +22,32 @@
      ===================================================================== */
   const SCORE_LABELS = { content: 'Content', communicative: 'Communicative achievement', organisation: 'Organisation', language: 'Language', grammar_vocabulary: 'Grammar and vocabulary', discourse: 'Discourse management', interaction: 'Interaction' };
   function aiCard() {
-    const key = h('input', { type: 'password', class: 'wide', placeholder: 'sk-ant-…', autocomplete: 'off', 'aria-label': 'Anthropic API key' });
-    const model = h('select', { 'aria-label': 'Model', onchange: (e) => AI.setModel(e.target.value) }, AI.MODELS.map(([v, t]) => h('option', { value: v, selected: v === AI.model() }, t)));
-    const status = h('p', { class: 'muted' }, AI.configured() ? `A key ending ${AI.keyHint()} is saved in this browser.` : 'No key saved. The site works fully without one.');
-    const show = (t, bad) => { status.textContent = t; status.className = bad ? 'a-warn' : 'muted'; };
-    return cardBlock('AI feedback (optional)',
-      h('p', { class: 'muted' }, 'Writing, Speaking and mistake explanations can get examiner-style feedback from Claude. It uses your own Anthropic API key: create one at console.anthropic.com and set a low monthly spend limit for it. Each request costs a few cents or less.'),
-      h('div', { class: 'callout warn' }, h('strong', {}, 'Privacy. '), 'The key is stored only in this browser and sent only to api.anthropic.com. Only the text you ask feedback on is sent. Do not save a key on a shared computer, and remove it if you stop using it.'),
-      key, h('div', { class: 'row', style: 'margin:8px 0' }, model,
-        h('button', { class: 'btn small', onclick: () => { if (!key.value.trim()) return show('Paste a key first.', true); AI.setKey(key.value); key.value = ''; show(`Saved (ending ${AI.keyHint()}). Press Test to check it.`); } }, 'Save key'),
-        h('button', { class: 'btn small ghost', onclick: async () => { show('Testing…'); try { await AI.test(); show('The key works.'); } catch (e) { show(e.message, true); } } }, 'Test'),
-        h('button', { class: 'btn small ghost', onclick: () => { AI.setKey(''); show('Key removed.'); } }, 'Remove key')),
-      status);
+    const box = h('div');
+    function draw() {
+      const p = AI.provider(), id = AI.providerId();
+      const provider = h('select', { 'aria-label': 'AI provider', onchange: (e) => { AI.setProvider(e.target.value); draw(); } },
+        Object.entries(AI.PROVIDERS).map(([k, v]) => h('option', { value: k, selected: k === id }, v.name)));
+      const key = h('input', { type: 'password', class: 'wide', placeholder: p.keyHint, autocomplete: 'off', 'aria-label': p.name + ' API key' });
+      const known = p.models.some(([v]) => v === AI.model());
+      const model = h('select', { 'aria-label': 'Model', onchange: (e) => { AI.setModel(e.target.value); other.value = ''; } }, p.models.map(([v, t]) => h('option', { value: v, selected: v === AI.model() }, t)));
+      const other = h('input', { type: 'text', placeholder: 'Other model name (optional)', 'aria-label': 'Other model name', value: known ? '' : AI.model(), onchange: (e) => { if (e.target.value.trim()) AI.setModel(e.target.value); else AI.setModel(model.value); } });
+      const status = h('p', { class: 'muted' }, AI.configured() ? `A key ending ${AI.keyHint()} is saved in this browser.` : 'No key saved. The site works fully without one.');
+      const show = (t, bad) => { status.textContent = t; status.className = bad ? 'a-warn' : 'muted'; };
+      box.replaceChildren(
+        h('p', { class: 'muted' }, 'Writing, Speaking and mistake explanations can get examiner-style feedback from an AI model. It uses your own key, so the site never sees it. Google Gemini and Groq have free plans; Anthropic Claude is paid and usually gives the most detailed feedback.'),
+        h('div', { class: 'row' }, provider),
+        h('p', {}, p.free ? 'Free: ' : 'Paid: ', h('a', { href: p.keyUrl, target: '_blank', rel: 'noopener' }, 'get a key at ' + p.keyUrl.replace('https://', '')),
+          h('span', { class: 'muted' }, p.free ? ' (sign in, press "Create API key", copy it). Free plans have daily limits and may use your text to improve their models; keep personal details out of what you send.' : ' (add credit and set a low monthly spend limit).')),
+        h('div', { class: 'callout warn' }, h('strong', {}, 'Privacy. '), `The key is stored only in this browser and sent only to ${p.host}. Only the text you ask feedback on is sent. Do not save a key on a shared computer, and remove it if you stop using it.`),
+        key, h('div', { class: 'row', style: 'margin:8px 0' }, model, other),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn small', onclick: () => { if (!key.value.trim()) return show('Paste a key first.', true); AI.setKey(key.value); key.value = ''; show(`Saved (ending ${AI.keyHint()}). Press Test to check it.`); } }, 'Save key'),
+          h('button', { class: 'btn small ghost', onclick: async () => { show('Testing…'); try { await AI.test(); show('The key works.'); } catch (e) { show(e.message, true); } } }, 'Test'),
+          h('button', { class: 'btn small ghost', onclick: () => { AI.setKey(''); draw(); } }, 'Remove key')),
+        status);
+    }
+    draw();
+    return cardBlock('AI feedback (optional)', box);
   }
   A.aiCard = aiCard;
 
@@ -54,7 +68,7 @@
   }
   /* A button that runs `job()` (returns feedback data) and shows the result in `target`. */
   function aiButton(label, target, job, title) {
-    if (!AI.configured()) return h('span', { class: 'muted' }, 'AI feedback: ', link('#/progress', 'add your API key'), ' (optional)');
+    if (!AI.configured()) return h('span', { class: 'muted' }, 'AI feedback: ', link('#/progress', 'add a free API key'), ' (optional)');
     const b = h('button', { class: 'btn ghost', onclick: async () => {
       b.disabled = true; target.replaceChildren(h('p', { class: 'muted' }, 'Reading your work… this takes a few seconds.'));
       try { target.replaceChildren(feedbackPanel(await job(), title)); }
