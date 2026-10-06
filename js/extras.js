@@ -12,8 +12,10 @@
     find.addEventListener('input', () => {
       const q = find.value.trim().toLowerCase();
       document.querySelectorAll('.trick').forEach((d) => { const hit = !q || d.textContent.toLowerCase().includes(q); d.hidden = !hit; if (q && hit) d.open = true; else if (!q) d.open = false; });
+      document.querySelectorAll('section[id^=tricks-]').forEach((s) => { s.hidden = !!q && ![...s.querySelectorAll('.trick')].some((d) => !d.hidden); });
+      document.querySelectorAll('.tricks-nav a').forEach((a) => { const s = document.getElementById(a.getAttribute('href').slice(1)); a.hidden = !!s && s.hidden; });
     });
-    const nav = h('p', { class: 'row' }, sections.map((s) => h('a', { class: 'btn small ghost', href: '#tricks-' + s.id, onclick: (e) => { e.preventDefault(); document.getElementById('tricks-' + s.id).scrollIntoView({ behavior: 'smooth' }); } }, s.title)));
+    const nav = h('p', { class: 'row tricks-nav' }, sections.map((s) => h('a', { class: 'btn small ghost', href: '#tricks-' + s.id, onclick: (e) => { e.preventDefault(); document.getElementById('tricks-' + s.id).scrollIntoView({ behavior: 'smooth' }); } }, s.title)));
     view(back('#/toolkit', 'Library'), h('h1', {}, 'Tricks'),
       h('p', { class: 'lead' }, 'Small tricks that settle the doubts everyone has: which word, which preposition, which form. Open one, read the example and move on.'),
       find, nav,

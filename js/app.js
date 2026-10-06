@@ -21,7 +21,7 @@ window.App = { routes: {}, cleanup: [] };
   ];
   const PRACTICE_SECTIONS = [
     { name: 'Use of English', ids: ['mcq', 'cloze', 'wf', 'kwt'], blurb: 'Cambridge Reading and Use of English, Parts 1–4, and similar tasks in Linguaskill and CertAcles.' },
-    { name: 'Reading', ids: ['reading', 'gapped'], blurb: 'Longer texts: understanding attitude, reference and text structure.' }
+    { name: 'Reading', ids: ['reading', 'cross', 'gapped', 'matching'], blurb: 'Longer texts: understanding attitude, reference and text structure.' }
   ];
 
   const grammar = GRAMMAR_CATS.flatMap((c) => C1.grammar.filter((g) => g.category === c.name))
@@ -212,9 +212,10 @@ window.App = { routes: {}, cleanup: [] };
         row('Grammar lessons', '#/grammar', gDone, grammar.length),
         row('Vocabulary items', '#/vocab', seen, allCards.length),
         row('Practice sets', '#/practice', pDone, pTotal)),
+      App.planBanner ? App.planBanner() : null,
       weak.length ? h('section', {}, h('h2', {}, 'Needs work'),
         weak.map(([k, a]) => h('div', { class: 'trow' }, link(topicHref(k), topicLabels[k] || k), bar(a, 'bad'), h('span', {}, pct(a) + '%'))),
-        h('p', { class: 'muted' }, 'Topics below 75% after at least 5 answers.')) : null,
+        h('p', { class: 'muted' }, 'Topics below 75% after at least 5 answers. ', link('#/weak', 'Train them now →'))) : null,
       h('p', { class: 'muted' }, link('#/progress', 'Review and progress →'), ' · ', link('#/welcome', 'How C1 Path works')));
   }
 
@@ -256,6 +257,9 @@ window.App = { routes: {}, cleanup: [] };
       cardBlock('Last 12 weeks', heat, h('p', { class: 'muted' }, 'Darker = more answers that day. Answer at least one question to keep your streak.')),
       ...tbl, !entries.length ? h('p', { class: 'muted' }, 'Nothing here yet. Do a lesson or a practice set and your results will appear.') : null,
       App.aiCard ? App.aiCard() : null,
+      App.historyCard ? App.historyCard() : null,
+      App.friendsCard ? App.friendsCard() : null,
+      App.offlineCard ? App.offlineCard() : null,
       App.syncCard ? App.syncCard() : null,
       cardBlock('Your data', h('p', { class: 'muted' }, 'Everything is stored in this browser only. Export a backup before clearing browser data or switching device.'),
         h('div', { class: 'row' },
@@ -643,7 +647,7 @@ window.App = { routes: {}, cleanup: [] };
     view(back('#/toolkit', 'Library'), h('h1', {}, 'Full tests'),
       h('p', { class: 'lead' }, 'Practise a whole exam paper under time pressure instead of one task at a time. Each test picks material you have not done yet.'),
       h('div', { class: 'grid' },
-        card('#/mock/reading', 'Reading and Use of English', 'Parts 1 to 5 and 7 on one page, scored by part.', '60 min', 'practice'),
+        card('#/mock/reading', 'Reading and Use of English', 'All eight parts on one page, scored by part.', '90 min', 'practice'),
         card('#/mock/listening', 'Listening', 'Four recordings in a row with their questions.', '40 min', 'listening'),
         card('#/mock/writing', 'Writing', 'An essay and a second text type.', '90 min', 'writing'),
         card('#/certacles', 'CertAcles-style paper', 'The four components in a typical university order, with approximate times.', 'Guide', 'review'),
@@ -655,10 +659,12 @@ window.App = { routes: {}, cleanup: [] };
   /* ---------- full test: Reading and Use of English ---------- */
   const MOCK_PARTS = [
     ['mcq', 'Part 1', 'Multiple-choice cloze'], ['cloze', 'Part 2', 'Open cloze'], ['wf', 'Part 3', 'Word formation'],
-    ['kwt', 'Part 4', 'Key word transformation'], ['reading', 'Part 5', 'Multiple-choice reading'], ['gapped', 'Part 7', 'Gapped text']
+    ['kwt', 'Part 4', 'Key word transformation'], ['reading', 'Part 5', 'Multiple-choice reading'], ['cross', 'Part 6', 'Cross-text multiple matching'],
+    ['gapped', 'Part 7', 'Gapped text'], ['matching', 'Part 8', 'Multiple matching']
   ];
   function mockTest() {
-    const picks = MOCK_PARTS.map(([id]) => {
+    const PARTS = MOCK_PARTS.filter(([id]) => C1.practice.some((p) => p.id === id));
+    const picks = PARTS.map(([id]) => {
       const p = C1.practice.find((x) => x.id === id);
       const fresh = p.sets.map((_, i) => i).filter((i) => !Store.score(setKey(id, i)));
       const pool = fresh.length ? fresh : p.sets.map((_, i) => i);
@@ -666,7 +672,7 @@ window.App = { routes: {}, cleanup: [] };
     });
     const results = {};
     const summary = h('div', { class: 'card', style: 'display:none' });
-    const sections = MOCK_PARTS.map(([id, part, name], k) => {
+    const sections = PARTS.map(([id, part, name], k) => {
       const { p, i } = picks[k], set = p.sets[i];
       return h('section', {}, h('h2', {}, `${part} · ${name}`), h('p', { class: 'muted' }, p.instruction),
         quiz(set.items, {
@@ -675,11 +681,12 @@ window.App = { routes: {}, cleanup: [] };
           onScore: (c, t) => {
             Store.record('u-' + id, c, t); Store.setScore(setKey(id, i), c, t);
             results[id] = [c, t];
-            if (Object.keys(results).length === MOCK_PARTS.length) {
+            if (Object.keys(results).length === PARTS.length) {
               const C = Object.values(results).reduce((a, r) => a + r[0], 0), T = Object.values(results).reduce((a, r) => a + r[1], 0);
               summary.style.display = '';
+              Store.addMock({ ts: Date.now(), kind: 'Reading and Use of English', c: C, t: T });
               summary.replaceChildren(h('h2', { style: 'margin-top:0' }, `Full test: ${C} / ${T} (${pct(C / T)}%)`),
-                MOCK_PARTS.map(([pid, pt, pn]) => h('div', { class: 'trow' }, h('span', {}, `${pt} · ${pn}`), bar(results[pid][0] / results[pid][1], barCls(results[pid][0] / results[pid][1])), h('span', {}, `${results[pid][0]}/${results[pid][1]}`))),
+                PARTS.map(([pid, pt, pn]) => h('div', { class: 'trow' }, h('span', {}, `${pt} · ${pn}`), bar(results[pid][0] / results[pid][1], barCls(results[pid][0] / results[pid][1])), h('span', {}, `${results[pid][0]}/${results[pid][1]}`))),
                 h('p', { class: 'muted' }, 'Start with the part that has the lowest bar. Every wrong answer is saved in your mistakes with its explanation.'),
                 h('div', { class: 'row' }, h('button', { class: 'btn', onclick: mockTest }, 'Take another test'), link('#/mistakes', 'Review mistakes', 'btn ghost')));
               summary.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -688,9 +695,9 @@ window.App = { routes: {}, cleanup: [] };
         }));
     });
     view(back('#/mock', 'Full tests'), h('h1', {}, 'Full test: Reading and Use of English'),
-      h('p', { class: 'lead' }, 'One task of each kind in the order of the exam paper: Parts 1 to 5 and 7. It takes about an hour. Work without looking anything up, check each part at the end of the part, and read every explanation afterwards.'),
-      App.timer ? App.timer(3600, 'Suggested time: 60 minutes') : null,
-      h('div', { class: 'callout' }, 'The real paper has eight parts and 90 minutes (Part 6 is a cross-text task not practised here). Sets you have not done yet are chosen first.'),
+      h('p', { class: 'lead' }, 'One task of each kind in the order of the exam paper: Parts 1 to 8. It takes about an hour and a half. Work without looking anything up, check each part at the end of the part, and read every explanation afterwards.'),
+      App.timer ? App.timer(5400, 'Suggested time: 90 minutes') : null,
+      h('div', { class: 'callout' }, 'The real paper has eight parts and 90 minutes. Sets you have not done yet are chosen first.'),
       ...sections, summary);
   }
 
@@ -769,6 +776,7 @@ window.App = { routes: {}, cleanup: [] };
           h('li', {}, 'To delete your account and all cloud data at any time: open the account menu at the top right and choose "Delete my account". Copies on your own devices stay.'),
           h('li', {}, 'To get a copy of your data: use "Export backup" in Review.'),
           h('li', {}, 'The sign-in session token is kept in your browser\'s localStorage.')),
+        h('p', {}, 'Optional friends leaderboard: only if you join it, the server also stores a display name you choose, your questions answered this week, your streak, your level and a friend code. They are visible only to you and to people who add your code, and "Leave" in Review deletes them. Deleting your account removes them too.'),
         h('p', {}, 'Supabase and, if you choose Google sign-in, Google act as service providers under their own privacy policies.')) : null,
       h('h2', {}, 'Optional AI feedback'),
       h('p', {}, 'If you add your own API key (Google Gemini, Groq or Anthropic) and ask for feedback, the text you choose to submit is sent to that provider to produce the feedback. The key stays in your browser. Free plans of some providers may use submitted text to improve their models, so do not include personal details. Without a key, nothing is sent.'),
@@ -842,8 +850,9 @@ window.App = { routes: {}, cleanup: [] };
   });
 
   window.App = Object.assign(window.App, {
+    stepsLeft: () => { const all = C1.course.flatMap((u) => unitSteps(u)); return { done: all.filter((x) => x.done).length, total: all.length }; },
     unitsDone: () => C1.course.filter((u) => unitDone(u) === unitSteps(u).length).length, unitCount: () => C1.course.length,
-    icon, view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
+    topicHref, icon, view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
     unitBack, unitFooter, uq, partOf, setKey, scoreChip, start: route, route
   });
   Object.defineProperty(window.App, 'unitCtx', { get: () => unitCtx });

@@ -334,3 +334,7 @@ a.card:hover, .step:hover { transform: translateY(-2px); box-shadow: 0 6px 16px 
 .figures b .ico svg { width: .85em; height: .85em; }
 
 main:focus, main:focus-visible { outline: none; }
+
+.fcode { font: 700 1.1rem monospace; letter-spacing: .12em; }
+.trow.friend { grid-template-columns: minmax(0,1.2fr) minmax(50px,1fr) auto 34px; }
+.trow.me span:first-child { font-weight: 700; }

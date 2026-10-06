@@ -50,3 +50,11 @@ Content lives in plain `.js` files (not JSON) so the site also works when opened
 ## Adding content
 
 Grammar quiz items, vocabulary cards and Use of English sets follow the shapes already in the data files. Every item needs a `why` explanation. Keep the principle: explain the reason, not just the rule.
+
+
+## Added later
+
+- **Full tests** now cover Reading and Use of English Parts 1 to 8 (`data/practice6.js` cross-text, `data/practice7.js` multiple matching) and keep a score history in Review.
+- **Exam plan** (`#/plan`), **weak spots** (`#/weak`), daily quests, XP and achievements (`js/plan.js`, `js/rewards.js`).
+- **Offline and install**: PNG icons and manifest; the recorded listening audio can be saved for offline use from Review (`c1path-audio` cache, served by `sw.js`).
+- **Friends leaderboard** (`js/friends.js`): optional, needs `supabase/friends.sql` run once in the Supabase SQL editor (after `schema.sql`).

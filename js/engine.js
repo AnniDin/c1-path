@@ -330,5 +330,5 @@
     return wrap;
   }
 
-  window.Engine = { h, quiz, norm, matches, Speech, shuffle, diffWords };
+  window.Engine = { h, quiz, norm, matches, Speech, shuffle, diffWords, gapItem };
 })();

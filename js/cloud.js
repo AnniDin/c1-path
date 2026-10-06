@@ -102,6 +102,14 @@
       });
       if (!res.ok) throw await errorOf(res);
     },
+    /* Calls a Postgres function in the project (used by the friends leaderboard). */
+    async rpc(name, body) {
+      const t = await token();
+      const res = await fetch(base + '/rest/v1/rpc/' + name, { method: 'POST', headers: headers(t), body: JSON.stringify(body || {}) });
+      if (!res.ok) throw await errorOf(res);
+      const txt = await res.text();
+      return txt ? JSON.parse(txt) : null;
+    },
     async deleteAccount() {
       const t = await token();
       const res = await fetch(base + '/rest/v1/rpc/delete_my_account', { method: 'POST', headers: headers(t), body: '{}' });
