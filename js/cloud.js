@@ -36,7 +36,8 @@
   let arrival = '';
   if (enabled && /[#&](access_token|error)=/.test(location.hash)) {
     const q = new URLSearchParams(location.hash.replace(/^#\/?/, '').replace(/^.*?(?=(access_token|error)=)/, ''));
-    history.replaceState(null, '', location.pathname + location.search + '#/progress');
+    let back = '#/'; try { back = sessionStorage.getItem('c1path.return') || '#/'; sessionStorage.removeItem('c1path.return'); } catch (e) { /* optional */ }
+    history.replaceState(null, '', location.pathname + location.search + back);
     if (q.get('access_token')) {
       session = { access_token: q.get('access_token'), refresh_token: q.get('refresh_token'), expires_at: Date.now() + (+q.get('expires_in') || 3600) * 1000 };
       write(session);
@@ -49,6 +50,7 @@
     if (session && session.id) return session.id;
     try { const id = JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub; session.id = id; write(session); return id; } catch (e) { throw new Error('Could not read your account id. Sign in again.'); }
   };
+  const remember = () => { try { sessionStorage.setItem('c1path.return', location.hash || '#/'); } catch (e) { /* optional */ } };
   const Cloud = {
     enabled,
     arrival: () => { const a = arrival; arrival = ''; return a; },
@@ -57,9 +59,22 @@
 
     /* Sends an email with a sign-in link (and a 6-digit code if the email template includes {{ .Token }}). */
     async sendLink(email) {
+      remember();
       const redirect = encodeURIComponent(location.origin + location.pathname);
       const res = await fetch(base + '/auth/v1/otp?redirect_to=' + redirect, { method: 'POST', headers: headers(), body: JSON.stringify({ email: email.trim(), create_user: true }) });
       if (!res.ok) throw await errorOf(res);
+    },
+    signInGoogle() {
+      remember();
+      location.href = base + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(location.origin + location.pathname);
+    },
+    /* Which sign-in providers the project has switched on (Google is hidden until it is). */
+    async providers() {
+      try {
+        const res = await fetch(base + '/auth/v1/settings', { headers: headers() });
+        const j = await res.json();
+        return { google: !!(j.external && j.external.google) };
+      } catch (e) { return { google: false }; }
     },
     async verifyCode(email, code) {
       const res = await fetch(base + '/auth/v1/verify', { method: 'POST', headers: headers(), body: JSON.stringify({ type: 'email', email: email.trim(), token: code.trim() }) });

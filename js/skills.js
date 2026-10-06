@@ -9,6 +9,7 @@
   A.topicLabels.dictation = 'Dictation';
   A.topicLabels.retry = 'Mistake practice';
 
+  A.toast = (m) => toast(m);
   function toast(msg) {
     const t = h('div', { class: 'toast', role: 'status' }, msg);
     document.body.append(t);

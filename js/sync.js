@@ -139,38 +139,18 @@
           h('button', { class: 'btn small ghost', onclick: async () => { await dropHandle(); sync.status = 'off'; draw(); } }, 'Disconnect')));
     }
 
-    let pendingEmail = '', othersOpen = false;
+    let othersOpen = false;
     function accountPart() {
       const u = Cloud.user();
-      const arrived = Cloud.arrival();
-      if (arrived) setTimeout(() => say(arrived, /did not work/.test(arrived)), 0);
-      if (u) {
-        const label = { ok: 'Synced ' + ago(cloud.at) + ' · automatic', busy: 'Syncing…', error: 'Problem: ' + cloud.error, off: 'Waiting to sync' }[cloud.status];
+      if (!u) {
         return h('div', {},
-          h('p', {}, h('span', { class: 'sdot ' + (cloud.status === 'off' ? 'paused' : cloud.status), 'aria-hidden': 'true' }), h('strong', {}, 'Signed in as ' + (u.email || 'your account')), h('span', { class: 'muted' }, ' · ' + label)),
-          h('div', { class: 'row' },
-            h('button', { class: 'btn small', onclick: () => runCloud() }, 'Sync now'),
-            h('button', { class: 'btn small ghost', onclick: async () => { await Cloud.signOut(); say('Signed out. Your progress stays on this device.'); draw(); } }, 'Sign out'),
-            h('button', { class: 'btn small ghost', onclick: async () => {
-              if (!confirm('Delete your account and the progress stored in the cloud? Progress on your devices is kept, but it will no longer sync.')) return;
-              try { await Cloud.deleteAccount(); say('Account and cloud data deleted.'); } catch (e) { say('Could not delete the account: ' + e.message, true); }
-              draw();
-            } }, 'Delete my account')));
+          h('p', {}, 'Create a free account to keep your progress safe and in step on every device. Sign in with Google or your email; no password to remember.'),
+          h('button', { class: 'btn', onclick: () => A.openSignIn && A.openSignIn() }, 'Sign in'));
       }
-      const email = h('input', { type: 'email', class: 'wide', placeholder: 'you@example.com', autocomplete: 'email', 'aria-label': 'Email address', value: pendingEmail });
-      const code = h('input', { type: 'text', inputmode: 'numeric', autocomplete: 'one-time-code', placeholder: '6-digit code', 'aria-label': 'Sign-in code', style: 'max-width:10em' });
+      const label = { ok: 'Synced ' + ago(cloud.at) + ' · automatic', busy: 'Syncing…', error: 'Problem: ' + cloud.error, off: 'Waiting to sync' }[cloud.status];
       return h('div', {},
-        h('p', {}, 'Create a free account to keep your progress safe and in step on every device. No password: we email you a sign-in link.'),
-        email,
-        h('div', { class: 'row', style: 'margin:8px 0' }, h('button', { class: 'btn', onclick: async () => {
-          if (!email.value.includes('@')) return say('Enter your email address.', true);
-          pendingEmail = email.value.trim(); say('Sending…');
-          try { await Cloud.sendLink(pendingEmail); say('Check your inbox (and spam folder) and open the link in that email on this device. If the email also shows a 6-digit code, you can type it below instead.'); draw(); } catch (e) { say('Could not send the email: ' + e.message, true); }
-        } }, 'Send me a sign-in link')),
-        pendingEmail ? h('div', { class: 'row' }, code, h('button', { class: 'btn small ghost', onclick: async () => {
-          try { await Cloud.verifyCode(pendingEmail, code.value); pendingEmail = ''; say('Signed in.'); draw(); } catch (e) { say('Could not sign in: ' + e.message, true); }
-        } }, 'Use code')) : null,
-        h('p', { class: 'muted' }, 'Your email and progress are stored on a Supabase server, only for syncing. You can delete everything at any time with "Delete my account".'));
+        h('p', {}, h('span', { class: 'sdot ' + (cloud.status === 'off' ? 'paused' : cloud.status), 'aria-hidden': 'true' }), h('strong', {}, 'Signed in as ' + (u.email || 'your account')), h('span', { class: 'muted' }, ' · ' + label)),
+        h('div', { class: 'row' }, h('button', { class: 'btn small', onclick: () => runCloud() }, 'Sync now'), h('span', { class: 'muted' }, 'Sign out or delete your account from the account menu at the top.')));
     }
 
     const out = h('textarea', { rows: 3, readonly: true, 'aria-label': 'Your transfer code', placeholder: 'Press "Create code", then send it to your other device.' });
@@ -198,4 +178,7 @@
     return root;
   }
   A.syncCard = syncCard;
+  A.syncState = () => cloud;
+  A.syncNow = runCloud;
+  A.agoText = ago;
 })();
