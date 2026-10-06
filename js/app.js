@@ -593,7 +593,7 @@ window.App = { routes: {}, cleanup: [] };
         tile('#/skills/writing', 'Writing', 'Exam-style tasks with a word count, text analysis and model answers.', `${sk.w[0]}/${sk.w[1]} tasks done`, 'writing')),
       App.limitsNote ? App.limitsNote() : null,
       sectionHead('Reference and tools'),
-      h('div', { class: 'row' }, link('#/mock', 'Full tests', 'btn'), link('#/exams', 'The exams explained', 'btn ghost'), link('#/placement', 'Placement test', 'btn ghost'), link('#/vquiz', 'Vocabulary quiz', 'btn ghost'), link('#/review', 'Flashcards', 'btn ghost')));
+      h('div', { class: 'row' }, link('#/mock', 'Full tests', 'btn'), link('#/tricks', 'Tricks', 'btn ghost'), link('#/generate', 'Generate with AI', 'btn ghost'), link('#/exams', 'The exams explained', 'btn ghost'), link('#/placement', 'Placement test', 'btn ghost'), link('#/vquiz', 'Vocabulary quiz', 'btn ghost'), link('#/review', 'Flashcards', 'btn ghost')));
   }
 
   /* ---------- full tests: hub and guided papers ---------- */
@@ -644,6 +644,7 @@ window.App = { routes: {}, cleanup: [] };
         card('#/mock/reading', 'Reading and Use of English', 'Parts 1 to 5 and 7 on one page, scored by part.', '60 min', 'practice'),
         card('#/mock/listening', 'Listening', 'Four recordings in a row with their questions.', '40 min', 'listening'),
         card('#/mock/writing', 'Writing', 'An essay and a second text type.', '90 min', 'writing'),
+        card('#/certacles', 'CertAcles-style paper', 'The four components in a typical university order, with approximate times.', 'Guide', 'review'),
         card('#/mock/speaking', 'Speaking', 'One full set: interview, long turn, discussion.', '15 min', 'speaking')),
       h('div', { class: 'callout' }, 'These tests train timing and stamina. They give no official mark. For a realistic check, do a full paper from a past-paper book too.'));
   }
@@ -802,7 +803,7 @@ window.App = { routes: {}, cleanup: [] };
     if (unitCtx && !unitById(unitCtx)) unitCtx = null;
     const parts = pathPart.split('/').filter(Boolean).map(decodeURIComponent);
     const [a, b, c] = parts;
-    const inLibrary = ['grammar', 'vocab', 'practice', 'vquiz', 'skills', 'exams', 'toolkit', 'mock'].includes(a);
+    const inLibrary = ['tricks', 'generate', 'certacles', 'grammar', 'vocab', 'practice', 'vquiz', 'skills', 'exams', 'toolkit', 'mock'].includes(a);
     const inReview = ['review', 'mistakes', 'progress', 'placement'].includes(a);
     const navKey = !a ? 'home' : unitCtx && a !== 'course' ? 'course' : inLibrary ? 'toolkit' : inReview ? 'progress' : a;
     document.querySelectorAll('#nav a').forEach((el) => el.classList.toggle('active', el.dataset.r === navKey));

@@ -283,3 +283,11 @@ details textarea { margin-top: 8px; }
 .ico svg { vertical-align: -.17em; }
 h1 .ico, h3 .ico { margin-right: .4em; color: var(--accent, currentColor); }
 .chip .ico { margin-right: .35em; }
+
+/* tricks and generator */
+.trick { border-top: 1px solid var(--line); padding: 10px 0; }
+.trick summary { cursor: pointer; font-weight: 600; }
+.trick p { margin: .5em 0; }
+.trickex { border-left: 3px solid var(--line); padding-left: 12px; }
+.pick { text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.pick.on { border-color: var(--accent, currentColor); box-shadow: inset 0 0 0 1px var(--accent, currentColor); }
