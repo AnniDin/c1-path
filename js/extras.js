@@ -8,14 +8,19 @@
   /* ---------- tricks ---------- */
   A.routes.tricks = () => {
     const sections = C1.tricks;
+    const find = h('input', { type: 'search', class: 'wide', placeholder: 'Search the tricks (e.g. make, since, wish)…', 'aria-label': 'Search the tricks' });
+    find.addEventListener('input', () => {
+      const q = find.value.trim().toLowerCase();
+      document.querySelectorAll('.trick').forEach((d) => { const hit = !q || d.textContent.toLowerCase().includes(q); d.hidden = !hit; if (q && hit) d.open = true; else if (!q) d.open = false; });
+    });
     const nav = h('p', { class: 'row' }, sections.map((s) => h('a', { class: 'btn small ghost', href: '#tricks-' + s.id, onclick: (e) => { e.preventDefault(); document.getElementById('tricks-' + s.id).scrollIntoView({ behavior: 'smooth' }); } }, s.title)));
     view(back('#/toolkit', 'Library'), h('h1', {}, 'Tricks'),
-      h('p', { class: 'lead' }, 'Short strategies for each part of the exam, and the traps Spanish speakers fall into. Each one says why it works, so you can adapt it instead of memorising it.'),
-      nav,
+      h('p', { class: 'lead' }, 'Small tricks that settle the doubts everyone has: which word, which preposition, which form. Open one, read the example and move on.'),
+      find, nav,
       ...sections.map((s) => h('section', { id: 'tricks-' + s.id },
         h('h2', {}, s.title), h('p', { class: 'muted' }, s.blurb),
         s.items.map((x) => h('details', { class: 'trick' }, h('summary', {}, x.t),
-          h('p', { html: x.tip }), h('p', { class: 'muted' }, h('strong', {}, 'Why it works: '), x.why),
+          h('p', { html: x.tip }), x.why ? h('p', { class: 'muted' }, x.why) : null,
           x.ex ? h('p', { class: 'trickex', html: x.ex }) : null)))),
       h('div', { class: 'callout' }, 'No trick replaces knowing the language. Use these to avoid losing marks you already deserve, and keep practising in the ', link('#/practice', 'exam tasks'), '.'));
   };
