@@ -269,3 +269,17 @@ details textarea { margin-top: 8px; }
 #account-menu button, #account-menu a { text-align: left; font: inherit; background: none; border: 0; color: var(--ink); padding: 8px 10px; border-radius: 6px; cursor: pointer; text-decoration: none; }
 #account-menu button:hover, #account-menu a:hover { background: var(--accent-soft); }
 #account-menu .danger { color: var(--bad); }
+
+/* XP and achievements */
+.xp { margin: 16px 0; }
+.xp-top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; }
+.badge { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; opacity: .6; }
+.badge.got { opacity: 1; background: var(--surface); border-color: var(--accent, var(--line)); }
+.badge .ico { font-size: 1.3rem; }
+.badge .muted { font-size: .82rem; }
+
+/* line icons */
+.ico svg { vertical-align: -.17em; }
+h1 .ico, h3 .ico { margin-right: .4em; color: var(--accent, currentColor); }
+.chip .ico { margin-right: .35em; }

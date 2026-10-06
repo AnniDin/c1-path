@@ -1,7 +1,7 @@
 /* Progress storage (localStorage with in-memory fallback), streaks and spaced repetition. */
 (function () {
   const KEY = 'c1path.v1';
-  const fresh = () => ({ stats: {}, days: {}, cards: {}, newToday: {}, lessons: {}, scores: {}, placement: null, theme: null, mistakes: {}, notes: [], drafts: {}, skills: {}, goal: 20, voices: { a: '', b: '' }, welcomed: false, dev: '', own: { stats: {}, days: {}, newToday: {} }, peers: {}, tomb: {} });
+  const fresh = () => ({ stats: {}, days: {}, cards: {}, newToday: {}, lessons: {}, scores: {}, placement: null, theme: null, mistakes: {}, notes: [], drafts: {}, skills: {}, goal: 20, voices: { a: '', b: '' }, welcomed: false, badges: {}, dev: '', own: { stats: {}, days: {}, newToday: {} }, peers: {}, tomb: {} });
   let mem = null;
 
   function load() {
@@ -115,6 +115,7 @@
       (r.notes || []).forEach((n) => { const i = s.notes.findIndex((x) => x.id === n.id); if (i < 0) s.notes.push(n); else if (n.ts > s.notes[i].ts) s.notes[i] = n; });
       s.notes = s.notes.filter((n) => (s.tomb['n:' + n.id] || 0) < n.ts);
       if (r.welcomed) s.welcomed = true;
+      s.badges = s.badges || {}; each(r.badges, (k, v) => { if (!s.badges[k] || v < s.badges[k]) s.badges[k] = v; });
       if (r.placement && (!s.placement || r.placement.date > s.placement.date)) s.placement = r.placement;
       save();
     },
@@ -169,6 +170,7 @@
     markLesson(id) { state.lessons[id] = true; save(); },
     setPlacement(p) { state.placement = p; save(); },
     setTheme(t) { state.theme = t; save(); },
+    earn(id) { state.badges = state.badges || {}; if (state.badges[id]) return false; state.badges[id] = Date.now(); save(); return true; },
     setWelcomed() { if (!state.welcomed) { state.welcomed = true; save(); } },
     reset() { state = fresh(); migrate(); save(); },
     onChange(fn) { listeners.push(fn); },

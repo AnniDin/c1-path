@@ -38,6 +38,20 @@ window.App = { routes: {}, cleanup: [] };
   const allCards = C1.vocab.flatMap((g) => g.cards.map((c, i) => Object.assign({ id: g.id + '-' + i, group: g.id, groupTitle: g.title, section: g.section }, c)));
   const cardById = Object.fromEntries(allCards.map((c) => [c.id, c]));
 
+  /* ---------- icons (line style, take the text colour) ---------- */
+  const ICONS = {
+    listening: '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/>',
+    speaking: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/>',
+    writing: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18M12 8h4M12 12h4"/>',
+    grammar: '<path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M8 7h7"/>',
+    vocab: '<rect x="3" y="8" width="13" height="12" rx="2"/><path d="M8 8V6a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-3"/>',
+    practice: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".8"/>',
+    review: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
+  };
+  const KIND_ICON = { Vocabulary: 'vocab', Grammar: 'grammar', 'Use of English': 'practice', Reading: 'grammar', Listening: 'listening', Speaking: 'speaking', Writing: 'writing', Review: 'review' };
+  const icon = (name) => h('span', { class: 'ico', 'aria-hidden': 'true', html: `<svg viewBox="0 0 24 24" width="1.15em" height="1.15em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[KIND_ICON[name] || name] || ''}</svg>` });
+
   /* ---------- helpers ---------- */
   const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const link = (href, text, cls) => h('a', { href, class: cls || '' }, text);
@@ -188,6 +202,7 @@ window.App = { routes: {}, cleanup: [] };
         fig(`${Store.todayCount()}/${Store.goal()}`, 'answers today'),
         fig(acc, 'accuracy'),
         fig(due, 'cards due')),
+      App.rewards ? App.rewards.strip() : null,
       rest.length ? h('section', {}, h('h2', {}, 'Also on the list'),
         rest.slice(0, 3).map(([t, d, href, cta]) => h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), link(href, cta, 'btn small ghost')))) : null,
       h('section', {}, h('h2', {}, 'Where you are'),
@@ -235,6 +250,7 @@ window.App = { routes: {}, cleanup: [] };
         h('div', { class: 'stat' }, h('b', {}, Object.keys(st.scores).length), h('span', {}, 'practice sets completed'))),
       cardBlock('Daily goal', h('p', { class: 'muted' }, 'How many questions or cards do you want to answer each day? Reaching it fills the bar on the home page.'),
         h('div', { class: 'row' }, [10, 20, 40, 60].map((n) => h('button', { class: 'btn small' + (Store.goal() === n ? '' : ' ghost'), onclick: () => { Store.setGoal(n); progress(); } }, n + ' answers')))),
+      App.rewards ? App.rewards.shelf() : null,
       cardBlock('Last 12 weeks', heat, h('p', { class: 'muted' }, 'Darker = more answers that day. Answer at least one question to keep your streak.')),
       ...tbl, !entries.length ? h('p', { class: 'muted' }, 'Nothing here yet. Do a lesson or a practice set and your results will appear.') : null,
       App.aiCard ? App.aiCard() : null,
@@ -513,7 +529,7 @@ window.App = { routes: {}, cleanup: [] };
       h('ol', { class: 'steps' }, infos.map((x, i) => h('li', { class: 'step' + (x.done ? ' done' : '') },
         h('span', { class: 'dot' }, x.done ? '✓' : String(i + 1)),
         h('a', { href: x.href }, h('strong', {}, x.label), x.sub ? h('div', { class: 'muted' }, x.sub) : null),
-        h('span', { class: 'chip' }, x.kind)))));
+        h('span', { class: 'chip' }, icon(x.kind), x.kind)))));
   }
 
   function unitReview(id) {
@@ -547,7 +563,7 @@ window.App = { routes: {}, cleanup: [] };
     const seen = allCards.filter((c) => Store.card(c.id)).length;
     const pDone = practiceTypes.reduce((a, p) => a + setsDone(p), 0), pTot = practiceTypes.reduce((a, p) => a + p.sets.length, 0);
     const sk = App.skillStats ? App.skillStats() : { l: [0, 0], s: [0, 0], w: [0, 0] };
-    const tile = (href, title, desc, stat) => h('a', { class: 'card', href }, h('h3', { style: 'margin:0 0 .2em' }, title), h('p', { class: 'muted', style: 'margin:0 0 8px' }, desc), h('span', { class: 'tag' }, stat));
+    const tile = (href, title, desc, stat, ic) => h('a', { class: 'card', href }, h('h3', { style: 'margin:0 0 .2em' }, ic ? icon(ic) : null, title), h('p', { class: 'muted', style: 'margin:0 0 8px' }, desc), h('span', { class: 'tag' }, stat));
     const results = h('div');
     const search = h('input', { type: 'search', class: 'wide', placeholder: 'Search lessons, vocabulary and course units…', 'aria-label': 'Search the Library' });
     search.addEventListener('input', () => {
@@ -567,14 +583,14 @@ window.App = { routes: {}, cleanup: [] };
       h('p', { class: 'lead' }, 'Everything on the site, by area, to study in any order. The ', link('#/course', 'Course'), ' uses these same pieces in a fixed sequence; come here when you know what you need.'),
       sectionHead('Language', 'Understand how English works.'),
       h('div', { class: 'grid' },
-        tile('#/grammar', 'Grammar', `${grammar.length} lessons in four themes, each explaining why the structure exists.`, `${gRead}/${grammar.length} read`),
-        tile('#/vocab', 'Vocabulary', 'Phrasal verbs, collocations, idioms and topic language, with flashcards and quizzes.', `${seen}/${allCards.length} started`)),
+        tile('#/grammar', 'Grammar', `${grammar.length} lessons in four themes, each explaining why the structure exists.`, `${gRead}/${grammar.length} read`, 'grammar'),
+        tile('#/vocab', 'Vocabulary', 'Phrasal verbs, collocations, idioms and topic language, with flashcards and quizzes.', `${seen}/${allCards.length} started`, 'vocab')),
       sectionHead('Exam papers', 'Practise each paper of the exam.'),
       h('div', { class: 'grid' },
-        tile('#/practice', 'Use of English and Reading', 'Exam-style tasks with a strategy for each type.', `${pDone}/${pTot} sets done`),
-        tile('#/skills/listening', 'Listening', 'Recordings read aloud by your browser, with exam-style questions, plus dictation.', `${sk.l[0]}/${sk.l[1]} done`),
-        tile('#/skills/speaking', 'Speaking', 'Parts 1 to 4 with prompts, a timer, a recorder and a self-assessment.', `${sk.s[0]}/${sk.s[1]} sets done`),
-        tile('#/skills/writing', 'Writing', 'Exam-style tasks with a word count, text analysis and model answers.', `${sk.w[0]}/${sk.w[1]} tasks done`)),
+        tile('#/practice', 'Use of English and Reading', 'Exam-style tasks with a strategy for each type.', `${pDone}/${pTot} sets done`, 'practice'),
+        tile('#/skills/listening', 'Listening', 'Recordings read aloud by your browser, with exam-style questions, plus dictation.', `${sk.l[0]}/${sk.l[1]} done`, 'listening'),
+        tile('#/skills/speaking', 'Speaking', 'Parts 1 to 4 with prompts, a timer, a recorder and a self-assessment.', `${sk.s[0]}/${sk.s[1]} sets done`, 'speaking'),
+        tile('#/skills/writing', 'Writing', 'Exam-style tasks with a word count, text analysis and model answers.', `${sk.w[0]}/${sk.w[1]} tasks done`, 'writing')),
       App.limitsNote ? App.limitsNote() : null,
       sectionHead('Reference and tools'),
       h('div', { class: 'row' }, link('#/mock', 'Full tests', 'btn'), link('#/exams', 'The exams explained', 'btn ghost'), link('#/placement', 'Placement test', 'btn ghost'), link('#/vquiz', 'Vocabulary quiz', 'btn ghost'), link('#/review', 'Flashcards', 'btn ghost')));
@@ -621,14 +637,14 @@ window.App = { routes: {}, cleanup: [] };
       'Speak aloud, in full sentences, and do not stop to correct yourself. Review the recording afterwards.');
   }
   function mockHub() {
-    const card = (href, title, desc, tag) => h('a', { class: 'card', href }, h('span', { class: 'tag' }, tag), h('h3', { style: 'margin:.4em 0 .2em' }, title), h('p', { class: 'muted', style: 'margin:0' }, desc));
+    const card = (href, title, desc, tag, ic) => h('a', { class: 'card', href }, h('span', { class: 'tag' }, tag), h('h3', { style: 'margin:.4em 0 .2em' }, icon(ic), title), h('p', { class: 'muted', style: 'margin:0' }, desc));
     view(back('#/toolkit', 'Library'), h('h1', {}, 'Full tests'),
       h('p', { class: 'lead' }, 'Practise a whole exam paper under time pressure instead of one task at a time. Each test picks material you have not done yet.'),
       h('div', { class: 'grid' },
-        card('#/mock/reading', 'Reading and Use of English', 'Parts 1 to 5 and 7 on one page, scored by part.', '60 min'),
-        card('#/mock/listening', 'Listening', 'Four recordings in a row with their questions.', '40 min'),
-        card('#/mock/writing', 'Writing', 'An essay and a second text type.', '90 min'),
-        card('#/mock/speaking', 'Speaking', 'One full set: interview, long turn, discussion.', '15 min')),
+        card('#/mock/reading', 'Reading and Use of English', 'Parts 1 to 5 and 7 on one page, scored by part.', '60 min', 'practice'),
+        card('#/mock/listening', 'Listening', 'Four recordings in a row with their questions.', '40 min', 'listening'),
+        card('#/mock/writing', 'Writing', 'An essay and a second text type.', '90 min', 'writing'),
+        card('#/mock/speaking', 'Speaking', 'One full set: interview, long turn, discussion.', '15 min', 'speaking')),
       h('div', { class: 'callout' }, 'These tests train timing and stamina. They give no official mark. For a realistic check, do a full paper from a past-paper book too.'));
   }
   const mockRoute = (b) => (b === 'reading' ? mockTest() : b === 'listening' ? mockListening() : b === 'writing' ? mockWriting() : b === 'speaking' ? mockSpeaking() : mockHub());
@@ -823,7 +839,8 @@ window.App = { routes: {}, cleanup: [] };
   });
 
   window.App = Object.assign(window.App, {
-    view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
+    unitsDone: () => C1.course.filter((u) => unitDone(u) === unitSteps(u).length).length, unitCount: () => C1.course.length,
+    icon, view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
     unitBack, unitFooter, uq, partOf, setKey, scoreChip, start: route, route
   });
   Object.defineProperty(window.App, 'unitCtx', { get: () => unitCtx });
