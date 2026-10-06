@@ -368,7 +368,7 @@
     const pool = (started.length >= 8 ? started : A.allCards).map((c) => c.ex.replace(/\[\[|\]\]/g, '')).filter(okLen);
     const spoken = (C1.listening || []).flatMap((l) => l.script.flatMap((x) => x.text.split(/(?<=[.!?])\s+/))).filter(okLen);
     const items = sample(pool, 3).concat(sample(spoken, 3)).map((text) => ({ type: 'dictation', text }));
-    view(back('#/skills/listening', 'Listening'), h('h1', {}, 'Dictation'),
+    view(back('#/skills/listening', 'Listening'), h('h1', {}, 'Dictation'), A.neuralHint ? A.neuralHint() : null,
       h('p', { class: 'muted' }, 'Three sentences come from your vocabulary and three from the listening recordings. Play each sentence, type what you hear, then check. You can replay as often as you like. 90% of the words counts as correct.'),
       !Speech.supported ? h('div', { class: 'callout bad' }, 'This browser cannot read text aloud, so dictation is unavailable here.') : null,
       quiz(items, { onRetry: dictation, onScore: (c, t) => Store.record('dictation', c, t) }));
@@ -496,7 +496,7 @@
     const S = (C1.speaking || {}).sets || [];
     view(back('#/toolkit', 'Library'), h('h1', {}, A.icon('speaking'), 'Speaking'),
       h('p', { class: 'lead' }, 'Speak aloud, out loud, every time. Each set follows the four parts of the exam with a timer and a recorder so you can listen back to yourself.'),
-      h('div', { class: 'row' }, link('#/skills/speaking/guide', 'Guide: the 4 parts, criteria and useful phrases', 'btn ghost')),
+      h('div', { class: 'row' }, link('#/skills/speaking/guide', 'Guide: the 4 parts, criteria and useful phrases', 'btn ghost'), link('#/skills/pronunciation', 'Pronunciation lab', 'btn ghost')),
       sectionHead('Practice sets'),
       h('div', { class: 'grid' }, S.map((x) => { const d = Store.skill('speaking:' + x.id) || {}; return h('a', { class: 'card', href: '#/skills/speaking/' + x.id },
         h('div', {}, d.done ? h('span', { class: 'tag ok' }, 'Done') : h('span', { class: 'chip' }, 'new')), h('h3', { style: 'margin:.4em 0 .2em' }, x.title), h('p', { class: 'muted', style: 'margin:0' }, x.part1[0])); })));
@@ -718,6 +718,7 @@
   A.routes.mistakes = (b) => (b === 'practice' ? mistakePractice() : mistakes());
   A.routes.notebook = () => { A.openNotes && A.openNotes(); location.replace('#/'); };
   A.routes.skills = (b, c) => {
+    if (b === 'pronunciation') return A.routes.pronunciation(c);
     if (!b) { location.replace('#/toolkit'); return; }
     if (b === 'listening') return c === 'own' ? ownAudio() : c ? listeningSet(c) : listeningList();
     if (b === 'dictation') return dictation();

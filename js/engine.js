@@ -55,10 +55,11 @@
       speechSynthesis.addEventListener('voiceschanged', go, { once: true });
       setTimeout(go, 400);
     }
-    function stop() { token++; if (supported) speechSynthesis.cancel(); }
+    function stop() { token++; if (supported) speechSynthesis.cancel(); if (api.neural) api.neural.stop(); }
     /* segments: [{who, text}]. Distinct speakers get distinct voices, or distinct pitch when only one voice exists. */
     function play(segments, o) {
       o = o || {};
+      if (api.neural && api.neural.active() && !o.browser) { stop(); return api.neural.play(segments, o); }
       if (!supported) { o.onEnd && o.onEnd(false); return; }
       stop();
       const my = token;
@@ -85,7 +86,8 @@
         next();
       });
     }
-    return { supported, play, stop, listVoices, ready, hasGoodVoice, say: (text, rate, onEnd) => play([{ who: '', text }], { rate, onEnd }) };
+    const api = { supported, play, stop, listVoices, ready, hasGoodVoice, neural: null, say: (text, rate, onEnd) => play([{ who: '', text }], { rate, onEnd }) };
+    return api;
   })();
 
   /* Word-level comparison of what was typed against a target text. */

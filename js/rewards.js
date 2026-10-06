@@ -103,11 +103,19 @@
           h('span', { class: 'muted qn' }, `${Math.min(q.now, q.max)}/${q.max}`))),
         h('p', { class: 'muted' }, n === qs.length ? 'All done today: +50 XP. See you tomorrow.' : 'Finish all three for 50 bonus XP.'));
     },
+    /* The latest badges earned (newest first), for Home. */
+    recent() {
+      const have = Store.state.badges || {}, ago = (ts) => { const d = Math.floor((Date.now() - ts) / 864e5); return d <= 0 ? 'today' : d === 1 ? 'yesterday' : d + ' days ago'; };
+      const list = BADGES.filter(([id]) => have[id]).sort((a, b) => have[b[0]] - have[a[0]]).slice(0, 3);
+      if (!list.length) return null;
+      return h('section', { class: 'recent' }, h('h2', {}, 'Latest achievements'),
+        ...list.map(([id, name, desc]) => h('a', { class: 'pathrow', href: '#/progress' }, h('div', {}, h('strong', {}, '🏅 ' + name), h('div', { class: 'muted' }, desc)), h('span', { class: 'muted' }, ago(have[id])))));
+    },
     shelf() {
-      const have = Store.state.badges || {}, n = BADGES.filter(([id]) => have[id]).length;
+      const have = Store.state.badges || {}, n = BADGES.filter(([id]) => have[id]).length, day = (ts) => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
       return A.cardBlock(`Achievements · ${n}/${BADGES.length}`, A.rewards.strip(),
-        h('div', { class: 'badges' }, BADGES.map(([id, name, desc]) => h('div', { class: 'badge' + (have[id] ? ' got' : ''), title: desc },
-          h('span', { class: 'ico', 'aria-hidden': 'true' }, have[id] ? '🏅' : '🔒'), h('strong', {}, name), h('span', { class: 'muted' }, desc)))),
+        h('div', { class: 'badges' }, BADGES.slice().sort((a, b) => (have[b[0]] || 0) - (have[a[0]] || 0)).map(([id, name, desc]) => h('div', { class: 'badge' + (have[id] ? ' got' : '') + (have[id] && Date.now() - have[id] < 3 * 864e5 ? ' fresh' : ''), title: desc },
+          h('span', { class: 'ico', 'aria-hidden': 'true' }, have[id] ? '🏅' : '🔒'), h('strong', {}, name), h('span', { class: 'muted' }, desc), have[id] ? h('span', { class: 'when' }, (Date.now() - have[id] < 3 * 864e5 ? 'New · ' : '') + day(have[id])) : null))),
         h('p', { class: 'muted' }, 'XP: 10 per correct answer, 2 per wrong one (you still learn), plus bonuses for lessons, sets, cards and skills.'));
     }
   };

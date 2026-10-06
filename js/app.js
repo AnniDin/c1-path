@@ -205,6 +205,7 @@ window.App = { routes: {}, cleanup: [] };
         fig(due, 'cards due')),
       App.rewards ? App.rewards.strip() : null,
       App.rewards ? App.rewards.quests() : null,
+      App.rewards && App.rewards.recent ? App.rewards.recent() : null,
       rest.length ? h('section', {}, h('h2', {}, 'Also on the list'),
         rest.slice(0, 3).map(([t, d, href, cta]) => h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), link(href, cta, 'btn small ghost')))) : null,
       h('section', {}, h('h2', {}, 'Where you are'),
@@ -259,6 +260,7 @@ window.App = { routes: {}, cleanup: [] };
       App.aiCard ? App.aiCard() : null,
       App.historyCard ? App.historyCard() : null,
       App.friendsCard ? App.friendsCard() : null,
+      App.neuralCard ? App.neuralCard() : null,
       App.offlineCard ? App.offlineCard() : null,
       App.syncCard ? App.syncCard() : null,
       cardBlock('Your data', h('p', { class: 'muted' }, 'Everything is stored in this browser only. Export a backup before clearing browser data or switching device.'),
@@ -781,7 +783,7 @@ window.App = { routes: {}, cleanup: [] };
       h('h2', {}, 'Optional AI feedback'),
       h('p', {}, 'If you add your own API key (Google Gemini, Groq or Anthropic) and ask for feedback, the text you choose to submit is sent to that provider to produce the feedback. The key stays in your browser. Free plans of some providers may use submitted text to improve their models, so do not include personal details. Without a key, nothing is sent.'),
       h('h2', {}, 'Speech and recording'),
-      h('p', {}, 'Voice recordings in Speaking practice stay in your browser. Automatic transcription uses your browser\'s own speech recognition, which in some browsers sends audio to the browser vendor\'s service; check your browser\'s privacy settings if that matters to you.'),
+      h('p', {}, 'If you turn on neural voices, your browser downloads a code library from jsDelivr and a voice model from Hugging Face (about 90 MB, once); those services see a normal download request. The text you listen to is spoken on your own device and is not sent anywhere. Voice recordings in Speaking practice stay in your browser. Automatic transcription uses your browser\'s own speech recognition, which in some browsers sends audio to the browser vendor\'s service; check your browser\'s privacy settings if that matters to you.'),
       h('h2', {}, 'Questions or requests'),
       h('p', {}, 'Open an issue at ', h('a', { href: 'https://github.com/AnniDin/c1-path/issues', target: '_blank', rel: 'noopener' }, 'github.com/AnniDin/c1-path/issues'), '. C1 Path is an independent project, not affiliated with Cambridge, Linguaskill or ACLES.'));
   }
