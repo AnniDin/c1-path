@@ -1,4 +1,4 @@
-/* C1 Path – sync without accounts: a shared file in a cloud-synced folder (automatic), or a copy-and-paste code. */
+/* C1 Path – sync between devices: a cloud account (Supabase, see js/cloud.js), a shared file in a synced folder, or a copy-and-paste code. */
 (function () {
   const { h } = Engine;
   const A = window.App;
@@ -53,8 +53,38 @@
     const go = () => { armed = false; document.removeEventListener('pointerdown', go, true); document.removeEventListener('keydown', go, true); run(true); };
     document.addEventListener('pointerdown', go, true); document.addEventListener('keydown', go, true);
   }
-  Store.onChange(() => { if (running || sync.status === 'off') return; clearTimeout(timer); timer = setTimeout(() => run(false), 4000); });
+  Store.onChange(() => {
+    if (running || cloudRunning) return;
+    const fileOn = sync.status !== 'off', cloudOn = !!(window.Cloud && Cloud.enabled && Cloud.user());
+    if (!fileOn && !cloudOn) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => { if (fileOn) run(false); if (cloudOn) runCloud(); }, 4000);
+  });
   if (FILE_API) getHandle().then((hd) => { if (hd) { sync.status = 'paused'; sync.name = hd.name; run(false); } });
+
+  /* ---- cloud account sync ---- */
+  const cloud = { status: 'off', at: null, error: '' }; // off | ok | busy | error
+  const stable = (o) => JSON.stringify(o, (k, v) => (v && typeof v === 'object' && !Array.isArray(v) ? Object.keys(v).sort().reduce((r, x) => { r[x] = v[x]; return r; }, {}) : v));
+  let cloudRunning = false;
+  async function runCloud() {
+    if (!window.Cloud || !Cloud.enabled || !Cloud.user() || cloudRunning) return;
+    cloudRunning = true; cloud.status = 'busy'; emit();
+    try {
+      const remote = await Cloud.pull();
+      const before = Store.exportData();
+      if (remote) Store.mergeData(remote);
+      const merged = JSON.parse(Store.exportData());
+      if (!remote || stable(remote) !== stable(merged)) await Cloud.push(merged);
+      cloud.status = 'ok'; cloud.error = ''; cloud.at = Date.now();
+      if (Store.exportData() !== before && ROUTES_SAFE.includes(location.hash) && A.route) A.route();
+    } catch (e) { cloud.status = 'error'; cloud.error = e.message || String(e); }
+    finally { cloudRunning = false; emit(); }
+  }
+  if (window.Cloud && Cloud.enabled) {
+    Cloud.onChange(() => { if (Cloud.user()) runCloud(); else { cloud.status = 'off'; emit(); } });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) runCloud(); });
+    if (Cloud.user()) runCloud();
+  }
 
   /* ---- transfer code: gzip + base64url of the progress data ---- */
   const unb64 = (str) => Uint8Array.from(atob(str.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
@@ -109,6 +139,40 @@
           h('button', { class: 'btn small ghost', onclick: async () => { await dropHandle(); sync.status = 'off'; draw(); } }, 'Disconnect')));
     }
 
+    let pendingEmail = '', othersOpen = false;
+    function accountPart() {
+      const u = Cloud.user();
+      const arrived = Cloud.arrival();
+      if (arrived) setTimeout(() => say(arrived, /did not work/.test(arrived)), 0);
+      if (u) {
+        const label = { ok: 'Synced ' + ago(cloud.at) + ' · automatic', busy: 'Syncing…', error: 'Problem: ' + cloud.error, off: 'Waiting to sync' }[cloud.status];
+        return h('div', {},
+          h('p', {}, h('span', { class: 'sdot ' + (cloud.status === 'off' ? 'paused' : cloud.status), 'aria-hidden': 'true' }), h('strong', {}, 'Signed in as ' + (u.email || 'your account')), h('span', { class: 'muted' }, ' · ' + label)),
+          h('div', { class: 'row' },
+            h('button', { class: 'btn small', onclick: () => runCloud() }, 'Sync now'),
+            h('button', { class: 'btn small ghost', onclick: async () => { await Cloud.signOut(); say('Signed out. Your progress stays on this device.'); draw(); } }, 'Sign out'),
+            h('button', { class: 'btn small ghost', onclick: async () => {
+              if (!confirm('Delete your account and the progress stored in the cloud? Progress on your devices is kept, but it will no longer sync.')) return;
+              try { await Cloud.deleteAccount(); say('Account and cloud data deleted.'); } catch (e) { say('Could not delete the account: ' + e.message, true); }
+              draw();
+            } }, 'Delete my account')));
+      }
+      const email = h('input', { type: 'email', class: 'wide', placeholder: 'you@example.com', autocomplete: 'email', 'aria-label': 'Email address', value: pendingEmail });
+      const code = h('input', { type: 'text', inputmode: 'numeric', autocomplete: 'one-time-code', placeholder: '6-digit code', 'aria-label': 'Sign-in code', style: 'max-width:10em' });
+      return h('div', {},
+        h('p', {}, 'Create a free account to keep your progress safe and in step on every device. No password: we email you a sign-in link.'),
+        email,
+        h('div', { class: 'row', style: 'margin:8px 0' }, h('button', { class: 'btn', onclick: async () => {
+          if (!email.value.includes('@')) return say('Enter your email address.', true);
+          pendingEmail = email.value.trim(); say('Sending…');
+          try { await Cloud.sendLink(pendingEmail); say('Check your inbox (and spam). Open the link on this device, or type the 6-digit code from the email below.'); draw(); } catch (e) { say('Could not send the email: ' + e.message, true); }
+        } }, 'Send me a sign-in link')),
+        pendingEmail ? h('div', { class: 'row' }, code, h('button', { class: 'btn small ghost', onclick: async () => {
+          try { await Cloud.verifyCode(pendingEmail, code.value); pendingEmail = ''; say('Signed in.'); draw(); } catch (e) { say('Could not sign in: ' + e.message, true); }
+        } }, 'Use code')) : null,
+        h('p', { class: 'muted' }, 'Your email and progress are stored on a Supabase server, only for syncing. You can delete everything at any time with "Delete my account".'));
+    }
+
     const out = h('textarea', { rows: 3, readonly: true, 'aria-label': 'Your transfer code', placeholder: 'Press "Create code", then send it to your other device.' });
     const inp = h('textarea', { rows: 3, 'aria-label': 'Paste a transfer code', placeholder: 'Paste a code from your other device here.' });
     const codePart = () => h('details', { open: !FILE_API },
@@ -123,7 +187,9 @@
       } }, 'Merge code')));
 
     function draw() {
-      root.replaceChildren(h('h2', { style: 'margin-top:0' }, 'Sync between devices'), filePart(), codePart(), msg,
+      const others = [filePart(), codePart()];
+      root.replaceChildren(h('h2', { style: 'margin-top:0' }, 'Sync between devices'),
+        ...(window.Cloud && Cloud.enabled ? [accountPart(), h('details', { open: othersOpen, ontoggle: (e) => { othersOpen = e.target.open; } }, h('summary', {}, 'Other ways to sync (shared file or code)'), ...others)] : others), msg,
         h('p', { class: 'muted' }, 'Merging never loses work: answers are counted per device and added up, notes are combined, deletions are remembered, and the more advanced result wins for flashcards and scores. Resetting progress on one device is undone by the next sync, so disconnect first if you really want to start over.'));
     }
     const onSync = () => { if (root.isConnected) draw(); else document.removeEventListener('c1sync', onSync); };
