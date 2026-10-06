@@ -39,6 +39,7 @@ Both use the same content; a unit is just an ordered path through it. `validate(
 - `js/store.js` – progress, streaks, spaced repetition (Leitner boxes)
 - `js/engine.js` – exercise rendering, checking and feedback
 - `js/ai.js` – optional AI feedback client (bring your own key)
+- `audio/`, `tools/make_audio.py`, `tools/dump-listening.js` – recorded listening audio (6.5 MB) generated with Kokoro, an open-source neural text-to-speech model (Apache-2.0, https://github.com/thewh1teagle/kokoro-onnx). To regenerate after changing a script, see the instructions at the top of `tools/make_audio.py`. Without a recording the site falls back to the browser's own voices.
 - `js/sync.js` – sync between devices (cloud account, shared file or transfer code), always merging both sides
 - `js/cloud.js`, `js/config.js`, `supabase/` – optional Supabase accounts: see `supabase/README.md`
 - `js/app.js` – core views and router; `js/skills.js` – mistakes, the notes drawer and the skills views; `js/main.js` – start-up and service worker

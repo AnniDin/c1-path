@@ -34,13 +34,17 @@
     let token = 0;
     /* English voices, best first: neural/natural voices, then British ones. */
     function allVoices() {
-      const score = (v) => (/natural|neural|online|premium|enhanced/i.test(v.name) ? 4 : 0) + (/en[-_]GB/i.test(v.lang) ? 2 : 0) + (/en[-_]US|en[-_]AU|en[-_]IE/i.test(v.lang) ? 1 : 0);
+      const score = (v) => (/natural|neural|online|premium|enhanced/i.test(v.name) ? 5 : /google/i.test(v.name) ? 3 : 0) + (/en[-_]GB/i.test(v.lang) ? 2 : 0) + (/en[-_]US|en[-_]AU|en[-_]IE/i.test(v.lang) ? 1 : 0);
       return speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang)).map((v, i) => [v, i]).sort((a, b) => score(b[0]) - score(a[0]) || a[1] - b[1]).map((x) => x[0]);
     }
+    const GOOD = /natural|neural|online|premium|enhanced|google/i;
     function voicesNow() {
-      const vs = allVoices(), gb = vs.filter((v) => /en[-_]GB/i.test(v.lang));
+      const vs = allVoices(), good = vs.filter((v) => GOOD.test(v.name)), gb = vs.filter((v) => /en[-_]GB/i.test(v.lang));
+      if (good.length >= 2) return good; // natural voices first, whatever the accent
       return gb.length >= 2 ? gb : vs;
     }
+    /* true when the browser has at least one natural-sounding English voice installed */
+    const hasGoodVoice = () => supported && speechSynthesis.getVoices().some((v) => /^en/i.test(v.lang) && GOOD.test(v.name));
     const pref = (slot) => ((window.Store && Store.state.voices) || {})[slot] || '';
     function listVoices(cb) { ready(() => cb(allVoices())); }
     function ready(cb) {
@@ -81,7 +85,7 @@
         next();
       });
     }
-    return { supported, play, stop, listVoices, say: (text, rate, onEnd) => play([{ who: '', text }], { rate, onEnd }) };
+    return { supported, play, stop, listVoices, ready, hasGoodVoice, say: (text, rate, onEnd) => play([{ who: '', text }], { rate, onEnd }) };
   })();
 
   /* Word-level comparison of what was typed against a target text. */
@@ -182,12 +186,27 @@
       const status = h('span', { class: 'muted' }, '');
       const rate = h('select', { 'aria-label': 'Speed' }, [['0.85', 'Slow'], ['1', 'Normal'], ['1.15', 'Fast']].map(([v, t]) => h('option', { value: v, selected: v === '1' }, t)));
       const playBtn = h('button', { class: 'btn small', onclick: play }, '▶ Play');
-      const stopBtn = h('button', { class: 'btn small ghost', onclick: () => { Speech.stop(); setIdle(); } }, '■ Stop');
+      const stopBtn = h('button', { class: 'btn small ghost', onclick: () => { Speech.stop(); if (clip) { clip.pause(); clip.currentTime = 0; } setIdle(); } }, '■ Stop');
       const tr = h('details', { class: 'transcript' }, h('summary', {}, 'Transcript (try without it first)'),
         item.script.map((s) => h('p', {}, s.who ? h('strong', {}, s.who + ': ') : null, s.text)));
       function setIdle() { playBtn.disabled = false; status.textContent = plays ? `Played ${plays} time${plays === 1 ? '' : 's'}${plays >= 2 ? ' (the exam plays it twice)' : ''}` : ''; }
+      /* Recorded audio (made by tools/make_audio.py) when available; otherwise the browser's own voices. */
+      const rec = item.audioId && window.C1 && C1.audio && (C1.audio.listening || {})[item.audioId];
+      let clip = null;
+      if (rec) {
+        clip = new Audio(rec.src); clip.preload = 'none';
+        clip.addEventListener('timeupdate', () => {
+          let i = 0; while (i + 1 < rec.marks.length && clip.currentTime >= rec.marks[i + 1]) i++;
+          status.textContent = `Playing… ${i + 1}/${rec.marks.length}`;
+        });
+        clip.addEventListener('ended', () => setIdle());
+        clip.addEventListener('error', () => { clip = null; status.textContent = 'The recording could not be loaded: using your browser voice instead.'; playBtn.disabled = false; });
+        rate.addEventListener('change', () => { if (clip) clip.playbackRate = +rate.value; });
+        if (window.App && App.cleanup) App.cleanup.push(() => clip && clip.pause());
+      }
       function play() {
         plays++; playBtn.disabled = true;
+        if (clip) { clip.playbackRate = +rate.value; clip.currentTime = 0; clip.play().catch(() => { clip = null; plays--; playBtn.disabled = false; play(); }); return; }
         Speech.play(item.script, {
           rate: +rate.value,
           onSegment: (i) => { status.textContent = `Playing… ${i + 1}/${item.script.length}`; },
@@ -195,7 +214,7 @@
         });
       }
       const voiceBox = h('details', { class: 'voices' }, h('summary', {}, 'Voices'));
-      Speech.listVoices((vs) => {
+      if (!rec) Speech.listVoices((vs) => {
         const names = vs.map((v) => v.name), cur = (window.Store && Store.state.voices) || {};
         const mk = (slot, label) => h('label', { class: 'muted' }, label + ' ', h('select', { onchange: (e) => { Store.setVoice(slot, e.target.value); } },
           h('option', { value: '' }, 'Automatic'), vs.map((v) => h('option', { value: v.name, selected: cur[slot] === v.name }, v.name + ' (' + v.lang + ')'))));
@@ -205,8 +224,8 @@
       const el = h('div', { class: 'card audio' },
         item.title ? h('h3', { style: 'margin-top:0' }, item.title) : null, item.intro ? h('p', { class: 'muted', html: item.intro }) : null,
         h('div', { class: 'row' }, playBtn, stopBtn, h('label', { class: 'muted' }, 'Speed ', rate), status),
-        !Speech.supported ? h('p', { class: 'fb' }, 'This browser cannot read text aloud, so use the transcript instead.') : null, voiceBox, tr);
-      el.addEventListener('quizchecked', () => { tr.open = true; Speech.stop(); });
+        !rec && !Speech.supported ? h('p', { class: 'fb' }, 'This browser cannot read text aloud, so use the transcript instead.') : null, rec ? null : voiceBox, tr);
+      el.addEventListener('quizchecked', () => { tr.open = true; Speech.stop(); if (clip) clip.pause(); });
       return { el, check: () => [] };
     },
     /* Dictation: item = { text } */

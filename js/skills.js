@@ -289,11 +289,20 @@
   /* =====================================================================
      LISTENING
      ===================================================================== */
+  /* Suggest better voices when the browser only has basic ones. Updates itself once the voice list has loaded. */
+  function voiceTip() {
+    const box = h('div');
+    Speech.ready(() => {
+      if (Speech.supported && !Speech.hasGoodVoice()) box.append(h('div', { class: 'callout' }, h('strong', {}, 'Want more natural voices? '), 'Open this site in Microsoft Edge (free natural English voices such as "Sonia" or "Aria") or in Chrome (Google UK English). You can also pick the voices yourself below each recording.'));
+    });
+    return box;
+  }
   function listeningList() {
     const L = C1.listening || [];
     view(back('#/toolkit', 'Library'), h('h1', {}, 'Listening'),
-      h('p', { class: 'lead' }, 'Each recording is read aloud by your browser\'s text-to-speech voices. Listen first without the transcript, answer, then read the transcript to see what you missed.'),
+      h('p', { class: 'lead' }, 'Each recording is a spoken dialogue made with an open-source neural voice. Listen first without the transcript, answer, then read the transcript to see what you missed.'),
       !Speech.supported ? h('div', { class: 'callout bad' }, 'This browser cannot read text aloud. You can still do the tasks from the transcripts, or try Chrome or Edge.') : null,
+      window.C1 && C1.audio && C1.audio.listening ? null : voiceTip(),
       h('div', { class: 'callout' }, h('strong', {}, 'How to practise. '), h('ol', {}, h('li', {}, 'Read the questions first and underline the key words.'), h('li', {}, 'Play the recording. The real exam plays it twice, so allow yourself two plays.'), h('li', {}, 'Answer, check, then open the transcript and find the evidence for every answer, including the ones you got right.'))),
       sectionHead('Recordings'),
       h('div', { class: 'grid' }, L.map((x) => h('a', { class: 'card', href: '#/skills/listening/' + x.id },
@@ -306,7 +315,7 @@
   function listeningSet(id) {
     const l = (C1.listening || []).find((x) => x.id === id);
     if (!l) return notFound();
-    const items = [{ type: 'audio', title: l.title, intro: l.intro, script: l.script }].concat(l.questions);
+    const items = [{ type: 'audio', title: l.title, intro: l.intro, script: l.script, audioId: l.id }].concat(l.questions);
     const uf = A.unitFooter('listening', id);
     view(A.unitBack() || back('#/skills/listening', 'Listening'), A.partOf('listening', id), h('div', {}, h('span', { class: 'tag' }, l.format), h('span', { class: 'tag' }, l.examPart)),
       h('h1', {}, l.title), l.skills ? h('p', { class: 'muted' }, 'Trains: ' + l.skills) : null,
