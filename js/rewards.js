@@ -16,11 +16,12 @@
       lessons: Object.values(S.lessons).filter(Boolean).length, cards: Object.keys(S.cards).length, sets: Object.keys(S.scores).length,
       listen: Object.keys(S.scores).filter((k) => k.startsWith('listen:')).length, speak: done(/^speaking:/), write: done(/^writing:/),
       units: A.unitsDone ? A.unitsDone() : 0, allUnits: A.unitCount ? A.unitCount() : 99, placement: !!S.placement,
-      goals: Object.keys(S.badges || {}).filter((k) => k.startsWith('goal:')).length
+      goals: Object.keys(S.badges || {}).filter((k) => k.startsWith('goal:')).length,
+      quests: Object.keys(S.badges || {}).filter((k) => k.startsWith('quest:')).length
     };
   };
 
-  const xpOf = (s) => s.right * 10 + (s.total - s.right) * 2 + s.lessons * 20 + s.sets * 30 + s.cards * 3 + (s.listen + s.speak + s.write) * 40;
+  const xpOf = (s) => s.right * 10 + (s.total - s.right) * 2 + s.lessons * 20 + s.sets * 30 + s.cards * 3 + (s.listen + s.speak + s.write) * 40 + s.quests * 50;
   const levelOf = (xp) => { const n = Math.floor(Math.sqrt(xp / 100)) + 1; return { n, title: TITLES[Math.min(n - 1, TITLES.length - 1)], from: 100 * (n - 1) * (n - 1), to: 100 * n * n }; };
 
   const BADGES = [
@@ -45,10 +46,29 @@
     ['u1', 'Unit complete', 'Finish a course unit', (s) => s.units >= 1],
     ['u5', 'Halfway there', 'Finish 5 course units', (s) => s.units >= 5],
     ['uall', 'Course complete', 'Finish every course unit', (s) => s.units >= s.allUnits],
+    ['q3', 'Quest runner', 'Complete all daily quests 3 times', (s) => s.quests >= 3],
+    ['q15', 'Quest master', 'Complete all daily quests 15 times', (s) => s.quests >= 15],
     ['acc', 'Sharp', '90% or more correct after 200 answers', (s) => s.total >= 200 && s.right / s.total >= 0.9]
   ];
 
   const toast = (m) => A.toast && A.toast(m);
+
+  /* Daily quests: three small goals that reset every day. Finishing all three is worth 50 bonus XP. */
+  const quests = () => [
+    { label: `Answer ${Store.goal()} questions`, now: Store.todayCount(), max: Store.goal(), href: '#/course/mix' },
+    { label: 'Start 5 new vocabulary cards', now: Store.newTodayCount(), max: 5, href: '#/review' },
+    { label: 'Finish a lesson, a practice set or a skill task', now: Store.didToday() ? 1 : 0, max: 1, href: '#/course' }
+  ].map((q) => Object.assign(q, { done: q.now >= q.max }));
+
+  /* A short burst of confetti (skipped when the user prefers reduced motion). */
+  function confetti() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const cols = ['#a63d15', '#d9962b', '#4d6a22', '#2f6f73', '#c4503a', '#7a4a7e'];
+    const box = h('div', { class: 'confetti', 'aria-hidden': 'true' });
+    for (let i = 0; i < 40; i++) box.append(h('i', { style: `left:${Math.random() * 100}%;background:${cols[i % cols.length]};animation-delay:${Math.random() * .4}s;animation-duration:${1.6 + Math.random() * 1.2}s;transform:rotate(${Math.random() * 360}deg)` }));
+    document.body.append(box); setTimeout(() => box.remove(), 3200);
+  }
+  A.confetti = confetti;
   let busy = false;
   function check() {
     if (busy) return; busy = true;
@@ -59,6 +79,8 @@
       const lv = levelOf(xpOf(s)).n;
       if (lv > 1 && Store.earn('lvl:' + lv)) fresh.push('Level ' + lv + ' · ' + levelOf(xpOf(s)).title);
       if (Store.todayCount() >= Store.goal() && Store.earn('goal:' + Store.today())) fresh.push('Daily goal reached');
+      if (quests().every((q) => q.done) && Store.earn('quest:' + Store.today())) fresh.push('All daily quests done (+50 XP)');
+      if (fresh.length && !first) confetti();
       if (fresh.length && !first) toast('🏅 ' + (fresh.length > 2 ? fresh.length + ' new achievements' : fresh.join(' · ')));
     } finally { busy = false; }
   }
@@ -69,8 +91,17 @@
     level() { const s = stats(), xp = xpOf(s), l = levelOf(xp); return Object.assign({ xp }, l); },
     strip() {
       const l = A.rewards.level();
-      return h('div', { class: 'xp' }, h('div', { class: 'xp-top' }, h('strong', {}, `Level ${l.n} · ${l.title}`), h('span', { class: 'muted' }, `${l.xp} XP · ${l.to - l.xp} to level ${l.n + 1}`)),
-        A.bar((l.xp - l.from) / (l.to - l.from), 'ok'));
+      return h('div', { class: 'xp' }, h('span', { class: 'lvl', 'aria-hidden': 'true' }, l.n),
+        h('div', { class: 'xp-main' }, h('div', { class: 'xp-top' }, h('strong', {}, `Level ${l.n} · ${l.title}`), h('span', { class: 'muted' }, `${l.xp} XP · ${l.to - l.xp} to level ${l.n + 1}`)),
+          A.bar((l.xp - l.from) / (l.to - l.from), 'ok')));
+    },
+    quests() {
+      const qs = quests(), n = qs.filter((q) => q.done).length;
+      return h('section', { class: 'quests' }, h('h2', {}, `Today's quests · ${n}/${qs.length}`),
+        ...qs.map((q) => h('a', { class: 'quest' + (q.done ? ' done' : ''), href: q.href },
+          h('span', { class: 'qdot', 'aria-hidden': 'true' }, q.done ? '✓' : ''), h('span', { class: 'qtext' }, q.label), A.bar(Math.min(1, q.now / q.max), q.done ? 'ok' : ''),
+          h('span', { class: 'muted qn' }, `${Math.min(q.now, q.max)}/${q.max}`))),
+        h('p', { class: 'muted' }, n === qs.length ? 'All done today: +50 XP. See you tomorrow.' : 'Finish all three for 50 bonus XP.'));
     },
     shelf() {
       const have = Store.state.badges || {}, n = BADGES.filter(([id]) => have[id]).length;

@@ -1,7 +1,7 @@
 /* Progress storage (localStorage with in-memory fallback), streaks and spaced repetition. */
 (function () {
   const KEY = 'c1path.v1';
-  const fresh = () => ({ stats: {}, days: {}, cards: {}, newToday: {}, lessons: {}, scores: {}, placement: null, theme: null, mistakes: {}, notes: [], drafts: {}, skills: {}, goal: 20, voices: { a: '', b: '' }, welcomed: false, badges: {}, dev: '', own: { stats: {}, days: {}, newToday: {} }, peers: {}, tomb: {} });
+  const fresh = () => ({ stats: {}, days: {}, cards: {}, newToday: {}, lessons: {}, scores: {}, placement: null, theme: null, mistakes: {}, notes: [], drafts: {}, skills: {}, goal: 20, voices: { a: '', b: '' }, welcomed: false, badges: {}, acts: {}, dev: '', own: { stats: {}, days: {}, newToday: {} }, peers: {}, tomb: {} });
   let mem = null;
 
   function load() {
@@ -32,6 +32,7 @@
     });
     state.stats = stats; state.days = days; state.newToday = nt;
   }
+  const act = (kind) => { const d = dayStr(); state.acts = state.acts || {}; (state.acts[d] = state.acts[d] || {})[kind] = 1; Object.keys(state.acts).sort().slice(0, -14).forEach((k) => delete state.acts[k]); };
   const bury = (kind, id) => { state.tomb[kind + ':' + id] = Date.now(); };
   migrate();
   function save() {
@@ -73,6 +74,7 @@
       return out;
     },
     setScore(key, c, t) {
+      act('set');
       const p = t ? c / t : 0;
       if (!state.scores[key] || p > state.scores[key].p) state.scores[key] = { p, c, t };
       save();
@@ -115,6 +117,7 @@
       (r.notes || []).forEach((n) => { const i = s.notes.findIndex((x) => x.id === n.id); if (i < 0) s.notes.push(n); else if (n.ts > s.notes[i].ts) s.notes[i] = n; });
       s.notes = s.notes.filter((n) => (s.tomb['n:' + n.id] || 0) < n.ts);
       if (r.welcomed) s.welcomed = true;
+      s.acts = s.acts || {}; each(r.acts, (d, v) => { s.acts[d] = Object.assign(s.acts[d] || {}, v); });
       s.badges = s.badges || {}; each(r.badges, (k, v) => { if (!s.badges[k] || v < s.badges[k]) s.badges[k] = v; });
       if (r.placement && (!s.placement || r.placement.date > s.placement.date)) s.placement = r.placement;
       save();
@@ -162,12 +165,12 @@
     draft(id) { return state.drafts[id] || null; },
     saveDraft(id, text) { state.drafts[id] = { text, ts: Date.now(), words: (text.trim().match(/\S+/g) || []).length }; save(); },
     skill(key) { return state.skills[key] || null; },
-    setSkill(key, data) { state.skills[key] = Object.assign({}, state.skills[key], data, { ts: Date.now() }); save(); },
+    setSkill(key, data) { act('skill'); state.skills[key] = Object.assign({}, state.skills[key], data, { ts: Date.now() }); save(); },
     setVoice(slot, name) { state.voices = Object.assign({ a: '', b: '' }, state.voices, { [slot]: name }); save(); },
     goal() { return state.goal || 20; },
     setGoal(n) { state.goal = n; save(); },
     todayCount() { return state.days[dayStr()] || 0; },
-    markLesson(id) { state.lessons[id] = true; save(); },
+    markLesson(id) { act('lesson'); state.lessons[id] = true; save(); },
     setPlacement(p) { state.placement = p; save(); },
     setTheme(t) { state.theme = t; save(); },
     earn(id) { state.badges = state.badges || {}; if (state.badges[id]) return false; state.badges[id] = Date.now(); save(); return true; },
@@ -193,6 +196,7 @@
       save();
       return c;
     },
+    didToday(kind) { const a = (state.acts || {})[dayStr()] || {}; return kind ? !!a[kind] : Object.keys(a).length > 0; },
     newTodayCount() { return state.newToday[dayStr()] || 0; },
     intervalLabel(id, rating) {
       const c = state.cards[id] || { box: 0 };

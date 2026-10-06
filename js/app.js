@@ -47,10 +47,11 @@ window.App = { routes: {}, cleanup: [] };
     vocab: '<rect x="3" y="8" width="13" height="12" rx="2"/><path d="M8 8V6a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-3"/>',
     practice: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".8"/>',
     review: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+    flame: '<path d="M12 3c1 3 5 5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-6 1-9z"/>',
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
   };
   const KIND_ICON = { Vocabulary: 'vocab', Grammar: 'grammar', 'Use of English': 'practice', Reading: 'grammar', Listening: 'listening', Speaking: 'speaking', Writing: 'writing', Review: 'review' };
-  const icon = (name) => h('span', { class: 'ico', 'aria-hidden': 'true', html: `<svg viewBox="0 0 24 24" width="1.15em" height="1.15em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[KIND_ICON[name] || name] || ''}</svg>` });
+  const icon = (name) => h('span', { class: 'ico', 'data-k': KIND_ICON[name] || name, 'aria-hidden': 'true', html: `<svg viewBox="0 0 24 24" width="1.15em" height="1.15em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[KIND_ICON[name] || name] || ''}</svg>` });
 
   /* ---------- helpers ---------- */
   const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -198,11 +199,12 @@ window.App = { routes: {}, cleanup: [] };
 
     view(hero,
       h('div', { class: 'figures' },
-        fig(Store.streak(), 'day streak'),
+        h('div', { class: 'streak' }, h('b', {}, icon('flame'), Store.streak()), h('span', {}, 'day streak')),
         fig(`${Store.todayCount()}/${Store.goal()}`, 'answers today'),
         fig(acc, 'accuracy'),
         fig(due, 'cards due')),
       App.rewards ? App.rewards.strip() : null,
+      App.rewards ? App.rewards.quests() : null,
       rest.length ? h('section', {}, h('h2', {}, 'Also on the list'),
         rest.slice(0, 3).map(([t, d, href, cta]) => h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), link(href, cta, 'btn small ghost')))) : null,
       h('section', {}, h('h2', {}, 'Where you are'),
@@ -588,7 +590,7 @@ window.App = { routes: {}, cleanup: [] };
       sectionHead('Exam papers', 'Practise each paper of the exam.'),
       h('div', { class: 'grid' },
         tile('#/practice', 'Use of English and Reading', 'Exam-style tasks with a strategy for each type.', `${pDone}/${pTot} sets done`, 'practice'),
-        tile('#/skills/listening', 'Listening', 'Recordings read aloud by your browser, with exam-style questions, plus dictation.', `${sk.l[0]}/${sk.l[1]} done`, 'listening'),
+        tile('#/skills/listening', 'Listening', 'Recorded dialogues with exam-style questions, plus dictation.', `${sk.l[0]}/${sk.l[1]} done`, 'listening'),
         tile('#/skills/speaking', 'Speaking', 'Parts 1 to 4 with prompts, a timer, a recorder and a self-assessment.', `${sk.s[0]}/${sk.s[1]} sets done`, 'speaking'),
         tile('#/skills/writing', 'Writing', 'Exam-style tasks with a word count, text analysis and model answers.', `${sk.w[0]}/${sk.w[1]} tasks done`, 'writing')),
       App.limitsNote ? App.limitsNote() : null,
