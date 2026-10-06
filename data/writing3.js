@@ -33,7 +33,7 @@ C1.writing.tasks.push(
       '<strong>Proposed measures</strong>',
       'First, a modest visitor levy of two pounds per night should be introduced for hotel and campsite guests, with the revenue ring-fenced for path repair and public toilets. Second, the council could encourage off-season visits by working with local businesses to offer discounted guided walks and food festivals in spring and autumn. Finally, a park-and-ride service from the edge of town would ease congestion while cutting emissions.',
       '<strong>Benefits and costs</strong>',
-      'Together, these measures would ease pressure in the peak weeks and spread demand more evenly through the year, thereby protecting both the coastline and residents’ quality of life. The levy might deter a few budget travellers, but the experience of comparable resorts suggests that any loss would be small. The main expense would be the initial outlay for the shuttle buses, which the levy would gradually offset.',
+      'Together, these measures would ease summer pressure and spread demand more evenly through the year, thereby protecting both the coastline and residents’ quality of life. The levy might deter a few budget travellers, but the experience of comparable resorts suggests that any loss would be small. The main expense would be the outlay for the shuttle buses, which the levy would offset.',
       '<strong>Recommendation</strong>',
       'I recommend that the council approve a one-year pilot of the levy and the shuttle service, and review the results before deciding whether to make them permanent.'
     ],
@@ -44,7 +44,7 @@ C1.writing.tasks.push(
       { para: 5, text: 'Three measures are signalled with <em>First, … Second, … Finally, …</em>, and each uses a different structure: passive <em>should be introduced</em>, <em>the council could encourage</em>, and <em>would ease</em>. Each answers a problem from paragraph 3: the levy pays for paths and toilets, off-season events reduce the summer peak, and park-and-ride relieves the overflowing car park.' },
       { para: 5, text: '<em>ring-fenced for</em> is precise financial vocabulary: it tells the council the money will not disappear into the general budget. <em>while cutting emissions</em> adds a second benefit with a participle clause.' },
       { para: 7, text: '<em>thereby protecting</em> is a result participle that links the measures to the aim. <em>might deter a few budget travellers</em> is an honest drawback, and <em>suggests that any loss would be small</em> answers it with evidence rather than reassurance.' },
-      { para: 7, text: 'The costs are stated as well as the benefits, as the task required: <em>The main expense would be … which the levy would gradually offset</em>. The relative clause shows the cost is manageable.' },
+      { para: 7, text: 'The costs are stated as well as the benefits, as the task required: <em>The main expense would be … which the levy would offset</em>. The relative clause shows the cost is manageable.' },
       { para: 9, text: '<em>I recommend that the council approve</em> uses the subjunctive after <em>recommend</em>. A one-year pilot with a review is a modest, realistic next step, which makes the proposal easier to accept.' }
     ],
     language: [
