@@ -198,7 +198,7 @@ window.App = { routes: {}, cleanup: [] };
       weak.length ? h('section', {}, h('h2', {}, 'Needs work'),
         weak.map(([k, a]) => h('div', { class: 'trow' }, link(topicHref(k), topicLabels[k] || k), bar(a, 'bad'), h('span', {}, pct(a) + '%'))),
         h('p', { class: 'muted' }, 'Topics below 75% after at least 5 answers.')) : null,
-      h('p', { class: 'muted' }, link('#/progress', 'Review and progress →')));
+      h('p', { class: 'muted' }, link('#/progress', 'Review and progress →'), ' · ', link('#/welcome', 'How C1 Path works')));
   }
 
   /* ---------- progress ---------- */
@@ -675,6 +675,90 @@ window.App = { routes: {}, cleanup: [] };
       ...sections, summary);
   }
 
+  /* ---------- welcome: short introduction, shown on the first visit ---------- */
+  function welcome(step) {
+    const steps = [
+      {
+        title: 'Welcome to C1 Path',
+        body: () => [
+          h('p', { class: 'lead' }, 'A free place to prepare for the C1 level of English, for Cambridge C1 Advanced, Linguaskill and CertAcles.'),
+          h('p', {}, 'It is made for learners who already speak English at around B1 or B2 and want to reach C1. You do not need an account, and you can study in short sessions: 15 to 20 minutes a day is enough to make steady progress.'),
+          h('div', { class: 'callout' }, h('strong', {}, 'What C1 means. '), 'At C1 you can follow long and demanding texts, express yourself fluently without searching for words, and write clear, well-organised texts on complex subjects.')
+        ]
+      },
+      {
+        title: 'How you learn here',
+        body: () => [
+          h('p', { class: 'lead' }, 'The idea is simple: understand first, then practise, then review.'),
+          h('div', { class: 'grid' },
+            h('div', { class: 'card' }, h('span', { class: 'tag' }, '1 · Understand'), h('p', {}, 'Every topic starts with the reason behind the language, so a rule stops being something to memorise. Every exercise comes with an explanation of why the answer is right.')),
+            h('div', { class: 'card' }, h('span', { class: 'tag' }, '2 · Practise'), h('p', {}, 'Vocabulary, grammar, exam tasks, Listening, Speaking and Writing, always in the format of the real exam.')),
+            h('div', { class: 'card' }, h('span', { class: 'tag' }, '3 · Review'), h('p', {}, 'Flashcards come back just before you would forget them, and every mistake is saved with its explanation until you get it right twice.'))),
+          h('p', { class: 'muted' }, 'No website can give an official mark. Here you get practice, explanations and honest self-assessment tools.')
+        ]
+      },
+      {
+        title: 'Finding your way around',
+        body: () => [
+          h('div', { class: 'steps' },
+            [['Home', 'Your next best step and a quick look at your progress.', '#/'],
+              ['Course', 'Ten themed units in a fixed order. The easiest way to follow a plan.', '#/course'],
+              ['Library', 'All the material by area, to study anything in any order. Includes full practice tests.', '#/toolkit'],
+              ['Review', 'Flashcards due, your saved mistakes, progress and sync between devices.', '#/progress'],
+              ['Notes', 'A notebook that opens from any page (button at the top, or Alt+N).', null]].map(([t, d, href], i) =>
+              h('div', { class: 'step' }, h('span', { class: 'dot' }, i + 1), h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), href ? link(href, 'Look', 'btn small ghost') : h('span')))),
+          h('p', { class: 'muted' }, 'Your progress is saved in this browser. Sign in at the top if you want it safe and synced across devices.')
+        ]
+      },
+      {
+        title: 'Choose where to start',
+        body: () => [
+          h('p', { class: 'lead' }, 'Not sure? Take the placement test: it shows where to start. You can always change your mind later.'),
+          h('div', { class: 'grid' },
+            h('a', { class: 'card', href: '#/placement', onclick: () => Store.setWelcomed() }, h('span', { class: 'tag' }, 'Recommended'), h('h3', { style: 'margin:.4em 0 .2em' }, 'Take the placement test'), h('p', { class: 'muted', style: 'margin:0' }, '24 questions from B1 to C1, about 15 to 20 minutes, with an explanation for every answer.')),
+            h('a', { class: 'card', href: '#/course/' + C1.course[0].id, onclick: () => Store.setWelcomed() }, h('span', { class: 'tag' }, 'Guided'), h('h3', { style: 'margin:.4em 0 .2em' }, 'Start the Course'), h('p', { class: 'muted', style: 'margin:0' }, 'Begin with the first unit and follow the steps in order.')),
+            h('a', { class: 'card', href: '#/toolkit', onclick: () => Store.setWelcomed() }, h('span', { class: 'tag' }, 'Free choice'), h('h3', { style: 'margin:.4em 0 .2em' }, 'Explore the Library'), h('p', { class: 'muted', style: 'margin:0' }, 'Look around and pick what you need.'))),
+          h('h2', {}, 'A routine that works'),
+          h('p', {}, 'Ten minutes of flashcards, one grammar lesson or practice set, and one skill (a listening, a speaking set or a writing task) a few times a week. Consistency matters more than long sessions.')
+        ]
+      }
+    ];
+    const i = Math.max(0, Math.min(steps.length - 1, +step || 0));
+    const s = steps[i];
+    const last = i === steps.length - 1;
+    view(h('p', { class: 'eyebrow' }, `Introduction · ${i + 1} of ${steps.length}`),
+      h('h1', {}, s.title),
+      ...s.body(),
+      h('div', { class: 'pager' },
+        i > 0 ? link('#/welcome/' + (i - 1), '← Back', 'btn ghost small') : link('#/', 'Skip the introduction', 'btn ghost small'),
+        last ? link('#/', 'Go to Home', 'btn ghost small') : link('#/welcome/' + (i + 1), 'Next →', 'btn')));
+    if (last || i === 0) Store.setWelcomed();
+  }
+
+  /* ---------- privacy ---------- */
+  function privacy() {
+    const cloud = window.Cloud && Cloud.enabled;
+    view(h('h1', {}, 'Privacy'),
+      h('p', { class: 'lead' }, 'C1 Path is a free study tool. It has no advertising, no analytics and no tracking cookies. This page says what is stored, where, and how to delete it.'),
+      h('h2', {}, 'Without an account'),
+      h('p', {}, 'Your progress, notes, drafts and settings are stored only in your browser (localStorage) on this device. Nobody else receives them. Clearing your browser data erases them, so use the backup button in ', link('#/progress', 'Review'), ' if you want a copy.'),
+      cloud ? h('div', {}, h('h2', {}, 'With an account'),
+        h('p', {}, 'If you sign in (with Google or an email link), the site stores your email address and a copy of your progress and notes on a Supabase database, only so that your progress can sync between your devices. Signing in with Google gives the site your email address; it does not receive your Google password, contacts or other Google data.'),
+        h('ul', {},
+          h('li', {}, 'Each account can read and change only its own data (row-level security).'),
+          h('li', {}, 'Your data is kept until you delete your account.'),
+          h('li', {}, 'To delete your account and all cloud data at any time: open the account menu at the top right and choose "Delete my account". Copies on your own devices stay.'),
+          h('li', {}, 'To get a copy of your data: use "Export backup" in Review.'),
+          h('li', {}, 'The sign-in session token is kept in your browser\'s localStorage.')),
+        h('p', {}, 'Supabase and, if you choose Google sign-in, Google act as service providers under their own privacy policies.')) : null,
+      h('h2', {}, 'Optional AI feedback'),
+      h('p', {}, 'If you add your own API key (Google Gemini, Groq or Anthropic) and ask for feedback, the text you choose to submit is sent to that provider to produce the feedback. The key stays in your browser. Free plans of some providers may use submitted text to improve their models, so do not include personal details. Without a key, nothing is sent.'),
+      h('h2', {}, 'Speech and recording'),
+      h('p', {}, 'Voice recordings in Speaking practice stay in your browser. Automatic transcription uses your browser\'s own speech recognition, which in some browsers sends audio to the browser vendor\'s service; check your browser\'s privacy settings if that matters to you.'),
+      h('h2', {}, 'Questions or requests'),
+      h('p', {}, 'Open an issue at ', h('a', { href: 'https://github.com/AnniDin/c1-path/issues', target: '_blank', rel: 'noopener' }, 'github.com/AnniDin/c1-path/issues'), '. C1 Path is an independent project, not affiliated with Cambridge, Linguaskill or ACLES.'));
+  }
+
   /* ---------- exams ---------- */
   function exams() {
     const E = C1.exams;
@@ -706,6 +790,8 @@ window.App = { routes: {}, cleanup: [] };
     const inReview = ['review', 'mistakes', 'progress', 'placement'].includes(a);
     const navKey = !a ? 'home' : unitCtx && a !== 'course' ? 'course' : inLibrary ? 'toolkit' : inReview ? 'progress' : a;
     document.querySelectorAll('#nav a').forEach((el) => el.classList.toggle('active', el.dataset.r === navKey));
+    if (!a && !Store.state.welcomed && !Store.totalAnswered()) { location.replace('#/welcome'); return; }
+    if (a === 'welcome') return welcome(b);
     if (!a) return home();
     if (a === 'course') return b === 'mix' ? dailyMix() : c === 'review' ? unitReview(b) : b ? unitPage(b) : courseList();
     if (a === 'toolkit') return toolkit();
@@ -719,6 +805,7 @@ window.App = { routes: {}, cleanup: [] };
     if (a === 'practice') return b ? practiceType(b, c == null ? null : +c) : practiceList();
     if (a === 'exams') return exams();
     if (a === 'mock') return mockRoute(b);
+    if (a === 'privacy') return privacy();
     notFound();
   }
   window.addEventListener('hashchange', route);
