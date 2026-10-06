@@ -99,6 +99,7 @@
         // the model was retired: switch to the best model the key can use and try once more
         const list = await listModels(), best = list.find(([id]) => id !== modelName());
         if (best) { put(p.modelStore, best[0]); return call(system, user, maxTokens, 'model'); }
+        if (!list.length) throw new Error(`The model "${modelName()}" is not available and the list of models could not be read with this key. Create a new key at ${p.keyUrl.replace('https://', '')} and make sure it can use the Gemini API. ${detail}`);
       }
       throw new Error(errorText(res.status, String(detail), p));
     }
