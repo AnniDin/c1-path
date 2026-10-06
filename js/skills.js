@@ -32,6 +32,14 @@
       const known = p.models.some(([v]) => v === AI.model());
       const model = h('select', { 'aria-label': 'Model', onchange: (e) => { AI.setModel(e.target.value); other.value = ''; } }, p.models.map(([v, t]) => h('option', { value: v, selected: v === AI.model() }, t)));
       const other = h('input', { type: 'text', placeholder: 'Other model name (optional)', 'aria-label': 'Other model name', value: known ? '' : AI.model(), onchange: (e) => { if (e.target.value.trim()) AI.setModel(e.target.value); else AI.setModel(model.value); } });
+      const refresh = async () => {
+        const list = await AI.listModels();
+        if (!list.length) return;
+        const cur = AI.model();
+        const all = list.some(([v]) => v === cur) ? list : [[cur, cur]].concat(list);
+        model.replaceChildren(...all.map(([v, t]) => h('option', { value: v, selected: v === cur }, t)));
+      };
+      if (AI.configured()) refresh();
       const status = h('p', { class: 'muted' }, AI.configured() ? `A key ending ${AI.keyHint()} is saved in this browser.` : 'No key saved. The site works fully without one.');
       const show = (t, bad) => { status.textContent = t; status.className = bad ? 'a-warn' : 'muted'; };
       box.replaceChildren(
@@ -43,7 +51,8 @@
         key, h('div', { class: 'row', style: 'margin:8px 0' }, model, other),
         h('div', { class: 'row' },
           h('button', { class: 'btn small', onclick: () => { if (!key.value.trim()) return show('Paste a key first.', true); AI.setKey(key.value); key.value = ''; show(`Saved (ending ${AI.keyHint()}). Press Test to check it.`); } }, 'Save key'),
-          h('button', { class: 'btn small ghost', onclick: async () => { show('Testing…'); try { await AI.test(); show('The key works.'); } catch (e) { show(e.message, true); } } }, 'Test'),
+          h('button', { class: 'btn small ghost', onclick: async () => { show('Testing…'); try { await AI.test(); show('The key works (model: ' + AI.model() + ').'); refresh(); } catch (e) { show(e.message, true); } } }, 'Test'),
+          h('button', { class: 'btn small ghost', onclick: async () => { await refresh(); show('Model list updated.'); } }, 'Refresh models'),
           h('button', { class: 'btn small ghost', onclick: () => { AI.setKey(''); draw(); } }, 'Remove key')),
         status);
     }

@@ -7,7 +7,7 @@
     gemini: {
       name: 'Google Gemini (free)', host: 'generativelanguage.googleapis.com', keyHint: 'AIza…', free: true,
       keyUrl: 'https://aistudio.google.com/apikey', keyStore: 'c1path.apikey.gemini', modelStore: 'c1path.aimodel.gemini',
-      models: [['gemini-2.5-flash', 'Gemini 2.5 Flash (recommended)'], ['gemini-2.5-flash-lite', 'Gemini 2.5 Flash-Lite (faster, lighter)']]
+      models: [['gemini-3.8-flash', 'Gemini 3.8 Flash (recommended)']]
     },
     groq: {
       name: 'Groq (free)', host: 'api.groq.com', keyHint: 'gsk_…', free: true,
@@ -35,7 +35,7 @@
     : status === 429 ? (p.free ? 'The free-tier limit was reached. Wait a minute and try again (free plans also have a daily limit).' : 'Rate limit or no credit left (429). ' + detail)
       : `API error ${status}. ${detail}`;
 
-  async function request(p, key, model, system, user, maxTokens) {
+  async function request(p, key, model, system, user, maxTokens, noThinking) {
     if (p === PROVIDERS.anthropic) {
       return fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -45,7 +45,7 @@
     }
     if (p === PROVIDERS.gemini) {
       const cfg = { maxOutputTokens: maxTokens * 3 };
-      if (/flash/.test(model)) cfg.thinkingConfig = { thinkingBudget: 0 };
+      if (/flash/.test(model) && !noThinking) cfg.thinkingConfig = { thinkingBudget: 0 };
       return fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
@@ -64,15 +64,42 @@
     return (((data.choices || [])[0] || {}).message || {}).content || '';
   }
 
-  async function call(system, user, maxTokens) {
+  /* Ask the provider which models this key can use, so the list never goes stale. Returns [[id, label]] or []. */
+  async function listModels() {
+    const p = prov(), key = get(p.keyStore);
+    if (!key || p === PROVIDERS.anthropic) return [];
+    try {
+      if (p === PROVIDERS.gemini) {
+        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': key } });
+        if (!res.ok) return [];
+        const list = ((await res.json()).models || [])
+          .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent') && /^models\/gemini/.test(m.name) && !/(embed|image|tts|live|audio|vision|robotics|computer|preview-\d|exp|thinking|learnlm|gemma)/i.test(m.name))
+          .map((m) => [m.name.replace('models/', ''), m.displayName || m.name.replace('models/', '')]);
+        const rank = (id) => (/flash-lite/.test(id) ? 2 : /flash/.test(id) ? 1 : 3);
+        const ver = (id) => parseFloat((id.match(/gemini-(\d+(\.\d+)?)/) || [0, 0])[1]);
+        return list.sort((a, b) => rank(a[0]) - rank(b[0]) || ver(b[0]) - ver(a[0]) || a[0].localeCompare(b[0]));
+      }
+      const res = await fetch('https://api.groq.com/openai/v1/models', { headers: { authorization: 'Bearer ' + key } });
+      if (!res.ok) return [];
+      return ((await res.json()).data || []).map((m) => m.id).filter((id) => !/(whisper|guard|tts|orpheus|playai|embed)/i.test(id)).sort().map((id) => [id, id]);
+    } catch (e) { return []; }
+  }
+
+  async function call(system, user, maxTokens, retried) {
     const p = prov(), key = get(p.keyStore);
     if (!key) throw new Error('No API key set. Add one in Review, under AI feedback.');
     let res;
-    try { res = await request(p, key, modelName(), system, user, maxTokens || 1600); }
+    try { res = await request(p, key, modelName(), system, user, maxTokens || 1600, retried === 'nothink'); }
     catch (e) { throw new Error('Could not reach the API. Check your connection.'); }
     if (!res.ok) {
       let detail = '';
       try { const j = await res.json(); detail = (j.error && (j.error.message || j.error)) || ''; } catch (e) { /* no body */ }
+      if (p === PROVIDERS.gemini && res.status === 400 && /thinking/i.test(String(detail)) && retried !== 'nothink') return call(system, user, maxTokens, 'nothink');
+      if (res.status === 404 && p !== PROVIDERS.anthropic && !retried) {
+        // the model was retired: switch to the best model the key can use and try once more
+        const list = await listModels(), best = list.find(([id]) => id !== modelName());
+        if (best) { put(p.modelStore, best[0]); return call(system, user, maxTokens, 'model'); }
+      }
       throw new Error(errorText(res.status, String(detail), p));
     }
     const out = textOf(p, await res.json());
@@ -96,6 +123,7 @@
     setProvider: (id) => put(PROVIDER, id),
     configured: () => !!get(prov().keyStore),
     keyHint: () => { const k = get(prov().keyStore); return k ? '…' + k.slice(-4) : ''; },
+    listModels,
     model: modelName,
     setKey: (k) => put(prov().keyStore, k.trim()),
     setModel: (m) => put(prov().modelStore, m.trim()),
