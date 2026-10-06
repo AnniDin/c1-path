@@ -8,6 +8,6 @@ window.C1 = window.C1 || {};
     u.steps.forEach((s, i) => { if (s.t === 'practice') at = i; });
     u.steps.splice(at + 1, 0, { t: 'practice', id, set });
   };
-  [[2, 0], [4, 1], [6, 2], [8, 3], [10, 4]].forEach(([u, i]) => place(u, 'cross', i));
-  [[3, 0], [5, 1], [7, 2], [9, 3], [11, 4]].forEach(([u, i]) => place(u, 'matching', i));
+  [[2, 0], [4, 1], [6, 2], [8, 3], [10, 4], [1, 5], [5, 6], [9, 7]].forEach(([u, i]) => place(u, 'cross', i));
+  [[3, 0], [5, 1], [7, 2], [9, 3], [11, 4], [0, 5], [4, 6], [12, 7]].forEach(([u, i]) => place(u, 'matching', i));
 })();

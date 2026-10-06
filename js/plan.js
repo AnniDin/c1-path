@@ -12,13 +12,14 @@
   const weakTopics = () => Object.entries(Store.state.stats).filter(([, s]) => s.t >= 5).map(([k, s]) => [k, s.c / s.t]).filter(([, a]) => a < 0.75).sort((a, b) => a[1] - b[1]).slice(0, 3);
 
   /* ---------- exam countdown (Home) and plan page ---------- */
+  const examDays = () => { const ex = Store.state.exam; return ex && ex.date ? daysTo(ex.date) : null; };
+  /* Home: the countdown only when a date is set; otherwise a quiet prompt inside "More". */
   A.planBanner = () => {
-    const ex = Store.state.exam, n = ex && ex.date ? daysTo(ex.date) : null;
-    return h('section', {}, h('h2', {}, 'Exam countdown'),
-      n != null && n >= 0
-        ? h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, n === 0 ? 'Your exam is today' : `${n} day${n === 1 ? '' : 's'} to your exam`), h('div', { class: 'muted' }, fmt(ex.date))), link('#/plan', 'See my plan', 'btn small ghost'))
-        : h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, 'Have an exam date?'), h('div', { class: 'muted' }, 'Set it and get a weekly study plan.')), link('#/plan', 'Set the date', 'btn small ghost')));
+    const n = examDays();
+    if (n == null || n < 0) return null;
+    return h('section', {}, h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, n === 0 ? 'Your exam is today' : `${n} day${n === 1 ? '' : 's'} to your exam`), h('div', { class: 'muted' }, fmt(Store.state.exam.date))), link('#/plan', 'See my plan', 'btn small ghost')));
   };
+  A.planPrompt = () => { const n = examDays(); return n != null && n >= 0 ? null : h('section', {}, h('h2', {}, 'Exam plan'), h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, 'Have an exam date?'), h('div', { class: 'muted' }, 'Set it and get a weekly study plan.')), link('#/plan', 'Set the date', 'btn small ghost'))); };
 
   A.routes.plan = () => {
     const ex = Store.state.exam, date = ex && ex.date, n = date ? daysTo(date) : null;
@@ -95,10 +96,10 @@
       } catch (e) { status.textContent = 'The download stopped. Check your connection and try again.'; btn.disabled = false; }
     } }, `Download the ${files.length} recordings`);
     if (canCache) caches.open('c1path-audio').then((c) => Promise.all(files.map((u) => c.match(u)))).then((r) => { if (r.every(Boolean)) { status.textContent = 'All recordings are saved on this device.'; btn.textContent = 'Saved'; btn.disabled = true; } });
-    const install = installEvent ? h('button', { class: 'btn small ghost', onclick: () => { installEvent.prompt(); installEvent = null; } }, 'Install the app') : null;
-    return cardBlock('Use it offline', h('p', { class: 'muted' }, 'Lessons and exercises work offline after your first visit. The recorded listenings are large (about 6.5 MB), so they are saved only if you ask.'),
+    const install = installEvent ? h('button', { class: 'btn small ghost', onclick: () => { installEvent.prompt(); installEvent = null; } }, 'Add to home screen') : null;
+    return cardBlock('Use it offline', h('p', { class: 'muted' }, 'This page keeps its lessons and exercises in your browser, so they work offline after your first visit. The recorded listenings are large (about 6.5 MB), so they are saved only if you ask.'),
       h('div', { class: 'row' }, canCache ? btn : null, install), status,
-      install ? null : h('p', { class: 'muted' }, 'To install it like an app, use "Install app" or "Add to Home Screen" in your browser menu.'));
+      install ? null : h('p', { class: 'muted' }, 'To keep a shortcut on your phone or desktop, use "Add to Home Screen" or "Install" in your browser menu. It is still this website: nothing extra is installed.'));
   };
 
   /* ---------- Home stays up to date while it is open ---------- */

@@ -20,7 +20,10 @@ C1.tricks = [
       { t: 'Economic or economical? Historic or historical?', tip: 'The longer form is the narrower meaning. <b>Economical</b> = saves money; <b>economic</b> = about the economy. <b>Historic</b> = important in history; <b>historical</b> = about the past.', ex: 'an economical car / an economic crisis / a historic victory / historical research' },
       { t: 'Hard, hardly; late, lately; near, nearly', tip: 'Adding <em>-ly</em> can change the meaning completely. <b>Hardly</b> = almost not. <b>Lately</b> = recently. <b>Nearly</b> = almost.', ex: 'He works hard. / He hardly works. // I arrived late. / I have been tired lately.' },
       { t: 'Used to, be used to, get used to', tip: '<b>Used to + verb</b> = a past habit (it stopped). <b>Be/get used to + -ing</b> = being accustomed. Test: if you can put a noun after <em>to</em>, it is the second kind.', ex: 'I used to smoke. / I am used to getting up early (or: used to the cold).' },
-      { t: 'Lose or loose?', tip: '<b>Lose</b> = /luːz/, one <em>o</em>, the verb. <b>Loose</b> = not tight, two <em>o</em>s. The extra <em>o</em> is loose.', ex: 'Don\'t lose your keys. / These trousers are loose.' }
+      { t: 'Lose or loose?', tip: '<b>Lose</b> = /luːz/, one <em>o</em>, the verb. <b>Loose</b> = not tight, two <em>o</em>s. The extra <em>o</em> is loose.', ex: 'Don\'t lose your keys. / These trousers are loose.' },
+      { t: 'Later or afterwards?', tip: '<b>Later</b> needs a reference point (<em>see you later</em>, <em>two hours later</em>). <b>Afterwards</b> points back to something you have just mentioned and can stand alone at the end of a clause.', ex: 'We had lunch and went for a walk afterwards. / I will call you later.' },
+      { t: 'Lie or lay?', tip: '<b>Lie</b> = be in a flat position, no object (lie, <em>lay</em>, <em>lain</em>). <b>Lay</b> = put something down, always with an object (lay, <em>laid</em>, <em>laid</em>). The trap: <em>lay</em> is also the past of <em>lie</em>. Telling untruths is another verb: lie, lied, lied.', ex: 'She lay on the sofa. / She laid the book on the table.' },
+      { t: 'Greet or say hello?', tip: '<b>Greet</b> takes the person directly, with no preposition. With <b>say hello</b> you need <em>to</em> before the person.', ex: 'He greeted me warmly. / Say hello to your sister.' }
     ]
   },
   {
@@ -42,7 +45,11 @@ C1.tricks = [
       { t: 'Have something done', tip: 'When someone else does a service for you: <b>have + object + past participle</b>. Not <em>I cut my hair</em> (unless you did it yourself).', ex: 'I had my car repaired.' },
       { t: 'It is said that → He is said to', tip: 'Two ways to report a general opinion: <b>It is said that he is rich</b> = <b>He is said to be rich</b>. Same with believed, thought, reported, known, expected.', ex: 'He is believed to have left the country.' },
       { t: 'Neither, either, both: agreement', tip: '<b>Both</b> takes a plural verb. <b>Either / neither</b> (alone) take a singular verb. <em>Neither of</em> + plural noun usually still takes singular in careful writing.', ex: 'Both are late. / Neither of them has called.' },
-      { t: 'Articles: when there is NO "the"', tip: 'No <em>the</em> for things in general (plural or uncountable): life, music, prices, people. Use <em>the</em> only when both of you know which one.', ex: 'I love music. / I loved the music at the wedding.' }
+      { t: 'Articles: when there is NO "the"', tip: 'No <em>the</em> for things in general (plural or uncountable): life, music, prices, people. Use <em>the</em> only when both of you know which one.', ex: 'I love music. / I loved the music at the wedding.' },
+      { t: 'Some or any?', tip: '<b>Some</b> in positive sentences, <b>any</b> in negatives and questions. Two twists: offers and requests keep <em>some</em> (you expect a yes), and <em>any</em> in a positive sentence means <em>it does not matter which</em>.', ex: 'I have some time. / I don\'t have any time. / Would you like some tea? / Any day is fine.' },
+      { t: 'Who or whom?', tip: 'Answer the question with <em>he</em> or <em>him</em>. If <em>him</em> fits, use <b>whom</b>; if <em>he</em> fits, use <b>who</b>. After a preposition in formal English it must be <em>whom</em>. In speech, <em>who</em> is fine nearly everywhere.', ex: 'Whom did you see? (I saw him.) / Who called? (He called.) / to whom it may concern' },
+      { t: 'So do I, neither do I', tip: 'Agreeing with a statement: <b>so</b> + auxiliary + subject for positives, <b>neither / nor</b> + auxiliary + subject for negatives. Repeat the auxiliary of the first sentence; if there was none, use <em>do / does / did</em>.', ex: 'I like tea. So do I. / She can\'t swim. Neither can I. / He has left. So have we.' },
+      { t: 'Reported speech: one step back', tip: 'When the reporting verb is past, the tenses step back: present → past, past → past perfect, <em>will</em> → <em>would</em>, <em>can</em> → <em>could</em>. Time words move too: <em>now → then</em>, <em>today → that day</em>, <em>here → there</em>. No need to shift if what was said is still true.', ex: '"I am tired," she said. → She said she was tired.' }
     ]
   },
   {
@@ -55,7 +62,9 @@ C1.tricks = [
       { t: 'Good at, interested in, famous for', tip: 'Learn the preposition with the adjective, never translate it. A small set repeats in every exam: <b>good at, interested in, famous for, responsible for, keen on, similar to, different from, aware of, capable of</b>.', ex: 'Spain is famous for its food.' },
       { t: 'Dependent preposition by pairs', tip: 'Learn them in small groups: <b>depend / rely / insist / focus / comment ON</b>; <b>apply / contribute / lead / object / respond TO</b>; <b>suffer / benefit / recover FROM</b>; <b>result / succeed / believe IN</b>.', ex: 'It depends on you. / It led to a problem.' },
       { t: 'On time or in time?', tip: '<b>On time</b> = at the planned moment, not late. <b>In time</b> = early enough to do something.', ex: 'The train left on time. / We arrived in time to catch it.' },
-      { t: 'In the end or at the end?', tip: '<b>In the end</b> = finally (after a process). <b>At the end (of)</b> = the last point of something.', ex: 'In the end we agreed. / At the end of the film, he cried.' }
+      { t: 'In the end or at the end?', tip: '<b>In the end</b> = finally (after a process). <b>At the end (of)</b> = the last point of something.', ex: 'In the end we agreed. / At the end of the film, he cried.' },
+      { t: 'Since, for or ago?', tip: '<b>Since</b> + a point in time (since 2019, since Monday). <b>For</b> + a length of time (for five years). <b>Ago</b> counts back from now and goes with the past simple, never the present perfect.', ex: 'I have lived here since 2019 / for five years. / I moved here five years ago.' },
+      { t: 'After a superlative: in or of?', tip: 'Use <b>in</b> + a place or group seen as one whole (in the world, in the class, in Europe). Use <b>of</b> + a plural or a number (of all, of the three, of my friends).', ex: 'the tallest building in the city / the cheapest of all the hotels' }
     ]
   },
   {
@@ -68,7 +77,10 @@ C1.tricks = [
       { t: '-er/-or does, -ee receives', tip: 'The suffix <b>-er / -or</b> is the person who does it; <b>-ee</b> is the person who receives it. Employer pays, employee is paid.', ex: 'trainer, trainee; interviewer, interviewee' },
       { t: 'Bored or boring?', tip: '<b>-ed</b> = how a person feels. <b>-ing</b> = what causes the feeling. Spanish speakers often swap them.', ex: 'I am bored. / The film is boring.' },
       { t: 'Is a negative hiding in the sentence?', tip: 'If the gap sits in a sentence with a negative or surprising meaning, the answer may need a negative prefix or <em>-less</em>. Read the whole sentence meaning, not just the gap.', ex: 'The results were unexpected and surprised everyone.' },
-      { t: 'Noun, adjective or adverb? Read the neighbours', tip: 'After <em>a, the, my, some, several</em> = noun (plural after several). After <em>be, seem, become</em> or before a noun = adjective. Next to a verb or an adjective = adverb.', ex: 'There were several (DIFFER) between the plans → differences' }
+      { t: 'Noun, adjective or adverb? Read the neighbours', tip: 'After <em>a, the, my, some, several</em> = noun (plural after several). After <em>be, seem, become</em> or before a noun = adjective. Next to a verb or an adjective = adverb.', ex: 'There were several (DIFFER) between the plans → differences' },
+      { t: '-able or -ible?', tip: 'Mostly, <b>-able</b> goes on a complete word (read → readable, comfort → comfortable) and <b>-ible</b> on a root that is not a word by itself (vis-ible, poss-ible, incred-ible). Always check a final <em>e</em>: desire → desirable.', ex: 'reliable, acceptable / visible, flexible, responsible' },
+      { t: 'Double the last letter?', tip: 'Short word with one vowel + one consonant: double it before a vowel suffix (stop → stopping, big → bigger). In longer words double only if the <b>last syllable is stressed</b> (beGIN → beginning, but VISit → visiting). British English also doubles a final <em>l</em>: travelling, cancelled.', ex: 'prefer → preferred / develop → developing' },
+      { t: 'Over- is too much, under- is too little', tip: 'The prefixes carry the meaning: <b>over-</b> = more than is good, <b>under-</b> = less than is needed. Handy for gap-fills about work, prices and estimates.', ex: 'overworked, overpriced, overestimate / underpaid, underfunded, underestimate' }
     ]
   },
   {
@@ -81,6 +93,9 @@ C1.tricks = [
       { t: 'A lot of: a great deal / a large number', tip: '<b>A great deal of / a good deal of</b> + uncountable. <b>A large number of / plenty of</b> + countable. Use <em>a lot of</em> in speaking, the others in writing.', ex: 'a great deal of time / a large number of students' },
       { t: 'Hedge opinions', tip: 'Avoid sounding too sure: <b>tend to, seem to, appear to, may, to some extent, it could be argued that</b>. It sounds more academic and is safer.', ex: 'This seems to be the main cause.' },
       { t: 'Think → a better verb', tip: 'In Speaking, vary: <b>I reckon, I would say, it strikes me that, as far as I am concerned, from my point of view</b>. In Writing: <b>it can be argued that, there is a case for</b>.', ex: 'It strikes me that prices are the issue.' },
+      { t: 'Phrasal verbs: where does "it" go?', tip: 'With most separable phrasal verbs a <b>pronoun goes in the middle</b>; a noun can go in the middle or at the end. Inseparable ones (look after, get over, run into) never split.', ex: 'Turn the light off / turn it off (not <em>turn off it</em>). / Look after them.' },
+      { t: 'Drop the relative pronoun', tip: 'When the pronoun is the <b>object</b> of the clause, you can drop it. Test: if a subject (I, you, she, a noun) comes right after it, drop it. When it is the <b>subject</b> (who lives, which fell) it must stay.', ex: 'The film (that) I saw was long. / The man who lives next door is a pilot.' },
+      { t: 'Make, let, allow', tip: '<b>Make</b> and <b>let</b> + person + <b>bare</b> infinitive. <b>Allow</b> + person + <b>to</b> + infinitive. The passive of <em>make</em> brings the <em>to</em> back.', ex: 'She made me wait. / She let me go. / She allowed me to leave. / I was made to wait.' },
       { t: 'Stress the right syllable', tip: 'Nouns and verbs that share a spelling change stress: the noun is stressed on the <b>first</b> syllable, the verb on the <b>second</b>. A re<b>CORD</b> (verb) / a <b>REC</b>ord (noun).', ex: 'present, increase, import, record, permit' }
     ]
   },
@@ -91,6 +106,7 @@ C1.tricks = [
       { t: 'Can or can\'t?', tip: 'In British English <b>can</b> is weak and short (/kən/), and almost disappears. <b>Can\'t</b> is long and clear (/kɑːnt/). Listen for length and the <em>t</em>.', ex: 'I can swim (short) / I can\'t swim (long)' },
       { t: 'Weak words vanish', tip: 'Small words are said fast and quiet: <em>to</em> → /tə/, <em>of</em> → /əv/, <em>and</em> → /ən/, <em>for</em> → /fə/. Listen for the stressed words and fill in the rest.', ex: 'a cup of tea → "a cuppa tea"' },
       { t: 'Spoken contractions', tip: 'Learn to recognise <b>gonna</b> (going to), <b>wanna</b> (want to), <b>gotta</b> (got to), <b>kinda</b> (kind of), <b>lemme</b> (let me), <b>dunno</b> (don\'t know). You will not write them, but you will hear them.', ex: 'I\'m gonna call him.' },
+      { t: 'Compound nouns: stress the first word', tip: 'A single compound noun is stressed on the <b>first</b> part. If both words are stressed, it is an adjective + noun. The stress tells you the meaning.', ex: 'a GREENhouse (for plants) / a green HOUSE (painted green); a HOTdog / a hot DOG' },
       { t: 'The answer comes after the "but"', tip: 'When a speaker says <em>at first</em>, <em>we thought</em>, <em>I used to</em>, <em>actually</em> or <em>but</em>, the answer is usually what comes next, not what came before.', ex: '"We booked Friday, but in the end we went on Saturday." → Saturday' }
     ]
   },
@@ -105,6 +121,9 @@ C1.tricks = [
       { t: 'Married with? Depend of?', tip: 'Do not translate prepositions: <b>married to</b>, <b>depend on</b>, <b>think about</b>, <b>consist of</b>, <b>arrive at/in</b>, <b>listen to</b>, <b>look at</b>.', ex: 'He is married to a doctor.' },
       { t: 'Make or take a decision, take a photo', tip: '<b>Make</b> a decision, a mistake, an appointment, progress. <b>Take</b> a photo, a break, a risk, a chance, a course, a seat. Spanish <em>tomar</em> is not always <em>take</em>.', ex: 'make a mistake / take a break' },
       { t: 'Do not use "the" for general things', tip: 'Spanish says <em>la vida es difícil</em>; English says <em>Life is hard</em>. No <em>the</em> before general plurals or uncountables: <em>I like music, prices are high</em>.', ex: 'Education is important. (not <em>The education</em>)' },
+      { t: 'Mucho: much, many or a lot of?', tip: 'Spanish has one word, English splits it: <b>much</b> + uncountable, <b>many</b> + countable. In questions and negatives use much / many; in positive sentences prefer <b>a lot of</b> (<em>much</em> sounds stiff).', ex: 'How much money? / How many friends? / I don\'t have much time. / I have a lot of work.' },
+      { t: 'Fumar es malo: use -ing as subject', tip: 'Spanish uses the infinitive as a subject; English normally uses the <b>-ing</b> form. <em>To + verb</em> as a subject sounds formal or literary.', ex: 'Smoking is bad for you. / Learning languages takes time.' },
+      { t: 'Silent letters: do not pronounce them', tip: 'Spanish speakers tend to say every letter. These are silent in English: <b>k</b> in knife, knee; <b>w</b> in write, answer; <b>p</b> in psychology; <b>b</b> in debt, climb; <b>t</b> in listen; <b>d</b> in Wednesday; <b>s</b> in island; <b>h</b> in honest.', ex: 'knee /niː/, debt /det/, listen /ˈlɪsən/' },
       { t: 'Spellings to check', tip: 'Common spellings to check: <b>necessary</b> (one c, two s), <b>definitely</b>, <b>separate</b>, <b>environment</b>, <b>government</b>, <b>accommodation</b> (two c, two m), <b>receive</b> (i before e except after c).', ex: '' }
     ]
   },
@@ -115,6 +134,7 @@ C1.tricks = [
       { t: 'Key word transformation: spot the structure', tip: 'Ask which grammar the key word forces: passive, reported speech, conditional, comparison, a fixed phrase. Then build the sentence around it. Contractions count as two words.', ex: 'Key word REGRET: <em>I regret not telling</em> / <em>I regret having told</em>.' },
       { t: 'Gapped text: find the pronoun with no owner', tip: 'In the paragraphs, look for <em>this, that, such, he, they, there, however</em> that point to something not yet named. That is what the missing paragraph must supply.', ex: '' },
       { t: 'Speaking Part 2: compare, do not describe', tip: 'Start with <em>Both pictures show…, but…</em> and use <em>whereas, while, in contrast, unlike</em>. Thirty seconds of description wastes your minute.', ex: 'Both pictures show people working, but in the first one they look far more stressed.' },
+      { t: 'Writing: no comma splices', tip: 'Two full sentences cannot be joined by a comma alone. Fix with a full stop, a semicolon, or a conjunction. Note that <em>however</em> and <em>therefore</em> are not conjunctions: they need a full stop or semicolon before them.', ex: 'It was late, so we went home. / I tried hard; however, I failed. (not <em>It was late, we went home</em>)' },
       { t: 'Writing: reuse the task words', tip: 'Echo the key words of the question in your first sentence and in each topic sentence, using synonyms. It keeps you on topic, which is what examiners check first.', ex: '' }
     ]
   }

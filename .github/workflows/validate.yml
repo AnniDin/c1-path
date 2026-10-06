@@ -11,5 +11,7 @@ jobs:
         with:
           node-version: 22
       - run: node tools/validate-node.js
+      - name: Behaviour tests
+        run: node tools/test.js
       - name: Syntax check scripts
         run: for f in js/*.js data/*.js sw.js; do node --check "$f"; done

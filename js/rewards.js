@@ -114,7 +114,7 @@
     shelf() {
       const have = Store.state.badges || {}, n = BADGES.filter(([id]) => have[id]).length, day = (ts) => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
       return A.cardBlock(`Achievements · ${n}/${BADGES.length}`, A.rewards.strip(),
-        h('div', { class: 'badges' }, BADGES.slice().sort((a, b) => (have[b[0]] || 0) - (have[a[0]] || 0)).map(([id, name, desc]) => h('div', { class: 'badge' + (have[id] ? ' got' : '') + (have[id] && Date.now() - have[id] < 3 * 864e5 ? ' fresh' : ''), title: desc },
+        h('div', { class: 'badges' }, BADGES.slice().sort((a, b) => (have[b[0]] || 0) - (have[a[0]] || 0)).map(([id, name, desc]) => h('div', { class: 'ach' + (have[id] ? ' got' : '') + (have[id] && Date.now() - have[id] < 3 * 864e5 ? ' fresh' : ''), title: desc },
           h('span', { class: 'ico', 'aria-hidden': 'true' }, have[id] ? '🏅' : '🔒'), h('strong', {}, name), h('span', { class: 'muted' }, desc), have[id] ? h('span', { class: 'when' }, (Date.now() - have[id] < 3 * 864e5 ? 'New · ' : '') + day(have[id])) : null))),
         h('p', { class: 'muted' }, 'XP: 10 per correct answer, 2 per wrong one (you still learn), plus bonuses for lessons, sets, cards and skills.'));
     }

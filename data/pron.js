@@ -28,5 +28,25 @@ C1.pron = [
   {
     id: 'linking', title: 'Linking words together', tip: 'Native speakers join words: the end of one flows into the start of the next. <em>Turn it off</em> sounds like "turnitoff". Do not pause between every word, and do not stress the small words.',
     items: ['Turn it off and pick it up.', 'What are you going to do about it?', 'I had a cup of tea and an apple.', 'Put it on and take it off again.', 'Could you give me a hand with this?']
+  },
+  {
+    id: 'schwa', title: 'Weak vowel /ə/', tip: 'The most common sound in English is a short, lazy vowel, /ə/ (the schwa), in unstressed syllables, whatever the spelling: <em>a</em>bout, <em>comp</em>a<em>ny</em>, teach<em>er</em>, les<em>son</em>. Spanish keeps every vowel clear (a-ssis-tant); in English only the stressed syllable is clear and the rest shrinks.',
+    items: ['The assistant announced a different approach to the problem.', 'The politician gave a lengthy explanation of the original argument.', 'A professional adviser recommended a generous donation to the charity.', 'Our neighbour\'s grandfather remembered a terrible accident on the avenue.', 'The company\'s director apologised for the delay in the delivery.']
+  },
+  {
+    id: 'sentence-stress', title: 'Sentence stress', tip: 'Stress the content words (nouns, main verbs, adjectives, adverbs, negatives) and weaken the function words (articles, prepositions, auxiliaries, pronouns). Tap the beat on the stressed words only: <em>We COULD have arRANGED the MEETing for a BETter TIME</em>, with the small words squeezed in between.',
+    items: ['We could have arranged the meeting for a better time.', 'She has been working on the project since September.', 'Nobody told me that the office would be closed today.', 'I would have called you if I had known about it.', 'The government has promised to improve the standard of living.']
+  },
+  {
+    id: 'h-and-r', title: 'H and R', tip: 'English <em>h</em> is only a soft breath, never the Spanish jota: <em>house</em>, not "jouse". It is silent in <em>hour, honest, honour, heir</em>. In British English <em>r</em> is not rolled: curl the tongue back without touching anything, and say it only before a vowel (<em>red, borrow</em>); in <em>car</em> or <em>market</em> it is silent.',
+    items: ['The honest receptionist handed her the heavy red envelope.', 'Harry heard the whole hotel had been booked for an hour.', 'Rarely do rural areas receive a really reliable broadband service.', 'The remarkable author wrote a rather brilliant report on rising prices.', 'The heir to the throne hired a historian to research the history of his house.']
+  },
+  {
+    id: 'ending-sounds', title: 'Endings: -s, -es', tip: 'The plural -s and the third-person -s have three sounds. After voiceless sounds say /s/: <em>stops, works</em>. After voiced sounds and vowels say /z/: <em>begins, plays</em>. After s, z, sh, ch, j sounds add a syllable /ɪz/: <em>buses, watches, judges</em>. Also finish every final consonant; do not add an "e" after it.',
+    items: ['The teacher watches the students and changes the exercises.', 'She discusses problems with her colleagues and manages the budgets.', 'He drives past the offices and stops at the bridges.', 'Laws and regulations change, and this affects thousands of families.', 'My boss organises meetings, reads reports and approves expenses.']
+  },
+  {
+    id: 'b-v-w', title: 'B, V and W', tip: 'Spanish uses one sound for b and v; English has three. <b>B</b>: both lips close, then pop. <b>V</b>: top teeth touch the lower lip and you hum. <b>W</b>: round the lips like the start of <em>huevo</em>, with no contact. Try <em>best / vest / west</em> and <em>berry / very</em>.',
+    items: ['Victor believes we have a valid reason to move forward.', 'We walked to the village on Wednesday and bought five bottles of wine.', 'Barbara never visited the vast vineyard because the weather was awful.', 'Would you rather have a bigger room with a better view?', 'The brave workers waved a banner while the vehicle moved away.']
   }
 ];
