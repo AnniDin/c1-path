@@ -165,7 +165,7 @@
         h('div', { class: 'row', style: 'margin:8px 0' }, h('button', { class: 'btn', onclick: async () => {
           if (!email.value.includes('@')) return say('Enter your email address.', true);
           pendingEmail = email.value.trim(); say('Sending…');
-          try { await Cloud.sendLink(pendingEmail); say('Check your inbox (and spam). Open the link on this device, or type the 6-digit code from the email below.'); draw(); } catch (e) { say('Could not send the email: ' + e.message, true); }
+          try { await Cloud.sendLink(pendingEmail); say('Check your inbox (and spam folder) and open the link in that email on this device. If the email also shows a 6-digit code, you can type it below instead.'); draw(); } catch (e) { say('Could not send the email: ' + e.message, true); }
         } }, 'Send me a sign-in link')),
         pendingEmail ? h('div', { class: 'row' }, code, h('button', { class: 'btn small ghost', onclick: async () => {
           try { await Cloud.verifyCode(pendingEmail, code.value); pendingEmail = ''; say('Signed in.'); draw(); } catch (e) { say('Could not sign in: ' + e.message, true); }

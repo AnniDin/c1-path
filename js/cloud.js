@@ -11,7 +11,8 @@
   let session = enabled ? read() : null;
   const emit = () => listeners.forEach((f) => { try { f(); } catch (e) { /* ignore */ } });
 
-  const headers = (token) => ({ 'content-type': 'application/json', apikey: cfg.anonKey, authorization: 'Bearer ' + (token || cfg.anonKey) });
+  /* Publishable keys are not JWTs, so they go only in the apikey header; the Authorization header carries the user's token once signed in. */
+  const headers = (token) => Object.assign({ 'content-type': 'application/json', apikey: cfg.anonKey }, token ? { authorization: 'Bearer ' + token } : {});
   async function errorOf(res) {
     let msg = '';
     try { const j = await res.json(); msg = j.msg || j.message || j.error_description || j.error || ''; } catch (e) { /* no body */ }

@@ -8,7 +8,7 @@ The site works without any of this. Follow these steps only if you want sign-in 
    - Site URL: `https://<your-user>.github.io/c1-path/`
    - Redirect URLs: add the same URL (and `http://localhost:8765/` if you test locally).
 4. **Email sign-in.** Authentication → Providers → Email must be enabled. "Confirm email" can stay on.
-5. **Optional: 6-digit code in the email.** Authentication → Email Templates → Magic Link: add a line such as `Or enter this code: {{ .Token }}`. The link works without it; the code is handy when you open the email on another device.
+5. **Optional: 6-digit code in the email (needs custom SMTP, see 6).** Authentication → Email Templates → Magic Link: add a line such as `Or enter this code: {{ .Token }}`. The link works without it; the code is handy when you open the email on another device.
 6. **Real email delivery.** Supabase's built-in email sender allows only a few emails per hour, which is fine for testing but not for real users. For real use, set up your own SMTP (Authentication → Emails → SMTP Settings) with a provider that has a free plan, for example Resend or Brevo.
 7. **Connect the site.** Project settings → API: copy the **Project URL** and the **anon public** key into `js/config.js`. Never use the `service_role` key. Commit and push.
 
