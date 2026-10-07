@@ -105,6 +105,25 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
   check('unknown quiz sources still get advice', A.recommendFor({ topic: 'mix', href: '#/course/mix' }, 50, [{ ok: false }]).length >= 1);
   check('at most three recommendations are shown', A.recommend(src, 50, [{ ok: false }]).children.slice(1).length <= 3);
   void hrefOf;
+  /* adaptive: the harder set follows the learner's level, and a score counts against the set's difficulty */
+  {
+    const one = (t, l) => A.setOrder(t).find((i) => lvl(t, i) === l), lowSet = one('cloze', 1), hiSet = one('cloze', 5), midSet = one('cloze', 3);
+    const recsAt = (set, pct) => A.recommendFor({ topic: 'u-cloze', href: '#/practice/cloze/' + set }, pct, [{ ok: false }]);
+    check('90% on a difficulty-1 set is not "strong" enough to jump up', !recsAt(lowSet, 90).some((r) => /harder set/.test(r.title)), recsAt(lowSet, 90).map((r) => r.title).join('|'));
+    check('75% on a difficulty-5 set counts as strong', recsAt(hiSet, 75).some((r) => /Practise|harder|Continue|every set/.test(r.title)) && !recsAt(hiSet, 75).some((r) => /Step down/.test(r.title)));
+    sb.Store.setScore('cloze/' + midSet, 9, 10);
+    check('after passing a difficulty-3 set the next one is difficulty 3 or above', A.competence('cloze') >= 3 && recsAt(midSet, 95).filter((r) => /practice\/cloze\/\d+/.test(r.href)).every((r) => lvl('cloze', +r.href.split('/').pop()) >= 3));
+    delete sb.Store.state.scores['cloze/' + midSet];
+  }
+  /* home: placement first, then the weakest exam part */
+  {
+    const st = sb.Store.state, keep = [st.placement, st.stats['u-wf']];
+    st.placement = null; check('a new learner is sent to the placement test first', A.homeSteps()[0][2] === '#/placement');
+    st.placement = { date: '2026-01-01', summary: 'x' }; st.stats['u-wf'] = { c: 2, t: 10 };
+    check('the weakest exam part is recommended at home', A.homeSteps().some((s) => /#\/practice\/wf\/\d+/.test(s[2])));
+    check('home always ends with a mixed review and has no duplicate links', A.homeSteps().slice(-1)[0][2] === '#/course/mix' && new Set(A.homeSteps().map((s) => s[2])).size === A.homeSteps().length);
+    st.placement = keep[0]; if (keep[1]) st.stats['u-wf'] = keep[1]; else delete st.stats['u-wf'];
+  }
 }
 
 /* ---- every route renders ---- */
@@ -159,6 +178,23 @@ for (const r of routes) {
   const d = (n) => new Date(Date.now() - n * 864e5).toLocaleDateString('sv');
   sb.Store.state.days[d(0)] = 12; sb.Store.state.days[d(9)] = 4; sb.Store.addMock({ ts: 1, kind: 'Reading', c: 30, t: 60 }); sb.Store.setExam(d(-30));
   for (const r of ['progress', '', 'plan']) { sb.location.hash = '#/' + r; app.children = []; try { sb.App.route(); check('route #/' + r + ' renders with data', /last 7 days|Exam plan|days? to your exam|Level/.test(app.textContent)); } catch (e) { check('route #/' + r + ' renders with data', false, e.message); } }
+}
+/* ---- a learner who has done everything: every page must still render with no NaN, undefined or null in the text ---- */
+{
+  const S = sb.Store.state, d = (n) => new Date(Date.now() - n * 864e5).toLocaleDateString('sv');
+  C1.practice.forEach((p) => { p.sets.forEach((_, i) => { S.scores[p.id + '/' + i] = { p: 0.9, c: 9, t: 10 }; }); S.stats['u-' + p.id] = { c: 90, t: 100 }; });
+  C1.grammar.forEach((g) => { S.lessons[g.id] = true; S.stats['g-' + g.id] = { c: 8, t: 10 }; });
+  C1.listening.forEach((l) => { S.scores['listen:' + l.id] = { p: 1, c: 4, t: 4 }; });
+  ((C1.writing || {}).tasks || []).forEach((t) => { S.skills['writing:' + t.id] = { done: true, ts: 1, ai: [{ ts: 1, scores: { content: 3, language: 3 }, level: 'B2+' }, { ts: 2, scores: { content: 4, language: 4 }, level: 'C1' }] }; });
+  for (let i = 0; i < 30; i++) S.days[d(i)] = 20 + i;
+  sb.Store.state.stats['weak-x'] = { c: 1, t: 9 };
+  const bad = [];
+  for (const r of routes.filter((x) => !/^(welcome)$/.test(x))) {
+    try { sb.location.hash = '#/' + r; app.children = []; sb.App.route(); if (/NaN|undefined|\[object|null/.test(app.textContent)) bad.push(r + ': ' + (app.textContent.match(/.{25}(NaN|undefined|\[object|null).{15}/) || [''])[0]); } catch (e) { bad.push(r + ' threw ' + e.message); }
+  }
+  check('with everything done, no page prints NaN/undefined/null or throws', !bad.length, bad.slice(0, 5).join(' || '));
+  const home = (sb.location.hash = '#/', app.children = [], sb.App.route(), app.textContent);
+  check('with everything done, home still says what to do next', /Next up/.test(home) && home.length > 200);
 }
 sb.location.hash = '#/nope'; sb.App.route();
 check('unknown route shows Not found', /Not found/.test(app.textContent));

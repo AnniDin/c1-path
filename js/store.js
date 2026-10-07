@@ -113,7 +113,16 @@
       each(r.mistakes, (k, v) => { if (!s.mistakes[k] || v.ts > s.mistakes[k].ts) s.mistakes[k] = v; });
       each(s.mistakes, (k, v) => { if ((s.tomb['m:' + k] || 0) >= v.ts) delete s.mistakes[k]; });
       each(r.drafts, (k, v) => { if (!s.drafts[k] || v.ts > s.drafts[k].ts) s.drafts[k] = v; });
-      each(r.skills, (k, v) => { if (!s.skills[k] || (v.ts || 0) > (s.skills[k].ts || 0)) s.skills[k] = v; });
+      /* a skill record holds several fields (done, self-ratings, AI checks): merge field by field so one device never erases what the other did */
+      const mergeSkill = (a, b) => {
+        if (!a) return b;
+        const m = (b.ts || 0) > (a.ts || 0) ? Object.assign({}, a, b) : Object.assign({}, b, a);
+        if (a.done || b.done) m.done = true;
+        if (a.ai || b.ai) { const seen = new Set(); m.ai = (a.ai || []).concat(b.ai || []).filter((x) => !seen.has(x.ts) && seen.add(x.ts)).sort((x, y) => x.ts - y.ts).slice(-6); }
+        m.ts = Math.max(a.ts || 0, b.ts || 0);
+        return m;
+      };
+      each(r.skills, (k, v) => { s.skills[k] = mergeSkill(s.skills[k], v); });
       (r.notes || []).forEach((n) => { const i = s.notes.findIndex((x) => x.id === n.id); if (i < 0) s.notes.push(n); else if (n.ts > s.notes[i].ts) s.notes[i] = n; });
       s.notes = s.notes.filter((n) => (s.tomb['n:' + n.id] || 0) < n.ts);
       if (r.welcomed) s.welcomed = true;

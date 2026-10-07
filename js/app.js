@@ -178,14 +178,7 @@ window.App = { routes: {}, cleanup: [] };
     const fresh = Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length));
     const nc = nextCourseStep();
 
-    const steps = [];
-    if (!st.placement) steps.push(['Take the placement test', 'Twenty-four questions, B1 to C1. It shows where to start.', '#/placement', 'Start']);
-    if (due + fresh > 0) steps.push([`Review ${due + fresh} vocabulary card${due + fresh === 1 ? '' : 's'}`, `${due} due · ${fresh} new`, '#/review', 'Review']);
-    const nMist = Store.mistakes().length;
-    if (nMist) steps.push([`Review ${nMist} mistake${nMist === 1 ? '' : 's'}`, 'Questions you got wrong, with the reason for each', '#/mistakes', 'Review']);
-    if (nc) steps.push([`Course · ${nc.u.title}`, `Step ${nc.i + 1} of ${nc.total}: ${nc.info.kind.toLowerCase()} · ${nc.info.label}`, nc.info.href, 'Continue']);
-    steps.push(['Mixed review', 'A few questions from grammar, vocabulary and rewriting', '#/course/mix', 'Start']);
-
+    const steps = App.homeSteps ? App.homeSteps() : [['Mixed review', 'A few questions from grammar, vocabulary and rewriting', '#/course/mix', 'Start']];
     const [first, ...rest] = steps;
     const hero = h('section', { class: 'hero' },
       h('p', { class: 'eyebrow' }, st.placement || Store.totalAnswered() ? 'Next up' : 'Start here'),
@@ -871,7 +864,7 @@ window.App = { routes: {}, cleanup: [] };
     stepsLeft: () => { const all = C1.course.flatMap((u) => unitSteps(u)); return { done: all.filter((x) => x.done).length, total: all.length }; },
     unitsDone: () => C1.course.filter((u) => unitDone(u) === unitSteps(u).length).length, unitCount: () => C1.course.length,
     topicHref, icon, view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
-    unitBack, unitFooter, uq, partOf, setKey, scoreChip, nextInUnit, nextCourseStep, dueIds, start: route, route
+    unitBack, unitFooter, uq, partOf, setKey, scoreChip, nextInUnit, nextCourseStep, dueIds, freshCards: () => Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length)), start: route, route
   });
   Object.defineProperty(window.App, 'unitCtx', { get: () => unitCtx });
 })();

@@ -18,16 +18,11 @@
   A.setLevel = setLevel; A.setOrder = setOrder; A.levelChip = levelChip;
 
   const done = (type, i) => !!Store.score(type + '/' + i);
-  /* the neighbour of set i on the difficulty ladder, preferring a set not done yet */
-  function stepSet(type, i, dir) {
-    const ord = setOrder(type), pos = ord.indexOf(i);
-    if (pos < 0) return null;
-    const rest = dir > 0 ? ord.slice(pos + 1) : ord.slice(0, pos).reverse();
-    const strict = (x) => (dir > 0 ? setLevel(type, x) > setLevel(type, i) : setLevel(type, x) < setLevel(type, i));
-    const j = rest.find((x) => !done(type, x) && strict(x));
-    if (j == null) { const k = rest.find((x) => !done(type, x)); if (k != null) return { j: k, again: false }; }
-    return j != null ? { j, again: false } : rest.length ? { j: rest[0], again: true } : null;
-  }
+  /* the learner's level in an exam part: the hardest difficulty at which a set was passed with 70% or more (0 = none yet) */
+  const competence = (type) => { const p = C1.practice.find((x) => x.id === type); let c = 0; (p ? p.sets : []).forEach((_, i) => { const s = Store.score(type + '/' + i); if (s && s.p >= 0.7) c = Math.max(c, setLevel(type, i)); }); return c; };
+  /* the undone set whose difficulty is closest to the target (a tie goes to the easier one) */
+  const pickAt = (type, target, exclude) => setOrder(type).filter((j) => j !== exclude && !done(type, j))
+    .sort((a, b) => Math.abs(setLevel(type, a) - target) - Math.abs(setLevel(type, b) - target) || setLevel(type, a) - setLevel(type, b))[0];
   const sameLevel = (type, i) => setOrder(type).find((j) => j !== i && !done(type, j) && setLevel(type, j) === setLevel(type, i));
   const leastPracticed = (not) => C1.practice.filter((p) => p.id !== not).map((p) => ({ id: p.id, title: p.title, n: p.sets.length, d: p.sets.filter((_, i) => done(p.id, i)).length }))
     .sort((a, b) => a.d / a.n - b.d / b.n)[0];
@@ -56,19 +51,23 @@
     if ((m = href.match(/^#\/practice\/([a-z]+)\/(\d+)/))) {
       const type = m[1], i = +m[2], p = C1.practice.find((x) => x.id === type);
       if (p) {
-        const unitNext = A.nextInUnit('practice', type, i), up = stepSet(type, i, 1), down = stepSet(type, i, -1);
-        if (strong) {
-          if (unitNext) R('Continue your unit: ' + unitNext.label, `You scored ${pct}%: this part is solid, so move on.`, unitNext.href);
-          if (up) R(`${up.again ? 'Repeat a harder set' : 'Try a harder set'}: ${p.sets[up.j].title}`, `${pct}% is strong. Difficulty ${setLevel(type, up.j)} of 5 next (this one was ${setLevel(type, i)}).`, `#/practice/${type}/${up.j}`);
-          else { const lp = leastPracticed(type); R('You have reached the hardest set of ' + p.title, 'Broaden your practice instead.', '#/practice'); lp && R('Practise ' + lp.title, `You have done ${lp.d} of ${lp.n} sets of that exam part.`, '#/practice/' + lp.id); }
-          const lp2 = leastPracticed(type); lp2 && lp2.d < lp2.n && R('Practise ' + lp2.title, `Your least practised exam part: ${lp2.d} of ${lp2.n} sets done.`, '#/practice/' + lp2.id);
-        } else if (fair) {
+        /* the same percentage means more on a harder set: judge the score against the set's difficulty */
+        const lvl = setLevel(type, i), comp = competence(type), adj = Math.round(pct + (lvl - 3) * 5);
+        const sStrong = adj >= 85, sFair = adj >= 60, why = lvl === 3 ? `${pct}%` : `${pct}% on a difficulty-${lvl} set counts as ${Math.min(100, Math.max(0, adj))}%`;
+        const unitNext = A.nextInUnit('practice', type, i);
+        const up = pickAt(type, Math.min(5, Math.max(comp, lvl) + 1), i), down = pickAt(type, Math.max(1, Math.min(lvl - 1, comp || lvl - 1)), i);
+        if (sStrong) {
+          if (unitNext) R('Continue your unit: ' + unitNext.label, `${why}: this part is solid, so move on.`, unitNext.href);
+          if (up != null) R('Try a harder set: ' + p.sets[up].title, `${why}. Your level in this exam part is about ${comp} of 5, so difficulty ${setLevel(type, up)} is the next step.`, `#/practice/${type}/${up}`);
+          else R('You have done every set of ' + p.title, 'Broaden your practice instead.', '#/practice');
+          const lp = leastPracticed(type); lp && lp.d < lp.n && R('Practise ' + lp.title, `Your least practised exam part: ${lp.d} of ${lp.n} sets done.`, '#/practice/' + lp.id);
+        } else if (sFair) {
           mistakeRec();
           const sl = sameLevel(type, i);
-          sl != null && R('Another set at this level: ' + p.sets[sl].title, `${pct}%: you are close. One more set of the same difficulty will show whether it is a pattern or bad luck.`, `#/practice/${type}/${sl}`);
+          sl != null && R('Another set at this level: ' + p.sets[sl].title, `${why}: you are close. One more set of the same difficulty will show whether it is a pattern or bad luck.`, `#/practice/${type}/${sl}`);
           R('Re-read the strategy for ' + p.title, 'Two minutes on the method often fixes the gaps you lost.', '#/practice/' + type);
         } else {
-          if (down) R(`${down.again ? 'Repeat an easier set' : 'Step down to an easier set'}: ${p.sets[down.j].title}`, `${pct}% means this level is too hard right now. Difficulty ${setLevel(type, down.j)} of 5 first, then come back.`, `#/practice/${type}/${down.j}`);
+          if (down != null) R('Step down to an easier set: ' + p.sets[down].title, `${why}: this level is too hard right now. Difficulty ${setLevel(type, down)} of 5 first, then come back.`, `#/practice/${type}/${down}`);
           const f = FOUNDATION[type]; f && R('Build the base first', f[1], f[0]);
           mistakeRec();
         }
@@ -142,4 +141,25 @@
     } catch (e) { return null; }
   };
   A.recommendFor = build; // used by the tests
+  A.competence = competence;
+
+  /* Home: the next best steps, in priority order (spaced repetition first, then the weakest exam part, mistakes, the course, the exam date) */
+  A.homeSteps = () => {
+    const steps = [], push = (t, s, href, label) => { if (!steps.some((x) => x[2] === href)) steps.push([t, s, href, label]); };
+    const st = Store.state, due = A.dueIds().length;
+    if (!st.placement) push('Take the placement test', 'Twenty-four questions, B1 to C1. It shows where to start.', '#/placement', 'Start');
+    const fresh = A.freshCards ? A.freshCards() : 0;
+    if (due + fresh > 0) push(`Review ${due + fresh} vocabulary card${due + fresh === 1 ? '' : 's'}`, `${due} due · ${fresh} new`, '#/review', 'Review');
+    /* the exam part with the lowest accuracy (at least 5 answers), and the set that suits the learner's level there */
+    const parts = C1.practice.map((p) => { const s = st.stats['u-' + p.id]; return s && s.t >= 5 ? { p, acc: s.c / s.t } : null; }).filter(Boolean).filter((x) => x.acc < 0.75).sort((a, b) => a.acc - b.acc);
+    if (parts[0]) { const { p, acc } = parts[0], j = pickAt(p.id, Math.max(1, competence(p.id)) , -1); if (j != null) push(`${p.title}: your weakest exam part`, `${Math.round(acc * 100)}% correct so far. A difficulty-${setLevel(p.id, j)} set suits your level.`, `#/practice/${p.id}/${j}`, 'Practise'); }
+    const nMist = Store.mistakes().length;
+    if (nMist) push(`Review ${nMist} mistake${nMist === 1 ? '' : 's'}`, 'Questions you got wrong, with the reason for each', '#/mistakes', 'Review');
+    const nc = A.nextCourseStep && A.nextCourseStep();
+    if (nc) push(`Course · ${nc.u.title}`, `Step ${nc.i + 1} of ${nc.total}: ${nc.info.kind.toLowerCase()} · ${nc.info.label}`, nc.info.href, 'Continue');
+    const ex = st.exam && st.exam.date;
+    if (ex) { const d = Math.round((new Date(ex + 'T00:00:00') - new Date(Store.today() + 'T00:00:00')) / 864e5); if (d >= 0 && d <= 21) push('Do a full timed test', `${d} day${d === 1 ? '' : 's'} to your exam: practise stamina and timing.`, '#/mock', 'Start'); }
+    push('Mixed review', 'A few questions from grammar, vocabulary and rewriting', '#/course/mix', 'Start');
+    return steps;
+  };
 })();

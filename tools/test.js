@@ -62,6 +62,20 @@ const sync = (a, b) => { b.Store.mergeData(a.Store.exportData()); a.Store.mergeD
   eq('newest exam date wins', [A.Store.state.exam.date, B.Store.state.exam.date], ['2027-02-01', '2027-02-01']);
 }
 
+/* --- a task done on one device and an AI check on the other: both survive --- */
+{
+  const A = device(), B = device();
+  A.Store.setSkill('writing:w1', { done: true, self: { Content: 4 } });
+  B.Store.setSkill('writing:w1', { ai: [{ ts: 5, scores: { content: 3 } }] });
+  B.Store.state.skills['writing:w1'].ts = Date.now() + 1000; // B's record is newer but has no "done"
+  sync(A, B);
+  eq('done on one device survives a newer record from the other', [A.Store.skill('writing:w1').done, B.Store.skill('writing:w1').done], [true, true]);
+  eq('AI checks reach the other device', A.Store.skill('writing:w1').ai.length, 1);
+  A.Store.setSkill('writing:w1', { ai: A.Store.skill('writing:w1').ai.concat({ ts: 9, scores: { content: 4 } }) });
+  sync(A, B); sync(A, B);
+  eq('AI history merges without duplicates', B.Store.skill('writing:w1').ai.map((x) => x.ts), [5, 9]);
+}
+
 /* --- deleting a note on one device removes it on the other --- */
 {
   const A = device(), B = device();
