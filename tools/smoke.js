@@ -111,6 +111,12 @@ for (const r of routes) {
   }
   check('every #/ link in the code points to a real page', !bad.size, [...bad].join('; '));
 }
+{
+  /* pages that only show with data: practised days, a full test, an exam date */
+  const d = (n) => new Date(Date.now() - n * 864e5).toLocaleDateString('sv');
+  sb.Store.state.days[d(0)] = 12; sb.Store.state.days[d(9)] = 4; sb.Store.addMock({ ts: 1, kind: 'Reading', c: 30, t: 60 }); sb.Store.setExam(d(-30));
+  for (const r of ['progress', '', 'plan']) { sb.location.hash = '#/' + r; app.children = []; try { sb.App.route(); check('route #/' + r + ' renders with data', /last 7 days|Exam plan|days? to your exam|Level/.test(app.textContent)); } catch (e) { check('route #/' + r + ' renders with data', false, e.message); } }
+}
 sb.location.hash = '#/nope'; sb.App.route();
 check('unknown route shows Not found', /Not found/.test(app.textContent));
 

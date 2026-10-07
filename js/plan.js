@@ -73,6 +73,15 @@
       }));
   };
 
+  /* ---------- this week against last week (Review) ---------- */
+  A.weekCard = () => {
+    const sum = (from, to) => { let t = 0, d = 0; for (let i = from; i < to; i++) { const x = new Date(midnight() - i * DAY).toLocaleDateString('sv'), n = Store.state.days[x] || 0; t += n; if (n > 0) d++; } return [t, d]; };
+    const [a, da] = sum(0, 7), [b] = sum(7, 14);
+    if (!a && !b) return null;
+    const diff = a - b, msg = !b ? 'Your first full week of data. Keep going.' : diff > 0 ? `${diff} more answers than last week.` : diff < 0 ? `${-diff} fewer answers than last week. A short daily session beats a long one on Sunday.` : 'The same as last week.';
+    return cardBlock('Your last 7 days', h('div', { class: 'stats' }, h('div', { class: 'stat' }, h('b', {}, a), h('span', {}, 'answers')), h('div', { class: 'stat' }, h('b', {}, da + '/7'), h('span', {}, 'days practised')), h('div', { class: 'stat' }, h('b', {}, b), h('span', {}, 'the week before'))), h('p', { class: 'muted' }, msg));
+  };
+
   /* ---------- full-test history (Review) ---------- */
   A.historyCard = () => {
     const m = (Store.state.mocks || []).slice(-8).reverse();
