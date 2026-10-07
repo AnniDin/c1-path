@@ -102,7 +102,7 @@ const sync = (a, b) => { b.Store.mergeData(a.Store.exportData()); a.Store.mergeD
 
 /* --- content data sanity: tricks and pronunciation --- */
 {
-  const C = device(['data/tricks.js', 'data/pron.js']).C1;
+  const C = device(['data/tricks.js', 'data/tricks2.js', 'data/tricks3.js', 'data/pron.js']).C1;
   const ids = new Set(); let bad = [];
   C.tricks.forEach((s) => { if (ids.has(s.id)) bad.push('dup section ' + s.id); ids.add(s.id); s.items.forEach((x) => { if (!x.t || !x.tip) bad.push(s.id + ': ' + (x.t || '?')); }); });
   C.pron.forEach((g) => { if (!g.id || !g.tip || g.items.length < 3) bad.push('pron ' + g.id); });

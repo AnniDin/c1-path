@@ -23,8 +23,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / 'audio' / 'listening'
 
 # Voice per speaker: the gender of each character name decides the pool; every speaker in a recording gets a different voice.
-FEMALE = {'Gemma', 'Carol', 'Isla', 'Anna', 'Rachel', 'Helen', 'Priya', 'Sofia', 'Rosa', 'Nadia', 'Lena', 'Marta', 'Dr Hill', 'Presenter', 'Guide'}
-MALE = {'Raj', 'Jamal', 'Dev', 'Mark', 'Tom', 'Luis', 'Dan', 'James', 'Ben', 'Colin', 'Omar', 'Joel', 'Dr Morgan'}
+FEMALE = {'Hannah', 'Imogen', 'Fiona', 'Harriet', 'Zoe', 'Gemma', 'Carol', 'Isla', 'Anna', 'Rachel', 'Helen', 'Priya', 'Sofia', 'Rosa', 'Nadia', 'Lena', 'Marta', 'Dr Hill', 'Presenter', 'Guide'}
+MALE = {'Callum', 'Oliver', 'Kevin', 'Rashid', 'Vikram', 'Neil', 'Raj', 'Jamal', 'Dev', 'Mark', 'Tom', 'Luis', 'Dan', 'James', 'Ben', 'Colin', 'Omar', 'Joel', 'Dr Morgan'}
 POOLS = {'f': ['bf_emma', 'bf_isabella', 'bf_alice', 'bf_lily'], 'm': ['bm_george', 'bm_lewis', 'bm_daniel', 'bm_fable']}
 
 
