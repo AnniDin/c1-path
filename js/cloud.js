@@ -110,6 +110,13 @@
       const txt = await res.text();
       return txt ? JSON.parse(txt) : null;
     },
+    /* Aggregate data any visitor may read (no account needed). */
+    async rpcPublic(name, body) {
+      const res = await fetch(base + '/rest/v1/rpc/' + name, { method: 'POST', headers: headers(), body: JSON.stringify(body || {}) });
+      if (!res.ok) throw await errorOf(res);
+      const txt = await res.text();
+      return txt ? JSON.parse(txt) : null;
+    },
     async deleteAccount() {
       const t = await token();
       const res = await fetch(base + '/rest/v1/rpc/delete_my_account', { method: 'POST', headers: headers(t), body: '{}' });

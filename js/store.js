@@ -21,16 +21,19 @@
       state.dev = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       state.own = { stats: clone(state.stats), days: clone(state.days), newToday: clone(state.newToday) };
     }
+    state.own.sub = state.own.sub || {}; state.own.fx = state.own.fx || {};
     state.peers = state.peers || {}; state.tomb = state.tomb || {};
   }
   function recompute() {
-    const stats = {}, days = {}, nt = {};
+    const stats = {}, days = {}, nt = {}, subs = {}, fx = {};
     [state.own].concat(Object.values(state.peers)).forEach((p) => {
       Object.keys(p.stats || {}).forEach((k) => { const a = stats[k] || (stats[k] = { c: 0, t: 0 }); a.c += p.stats[k].c; a.t += p.stats[k].t; });
       Object.keys(p.days || {}).forEach((k) => { days[k] = (days[k] || 0) + p.days[k]; });
       Object.keys(p.newToday || {}).forEach((k) => { nt[k] = (nt[k] || 0) + p.newToday[k]; });
+      Object.keys(p.sub || {}).forEach((k) => { const a = subs[k] || (subs[k] = { label: p.sub[k].label, href: p.sub[k].href, c: 0, t: 0 }); a.c += p.sub[k].c; a.t += p.sub[k].t; });
+      Object.keys(p.fx || {}).forEach((k) => { const a = fx[k] || (fx[k] = { n: 0, sum: 0 }); a.n += p.fx[k].n; a.sum += p.fx[k].sum; });
     });
-    state.stats = stats; state.days = days; state.newToday = nt;
+    state.stats = stats; state.days = days; state.newToday = nt; state.sub = subs; state.fx = fx;
   }
   const act = (kind) => { const d = dayStr(); state.acts = state.acts || {}; (state.acts[d] = state.acts[d] || {})[kind] = 1; Object.keys(state.acts).sort().slice(0, -14).forEach((k) => delete state.acts[k]); };
   const bury = (kind, id) => { state.tomb[kind + ':' + id] = Date.now(); };
@@ -77,10 +80,14 @@
       act('set');
       const p = t ? c / t : 0;
       const last = { p, ts: Date.now() }, old = state.scores[key];
-      state.scores[key] = !old || p > old.p ? { p, c, t, last } : Object.assign({}, old, { last }); // best score, plus the latest attempt
+      const n = (old ? old.n || 1 : 0) + 1;
+      state.scores[key] = !old || p > old.p ? { p, c, t, last, n } : Object.assign({}, old, { last, n }); // best score, the latest attempt and how many attempts
       save();
     },
     score(key) { return state.scores[key] || null; },
+    /* sub-skill tallies (rows: [{ id, label, href, c, t }]) and the log of how suggestions worked, counted per device and added up on merge */
+    addSubs(rows) { rows.forEach((r) => { const o = state.own.sub[r.id] || (state.own.sub[r.id] = { label: r.label, href: r.href, c: 0, t: 0 }); o.c += r.c; o.t += r.t; }); recompute(); save(); },
+    addFx(kind, n, sum) { const o = state.own.fx[kind] || (state.own.fx[kind] = { n: 0, sum: 0 }); o.n += n; o.sum += sum; recompute(); save(); },
     exportData() { return JSON.stringify(state); },
     importData(json) {
       const d = JSON.parse(json);
@@ -95,7 +102,7 @@
       if (!d || typeof d !== 'object' || !d.stats || !d.days) throw new Error('Not a C1 Path backup');
       const r = Object.assign(fresh(), d), s = state;
       const each = (o, fn) => Object.keys(o || {}).forEach((k) => fn(k, o[k]));
-      const weight = (p) => Object.values((p && p.stats) || {}).reduce((a, x) => a + x.t, 0) + Object.keys((p && p.days) || {}).length;
+      const weight = (p) => Object.values((p && p.stats) || {}).reduce((a, x) => a + x.t, 0) + Object.keys((p && p.days) || {}).length + Object.values((p && p.sub) || {}).reduce((a, x) => a + x.t, 0) + Object.values((p && p.fx) || {}).reduce((a, x) => a + x.n, 0);
       // per-device counters
       const incoming = Object.assign({}, r.peers);
       incoming[r.dev || 'legacy'] = r.own && r.dev ? r.own : { stats: r.stats, days: r.days, newToday: r.newToday };
@@ -110,7 +117,7 @@
       each(s.tomb, (k, v) => { if (v < cutoff) delete s.tomb[k]; });
       each(r.cards, (k, v) => { const c = s.cards[k]; if (!c || (v.ts && c.ts ? v.ts > c.ts : v.box > c.box || (v.box === c.box && v.due > c.due))) s.cards[k] = v; }); // newest rating wins, so Again on one device sticks; copies without a time keep the old rule
       each(r.lessons, (k, v) => { if (v) s.lessons[k] = v; });
-      each(r.scores, (k, v) => { const o = s.scores[k], best = !o || v.p > o.p ? Object.assign({}, v) : Object.assign({}, o), la = [o && o.last, v.last].filter(Boolean).sort((a, b) => b.ts - a.ts)[0]; if (la) best.last = la; s.scores[k] = best; });
+      each(r.scores, (k, v) => { const o = s.scores[k], best = !o || v.p > o.p ? Object.assign({}, v) : Object.assign({}, o), la = [o && o.last, v.last].filter(Boolean).sort((a, b) => b.ts - a.ts)[0]; if (la) best.last = la; best.n = Math.max((o && o.n) || (o ? 1 : 0), v.n || 1); s.scores[k] = best; });
       each(r.mistakes, (k, v) => { const m = s.mistakes[k]; if (!m || v.ts > m.ts) s.mistakes[k] = v; else if (v.ts === m.ts) m.right = Math.max(m.right || 0, v.right || 0); });
       each(s.mistakes, (k, v) => { if ((s.tomb['m:' + k] || 0) >= v.ts) delete s.mistakes[k]; });
       each(r.drafts, (k, v) => { if (!s.drafts[k] || v.ts > s.drafts[k].ts) s.drafts[k] = v; });

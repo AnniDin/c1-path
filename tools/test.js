@@ -154,6 +154,18 @@ const sync = (a, b) => { b.Store.mergeData(a.Store.exportData()); a.Store.mergeD
   eq('the most recent attempt is kept on both devices', [a.last.p, b.last.p], [0.4, 0.4]);
 }
 
+/* --- sub-skill tallies and the suggestion log add up across devices --- */
+{
+  const A = device(), B = device();
+  A.Store.addSubs([{ id: 'prepositions', label: 'Prepositions', href: '#/grammar/prepositions', c: 3, t: 10 }]); B.Store.addSubs([{ id: 'prepositions', label: 'Prepositions', href: '#/grammar/prepositions', c: 5, t: 6 }]);
+  A.Store.addFx('easier', 1, 10); B.Store.addFx('easier', 2, -4);
+  sync(A, B); sync(A, B);
+  eq('sub-skill tallies add up on both devices', [A.Store.state.sub.prepositions, B.Store.state.sub.prepositions], [{ label: 'Prepositions', href: '#/grammar/prepositions', c: 8, t: 16 }, { label: 'Prepositions', href: '#/grammar/prepositions', c: 8, t: 16 }]);
+  eq('the suggestion log adds up and merging twice changes nothing', [A.Store.state.fx.easier, B.Store.state.fx.easier], [{ n: 3, sum: 6 }, { n: 3, sum: 6 }]);
+  A.Store.setScore('wf/2', 5, 10); A.Store.setScore('wf/2', 9, 10);
+  eq('the number of attempts of a set is counted', A.Store.score('wf/2').n, 2);
+}
+
 /* --- content data sanity: tricks and pronunciation --- */
 {
   const C = device(['data/tricks.js', 'data/tricks2.js', 'data/tricks3.js', 'data/pron.js']).C1;

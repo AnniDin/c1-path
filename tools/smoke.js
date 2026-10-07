@@ -115,11 +115,11 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
     check('a multiple-choice gap about a phrasal verb is a phrasal verb', tg({ type: 'mcq', q: 'x', options: ['a', 'b', 'c', 'd'], answer: 0, why: 'This phrasal verb means delay.' }, 'u-mcq', '#/practice/mcq/1') === 'phrasal');
     const wrongRes = [1, 2, 3].map(() => ({ ok: false, item: { type: 'gap', q: 'I look ___ it.', answers: ['at'], why: 'x' } })).concat([{ ok: true, item: { type: 'gap', q: 'q', answers: ['the'], why: 'x' } }]);
     check('the skill missed most in a result is found', A.diagnoseWrong(wrongRes, { topic: 'u-cloze', href: '#/practice/cloze/1' })[0].id === 'prepositions' && A.diagnoseWrong(wrongRes, { topic: 'u-cloze' })[0].n === 3);
-    ls.removeItem('c1path.sub'); for (let k = 0; k < 3; k++) A.diagnoseRecord(wrongRes, { topic: 'u-cloze', href: '#/practice/cloze/1' });
+    sb.Store.state.own.sub = {}; for (let k = 0; k < 3; k++) A.diagnoseRecord(wrongRes, { topic: 'u-cloze', href: '#/practice/cloze/1' });
     const ws = A.weakestSkill();
     check('after enough misses the weakest skill shows up', ws && ws.id === 'prepositions' && ws.acc < 0.65, JSON.stringify(ws));
     check('a recommendation after a miss names that skill', A.recommendFor({ topic: 'u-cloze', href: '#/practice/cloze/1' }, 40, wrongRes).some((r) => /Fix a pattern: Prepositions/.test(r.title)));
-    ls.removeItem('c1path.sub');
+    sb.Store.state.own.sub = {}; sb.Store.addSubs([]);
 
     const key = 'wf/0', keepScore = sb.Store.state.scores[key], day = 864e5;
     sb.Store.state.scores[key] = { p: 0.5, c: 4, t: 8, last: { p: 0.5, ts: Date.now() - 3 * day } };
@@ -139,13 +139,25 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
     if (keepStats) st.stats['u-cloze'] = keepStats; else delete st.stats['u-cloze'];
     check('the bar moves with your accuracy: easier to progress when struggling, stricter when strong', lowAcc && !highAcc && mid, [lowAcc, highAcc, mid].join());
 
-    ls.setItem('c1path.recfx', JSON.stringify({ easier: { n: 6, sum: -60 } }));
+    sb.Store.addFx('easier', 6, -60);
     const order = A.recommendFor({ topic: 'u-cloze', href: '#/practice/cloze/' + three }, 30, [{ ok: false }]).map((r) => r.kind);
     check('a kind of suggestion that keeps lowering your score is shown last', order.indexOf('easier') === order.length - 1 && order.length > 1, order.join());
-    ls.removeItem('c1path.recfx');
+    sb.Store.state.own.fx = {}; sb.Store.addFx('same', 0, 0);
     ls.setItem('c1path.recpend', JSON.stringify({ kind: 'same', pct: 50, ts: Date.now() })); A.afterQuiz([{ ok: true }], {}, 70);
-    check('finishing a quiz after following a suggestion logs the change', JSON.parse(ls.getItem('c1path.recfx')).same.sum === 20);
-    ls.removeItem('c1path.recfx'); ls.removeItem('c1path.recpend');
+    check('finishing a quiz after following a suggestion logs the change', sb.Store.state.fx.same.sum === 20 && sb.Store.state.fx.same.n === 1);
+    sb.Store.state.own.fx = {}; sb.Store.addFx('same', 0, 0); ls.removeItem('c1path.recpend');
+
+    /* calibration with other learners' scores */
+    const cal = { easy: null };
+    const sets4 = A.setOrder('mcq'); const base = sets4.map((i) => [i, (sb.C1.levels.practice.mcq || [])[i]]);
+    const target = base.find(([, l]) => l === 3)[0], others = base.filter(([i]) => i !== target).slice(0, 4).map(([i]) => i);
+    const rows = {}; rows['mcq/' + target] = { n: 60, avg: 0.25 }; others.forEach((i) => { rows['mcq/' + i] = { n: 60, avg: 0.8 }; });
+    ls.setItem('c1path.calib', JSON.stringify({ ts: Date.now(), rows }));
+    check('a set that learners score very low on is rated harder than the expert said', A.setLevel('mcq', target) > 3, String(A.setLevel('mcq', target)));
+    check('a set with no shared scores keeps the expert rating', A.setLevel('mcq', sets4.find((i) => !(('mcq/' + i) in rows))) === (sb.C1.levels.practice.mcq || [])[sets4.find((i) => !(('mcq/' + i) in rows))]);
+    rows['mcq/' + target] = { n: 6, avg: 0.25 }; ls.setItem('c1path.calib', JSON.stringify({ ts: Date.now(), rows }));
+    check('too few learners: the expert rating stands', A.setLevel('mcq', target) === 3);
+    ls.removeItem('c1path.calib'); void cal;
   }
   /* adaptive: the harder set follows the learner's level, and a score counts against the set's difficulty */
   {

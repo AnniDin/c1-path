@@ -8,11 +8,11 @@
   const LABEL = ['', 'Warm-up', 'Easier', 'Medium', 'Harder', 'Hardest'];
 
   /* ---------- difficulty: practice sets run from easier to harder (progress is stored by set number, so only the display order changes) ---------- */
-  const setLevel = (type, i) => (((LV().practice || {})[type] || [])[i]) || 3;
+  const setLevel = (type, i) => { const expert = (((LV().practice || {})[type] || [])[i]) || 3; return A.calibrate ? A.calibrate(type, type + '/' + i, expert) : expert; };
   const setOrder = (type) => { const p = C1.practice.find((x) => x.id === type); return p ? p.sets.map((_, i) => i).sort((a, b) => setLevel(type, a) - setLevel(type, b) || a - b) : []; };
-  const levelChip = (n) => h('span', { class: 'chip lv lv' + n, title: `Estimated difficulty ${n} of 5` }, LABEL[n] || 'Medium');
+  const levelChip = (n) => h('span', { class: 'chip lv lv' + n, title: `Difficulty ${n} of 5: an expert rating, adjusted with learners' scores when enough are shared` }, LABEL[n] || 'Medium');
   /* listening sets, writing tasks and speaking sets: rated by id; lists show them from easier to harder */
-  const itemLevel = (kind, id) => ((LV()[kind] || {})[id]) || 3;
+  const itemLevel = (kind, id) => { const expert = ((LV()[kind] || {})[id]) || 3; return kind === 'listening' && A.calibrate ? A.calibrate('listening', 'listen:' + id, expert) : expert; };
   A.ranked = (kind, list) => list.map((x, i) => [x, i]).sort((a, b) => itemLevel(kind, a[0].id) - itemLevel(kind, b[0].id) || a[1] - b[1]).map((x) => x[0]);
   A.itemChip = (kind, id) => levelChip(itemLevel(kind, id));
   A.setLevel = setLevel; A.setOrder = setOrder; A.levelChip = levelChip;
@@ -45,17 +45,20 @@
       : /weak spots/i.test(t) ? 'weak' : /Re-read|Read the idea|strategy|Listen again/i.test(t) ? 'reread' : 'other');
 
   /* ---------- local feedback loop: did the suggestions you followed help? (this device only) ---------- */
-  const PEND = 'c1path.recpend', FX = 'c1path.recfx';
+  const PEND = 'c1path.recpend'; // the click waiting for the next quiz (transient, this device)
   const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || 'null') || d; } catch (e) { return d; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* ignore */ } };
+  /* the log from before it was synced (localStorage) moves into the Store once */
+  try { const old = JSON.parse(localStorage.getItem('c1path.recfx') || 'null'); if (old) { Object.entries(old).forEach(([k, o]) => Store.addFx(k, o.n, o.sum)); localStorage.removeItem('c1path.recfx'); } } catch (e) { /* ignore */ }
   /* a kind of suggestion followed at least 5 times whose next quiz scored 5+ points lower on average is shown last
      (harder sets and unit steps are exempt: a lower score is expected there) */
-  const demoted = (k) => { const o = lsGet(FX, {})[k]; return !['harder', 'unit'].includes(k) && !!o && o.n >= 5 && o.sum / o.n <= -5; };
+  const demoted = (k) => { const o = (Store.state.fx || {})[k]; return !['harder', 'unit'].includes(k) && !!o && o.n >= 5 && o.sum / o.n <= -5; };
   A.afterQuiz = (res, source, pct) => {
     A.diagnoseRecord && A.diagnoseRecord(res, source);
     const p = lsGet(PEND, null);
-    if (p && Date.now() - p.ts < 864e5) { const fx = lsGet(FX, {}), o = fx[p.kind] || (fx[p.kind] = { n: 0, sum: 0 }); o.n++; o.sum += pct - p.pct; lsSet(FX, fx); }
+    if (p && Date.now() - p.ts < 864e5) Store.addFx(p.kind, 1, pct - p.pct);
     lsSet(PEND, null);
+    A.shareScore && A.shareScore(res, source, pct);
   };
 
   /* ---------- spaced retries: a weak set comes back after 2 days, a middling one after 7, a good one after 21 ---------- */
@@ -193,14 +196,14 @@
   A.skillsCard = () => {
     const rows = (A.subSkillStats ? A.subSkillStats() : []).filter((x) => x.t >= 5).slice(0, 5);
     if (!rows.length) return null;
-    return A.cardBlock('Your skills, weakest first', h('p', { class: 'muted' }, 'Every answer is tagged with the skill it tests. These are the ones you miss most (kept on this device).'),
+    return A.cardBlock('Your skills, weakest first', h('p', { class: 'muted' }, 'Every answer is tagged with the skill it tests. These are the ones you miss most '),
       ...rows.map((x) => { const a = x.c / x.t; return h('div', { class: 'trow' }, link(x.href, x.label), A.bar(a, a >= 0.8 ? 'ok' : a >= 0.6 ? 'warn' : 'bad'), h('span', {}, `${Math.round(a * 100)}% · ${x.t}`)); }));
   };
   const KIND = { harder: 'A harder set', easier: 'An easier set', same: 'A set at the same level', mistakes: 'Practising mistakes', base: 'A base lesson', retry: 'A spaced retry', unit: 'The next unit step', dictation: 'Dictation', weak: 'Weak spots', reread: 'Re-reading' };
   A.recsCard = () => {
-    const fx = lsGet(FX, {}), rows = Object.entries(fx).filter(([, o]) => o.n >= 2);
+    const rows = Object.entries(Store.state.fx || {}).filter(([, o]) => o.n >= 2);
     if (!rows.length) return null;
-    return A.cardBlock('Do the suggestions help?', h('p', { class: 'muted' }, 'The score of your next quiz after you followed each kind of suggestion, against the quiz before it. A harder set scores lower by design. A kind that keeps lowering your score is shown last. Kept on this device.'),
+    return A.cardBlock('Do the suggestions help?', h('p', { class: 'muted' }, 'The score of your next quiz after you followed each kind of suggestion, against the quiz before it. A harder set scores lower by design. A kind that keeps lowering your score is shown last. '),
       ...rows.map(([k, o]) => { const d = Math.round(o.sum / o.n); return h('div', { class: 'trow' }, h('span', {}, KIND[k] || k), h('span', {}, `${o.n} times`), h('span', { class: d >= 0 ? 'a-ok' : 'a-warn' }, (d > 0 ? '+' : '') + d + ' points')); }));
   };
   A.competence = competence;

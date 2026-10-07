@@ -1,6 +1,6 @@
 /* C1 Path – sub-skill diagnosis: every answered question is tagged with the skill it tests (prepositions, inversion, collocations...),
    so "what to do next" can say WHAT you keep missing, not just how much. Tags come from the item itself (key words, answer, explanation),
-   and the tallies stay on this device (localStorage, not synced). */
+   and the tallies are counted per device and added up when devices sync. */
 (function () {
   const A = window.App;
   const KEY = 'c1path.sub';
@@ -56,15 +56,16 @@
     return tag(first(MCQ, why) || 'meaning');
   }
 
-  const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; } };
-  const save = (o) => { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) { /* ignore */ } };
+  /* tallies from before they were synced (localStorage) move into the Store once */
+  try { const old = JSON.parse(localStorage.getItem(KEY) || 'null'); if (old) { Store.addSubs(Object.entries(old).map(([id, o]) => ({ id, label: o.label, href: o.href, c: o.c, t: o.t }))); localStorage.removeItem(KEY); } } catch (e) { /* ignore */ }
+  const load = () => Store.state.sub || {};
   A.skillTag = tagOf;
 
   /* tally this quiz: running totals per tag on this device */
   A.diagnoseRecord = (res, source) => {
-    const all = load();
-    res.forEach((r) => { if (!r.item) return; const t = tagOf(r.item, source), o = all[t.id] || (all[t.id] = { label: t.label, href: t.href, c: 0, t: 0 }); o.t++; if (r.ok) o.c++; });
-    save(all);
+    const by = {};
+    res.forEach((r) => { if (!r.item) return; const t = tagOf(r.item, source), o = by[t.id] || (by[t.id] = { id: t.id, label: t.label, href: t.href, c: 0, t: 0 }); o.t++; if (r.ok) o.c++; });
+    const rows = Object.values(by); if (rows.length) Store.addSubs(rows);
   };
   /* the skills missed most in THIS result: [{ id, label, href, n }] */
   A.diagnoseWrong = (res, source) => {
