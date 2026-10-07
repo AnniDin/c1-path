@@ -11,20 +11,22 @@ class Node_ {
   constructor(tag) { this.tag = tag; this.children = []; this.attrs = {}; this.className = ''; this.innerHTML = ''; this.style = {}; this.dataset = {}; this.value = ''; this.nodeType = 1; }
   get textContent() { return this.children.map((c) => (c.nodeType === 3 ? c.data : c.textContent)).join('') || this._t || ''; }
   set textContent(v) { this.children = []; this._t = String(v); }
-  append(...k) { k.forEach((c) => this.children.push(typeof c === 'string' ? new Text_(c) : c)); }
+  append(...k) { k.forEach((c) => this.children.push(c && c.nodeType ? c : new Text_(c))); } // like a browser: append(null) writes the text "null"
   appendChild(c) { this.append(c); return c; }
   prepend(...k) { this.children.unshift(...k); }
   replaceChildren(...k) { this.children = []; this._t = ''; this.append(...k); }
   setAttribute(k, v) { this.attrs[k] = String(v); }
   getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }
   removeAttribute(k) { delete this.attrs[k]; }
-  addEventListener() {} removeEventListener() {}
+  addEventListener(t, f) { (this.ls = this.ls || {})[t] = (this.ls[t] || []).concat(f); } removeEventListener() {}
+  all(pred, out = []) { this.children.forEach((c) => { if (c.nodeType === 1) { if (pred(c)) out.push(c); c.all(pred, out); } }); return out; }
   get classList() {
     const s = this, has = (c) => s.className.split(' ').includes(c);
     return { add: (c) => { if (!has(c)) s.className = (s.className + ' ' + c).trim(); }, remove: (c) => { s.className = s.className.split(' ').filter((x) => x && x !== c).join(' '); }, contains: has,
       toggle(c, on) { (on === undefined ? !has(c) : on) ? this.add(c) : this.remove(c); } };
   }
   querySelector() { return null; } querySelectorAll() { return []; } closest() { return null; }
+  dispatchEvent() { return true; }
   before() {} after() {} focus() {} blur() {} click() {} scrollIntoView() {} remove() {} insertBefore(c) { this.append(c); return c; }
   getBoundingClientRect() { return { top: 0, left: 0, width: 0, height: 0 }; }
   get parentNode() { return null; } get firstChild() { return this.children[0] || null; }
@@ -44,7 +46,7 @@ const sb = {
   matchMedia: () => ({ matches: false, addEventListener() {} }), navigator: { userAgent: 'node' },
   location: { hash: '', href: 'http://localhost/', protocol: 'http:', replace(h) { this.hash = h; } },
   addEventListener() {}, removeEventListener() {}, scrollTo() {}, scrollY: 0, requestAnimationFrame: () => 0, fetch: () => Promise.reject(new Error('offline')),
-  confirm: () => true, alert() {}, URL, URLSearchParams, Blob: function () {}, Audio: function () { this.play = () => Promise.resolve(); this.pause = () => {}; this.addEventListener = () => {}; this.removeEventListener = () => {}; this.load = () => {}; this.style = {}; },
+  CustomEvent: function (t, o) { this.type = t; this.detail = o && o.detail; }, confirm: () => true, alert() {}, URL, URLSearchParams, Blob: function () {}, Audio: function () { this.play = () => Promise.resolve(); this.pause = () => {}; this.addEventListener = () => {}; this.removeEventListener = () => {}; this.load = () => {}; this.style = {}; },
   getComputedStyle: () => ({}), history: { replaceState() {} }
 };
 sb.window = sb; sb.self = sb;
@@ -69,6 +71,15 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
   check('view() flattens and skips null/false', app.children.length === 3 && app.children.every((c) => c.tag));
 }
 
+/* ---- a perfect score: the result box must not print "null" ---- */
+{
+  const wrap = sb.Engine.quiz([{ type: 'gap', q: 'She ___ home.', answers: ['went'], why: 'Past simple.' }], { source: { topic: 't', label: 'T', href: '#/' } });
+  wrap.all((n) => n.tag === 'input')[0].value = 'went';
+  wrap.all((n) => n.tag === 'button' && /Check answers/.test(n.textContent))[0].ls.click.forEach((f) => f({}));
+  const text = wrap.textContent;
+  check('perfect score shows the praise and no "null"', /Strong/.test(text) && !/null|undefined/.test(text), text.slice(-120));
+}
+
 /* ---- every route renders ---- */
 const C1 = sb.C1, routes = ['', 'welcome', 'course', 'course/mix', 'toolkit', 'progress', 'review', 'mistakes', 'mistakes/practice', 'placement', 'exams', 'privacy', 'mock', 'tricks', 'generate', 'certacles', 'plan', 'weak',
   'grammar', 'vocab', 'practice', 'skills', 'skills/listening', 'skills/writing', 'skills/writing/guide', 'skills/speaking', 'skills/pronunciation', 'vquiz/all'];
@@ -85,6 +96,11 @@ for (const r of routes) {
   try {
     sb.location.hash = '#/' + r; app.children = []; sb.App.route();
     const redirected = sb.location.hash !== '#/' + r;
+    if (/^(practice\/[a-z]+\/\d+|grammar\/.+|skills\/listening\/.+|vquiz.*)$/.test(r) && !r.startsWith('practice/reading')) {
+      /* press "Check answers" with nothing filled in, then read the result box */
+      const b = app.all((n) => n.tag === 'button' && /Check answers/.test(n.textContent))[0];
+      if (b) { try { (b.ls.click || []).forEach((f) => f({ preventDefault() {} })); check('quiz result on #/' + r + ' has no null/undefined text', !/null|undefined|\[object/.test(app.textContent), app.textContent.match(/.{20}(null|undefined).{10}/)); } catch (e) { check('checking answers on #/' + r, false, e.message); } }
+    }
     check('route #/' + r + ' renders', redirected || app.children.length > 0 && app.textContent.trim().length > 20 && !/^Not found/.test(app.textContent), 'empty or not found');
   } catch (e) { check('route #/' + r + ' renders', false, e.message); }
 }

@@ -320,12 +320,12 @@
       const wrong = res.length - correct;
       result.style.display = '';
       result.innerHTML = '';
-      result.append(h('div', { class: 'score' }, `${correct} / ${res.length}  (${pct}%)`),
+      result.append(...[h('div', { class: 'score' }, `${correct} / ${res.length}  (${pct}%)`),
         h('p', { class: 'muted' }, pct >= 80 ? 'Strong. Read any explanation you missed, then move on.' :
           pct >= 50 ? 'Good progress. Read the explanations: they tell you why, not just what.' :
             'This topic needs another look. Re-read the lesson idea, then try again.'),
         wrong && opts.source ? h('p', { class: 'muted' }, `${wrong} mistake${wrong === 1 ? '' : 's'} saved. `, h('a', { href: '#/mistakes' }, 'Review them with explanations')) : null,
-        h('div', { class: 'row' }, again));
+        h('div', { class: 'row' }, again)].filter(Boolean));
       result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     if (hasQuestions) wrap.append(h('div', { class: 'row', style: 'margin-top:14px' }, btn), result);
