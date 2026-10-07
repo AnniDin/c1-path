@@ -66,7 +66,11 @@
     const box = h('div', { class: 'card aifb' }, h('h3', { style: 'margin-top:0' }, title || 'AI feedback'),
       h('p', { class: 'muted' }, 'A second opinion from an AI model, not an official mark. Check anything that surprises you.'));
     if (d.level) box.append(h('p', {}, h('strong', {}, 'Estimated level: '), String(d.level)));
-    Object.entries(d.scores || {}).forEach(([k, v]) => { const n = Math.max(0, Math.min(5, +v || 0)); box.append(h('div', { class: 'trow' }, h('span', {}, SCORE_LABELS[k] || k), bar(n / 5, n >= 4 ? 'ok' : n >= 3 ? 'warn' : 'bad'), h('span', {}, n + '/5'))); });
+    Object.entries(d.scores || {}).forEach(([k, v]) => {
+      const n = Math.max(0, Math.min(5, +v || 0)), before = d._prev && d._prev.scores && d._prev.scores[k] != null ? Math.max(0, Math.min(5, +d._prev.scores[k] || 0)) : null, diff = before == null ? 0 : n - before;
+      box.append(h('div', { class: 'trow' }, h('span', {}, SCORE_LABELS[k] || k), bar(n / 5, n >= 4 ? 'ok' : n >= 3 ? 'warn' : 'bad'), h('span', {}, n + '/5' + (diff ? (diff > 0 ? ' (+' : ' (') + diff + ' since last time)' : ''))));
+    });
+    if (d._prev) box.append(h('p', { class: 'muted' }, 'Compared with your previous AI check on this task (' + fmtDate(d._prev.ts) + (d._prev.level ? ', ' + d._prev.level : '') + '). Rewrite using the corrections and check again: that is how the scores move.'));
     if (d.summary) box.append(h('p', {}, String(d.summary)));
     if ((d.strengths || []).length) box.append(h('h3', {}, 'Strengths'), li(d.strengths));
     if ((d.corrections || []).length) box.append(h('h3', {}, 'Corrections'), h('div', { class: 'tablewrap' }, h('table', {}, h('thead', {}, h('tr', {}, ['You wrote', 'Better', 'Why'].map((t) => h('th', {}, t)))),
@@ -632,7 +636,7 @@
       sectionHead('Tasks'),
       h('div', { class: 'grid' }, W.map((t) => { const d = Store.draft(t.id), sk = Store.skill('writing:' + t.id) || {};
         return h('a', { class: 'card', href: '#/skills/writing/' + t.id },
-          h('div', {}, h('span', { class: 'tag' }, t.genre[0].toUpperCase() + t.genre.slice(1)), sk.done ? h('span', { class: 'tag ok' }, 'Done') : d ? h('span', { class: 'chip' }, d.words + ' words drafted') : h('span', { class: 'chip' }, 'new')),
+          h('div', {}, h('span', { class: 'tag' }, t.genre[0].toUpperCase() + t.genre.slice(1)), (sk.ai && sk.ai.length ? h('span', { class: 'tag' }, 'AI: ' + (sk.ai[sk.ai.length - 1].level || 'checked')) : null), sk.done ? h('span', { class: 'tag ok' }, 'Done') : d ? h('span', { class: 'chip' }, d.words + ' words drafted') : h('span', { class: 'chip' }, 'new')),
           h('h3', { style: 'margin:.4em 0 .2em' }, t.title), h('p', { class: 'muted', style: 'margin:0' }, `${t.min}–${t.max} words`)); })));
   }
 
@@ -708,7 +712,13 @@
         h('details', { class: 'card' }, h('summary', {}, 'Useful language'), t.language.map((g) => h('div', {}, h('strong', {}, g.h), h('ul', {}, g.items.map((i) => h('li', {}, i))))))),
       timerBox, area, h('div', { class: 'row', style: 'justify-content:space-between' }, counter, savedMsg),
       h('div', { class: 'row', style: 'margin:10px 0' }, h('button', { class: 'btn', onclick: runAnalysis }, 'Analyse my text'), h('button', { class: 'btn ghost', onclick: showModel }, 'Show model answer'),
-        aiButton('AI feedback', aiOut, async () => { if (count() < 60) throw new Error('Write at least 60 words first.'); return AI.writing(t, area.value); }, 'AI feedback: ' + t.title)),
+        aiButton('AI feedback', aiOut, async () => {
+          if (count() < 60) throw new Error('Write at least 60 words first.');
+          const d = await AI.writing(t, area.value), tries = (Store.skill('writing:' + id) || {}).ai || [];
+          d._prev = tries[tries.length - 1] || null;
+          Store.setSkill('writing:' + id, { ai: tries.concat({ ts: Date.now(), words: count(), level: d.level || '', scores: d.scores || {} }).slice(-6) });
+          return d;
+        }, 'AI feedback: ' + t.title)),
       analysis, aiOut, modelBox, selfBox,
       uf || h('div', { class: 'pager' }, link('#/skills/writing', 'All tasks', 'btn ghost small'), link('#/skills/writing/guide', 'Guide', 'btn ghost small')));
     paint();

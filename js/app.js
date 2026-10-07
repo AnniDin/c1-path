@@ -282,7 +282,7 @@ window.App = { routes: {}, cleanup: [] };
     const box = h('div');
     box.append(h('h1', {}, 'Placement test'),
       h('p', { class: 'lead' }, `${items.length} questions from B1 up to C1. Do not guess wildly: a wrong answer with an explanation teaches you more than a lucky one. It takes about 15–20 minutes.`),
-      prev ? h('div', { class: 'callout' }, `Last result (${prev.date}): ${prev.summary}`) : null,
+      prev ? h('div', { class: 'callout' }, `Last result (${prev.date}): ${prev.summary}`) : '',
       quiz(items, {
         source: { topic: 'placement', label: 'Placement test', href: '#/placement' },
         onRetry: placement,

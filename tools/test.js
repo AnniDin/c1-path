@@ -100,6 +100,18 @@ const sync = (a, b) => { b.Store.mergeData(a.Store.exportData()); a.Store.mergeD
   eq('reaching the daily goal records it once', Object.keys(D.Store.state.badges).filter((k) => k.startsWith('goal:')).length, 1);
 }
 
+/* --- rewriting a text and raising the AI score earns a badge --- */
+{
+  const D = device();
+  D.Engine = { h: (tag, attrs, ...kids) => ({ tag, attrs, kids }), Speech: {}, quiz: noop };
+  D.App = { bar: noop, cardBlock: noop, toast: noop, unitsDone: () => 0, unitCount: () => 13 };
+  vm.runInContext(read('js/rewards.js'), D, { filename: 'js/rewards.js' });
+  D.Store.setSkill('writing:w1', { ai: [{ ts: 1, scores: { content: 3, language: 3 } }] });
+  eq('one AI check is not an improvement', !!D.Store.state.badges.rewrite, false);
+  D.Store.setSkill('writing:w1', { ai: [{ ts: 1, scores: { content: 3, language: 3 } }, { ts: 2, scores: { content: 4, language: 3 } }] });
+  eq('a higher second AI score earns Rewriter', !!D.Store.state.badges.rewrite, true);
+}
+
 /* --- content data sanity: tricks and pronunciation --- */
 {
   const C = device(['data/tricks.js', 'data/tricks2.js', 'data/tricks3.js', 'data/pron.js']).C1;

@@ -13,5 +13,7 @@ jobs:
       - run: node tools/validate-node.js
       - name: Behaviour tests
         run: node tools/test.js
+      - name: Render every page
+        run: node tools/smoke.js
       - name: Syntax check scripts
         run: for f in js/*.js data/*.js sw.js; do node --check "$f"; done

@@ -16,6 +16,8 @@
       lessons: Object.values(S.lessons).filter(Boolean).length, cards: Object.keys(S.cards).length, sets: Object.keys(S.scores).length,
       listen: Object.keys(S.scores).filter((k) => k.startsWith('listen:')).length, speak: done(/^speaking:/), write: done(/^writing:/),
       units: A.unitsDone ? A.unitsDone() : 0, allUnits: A.unitCount ? A.unitCount() : 99, placement: !!S.placement,
+      mocks: (S.mocks || []).length,
+      improved: Object.values(S.skills).some((k) => { const a = (k && k.ai) || [], sum = (x) => Object.values(x.scores || {}).reduce((t, v) => t + (+v || 0), 0); return a.length > 1 && sum(a[a.length - 1]) > sum(a[0]); }),
       goals: Object.keys(S.badges || {}).filter((k) => k.startsWith('goal:')).length,
       quests: Object.keys(S.badges || {}).filter((k) => k.startsWith('quest:')).length
     };
@@ -48,6 +50,10 @@
     ['uall', 'Course complete', 'Finish every course unit', (s) => s.units >= s.allUnits],
     ['q3', 'Quest runner', 'Complete all daily quests 3 times', (s) => s.quests >= 3],
     ['q15', 'Quest master', 'Complete all daily quests 15 times', (s) => s.quests >= 15],
+    ['ear10', 'Sharp ear', 'Finish 10 listening sets', (s) => s.listen >= 10],
+    ['pen5', 'Wordsmith', 'Complete 5 writing tasks', (s) => s.write >= 5],
+    ['mock1', 'Test day', 'Finish a full timed test', (s) => s.mocks >= 1],
+    ['rewrite', 'Rewriter', 'Raise your AI writing score by rewriting', (s) => s.improved],
     ['acc', 'Sharp', '90% or more correct after 200 answers', (s) => s.total >= 200 && s.right / s.total >= 0.9]
   ];
 
