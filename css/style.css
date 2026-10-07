@@ -351,3 +351,13 @@ main:focus, main:focus-visible { outline: none; }
 .ach:not(.got) strong { color: var(--muted); }
 .ach:not(.got) .ico { filter: grayscale(1); opacity: .7; }
 @media (max-width: 640px) { .crumbs a, .foot a, .more > summary { display: inline-block; padding: 8px 4px; } }
+
+/* What to do next, and difficulty chips */
+.next { margin: 14px 0 6px; padding-top: 12px; border-top: 1px solid var(--line, rgba(128,128,128,.25)); }
+.next h3 { margin: 0 0 8px; }
+.nextrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; flex-wrap: wrap; }
+.nextrow > div { flex: 1 1 220px; min-width: 0; }
+.chip.lv { font-weight: 600; }
+.chip.lv1, .chip.lv2 { color: var(--ok, #2e7d32); }
+.chip.lv4 { color: var(--warn, #b26a00); }
+.chip.lv5 { color: var(--bad, #b3261e); }

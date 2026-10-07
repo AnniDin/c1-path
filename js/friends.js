@@ -28,7 +28,7 @@
       if (!me) {
         const name = h('input', { type: 'text', maxlength: 24, placeholder: 'Display name', 'aria-label': 'Display name', value: String((Cloud.user().email || '').split('@')[0]).slice(0, 24) });
         return box.replaceChildren(card(
-          h('p', { class: 'muted' }, 'Compete with friends in a weekly ranking. It is optional. If you join, your display name, questions answered this week, streak and level are visible only to people who add your friend code. You can leave at any time and it is deleted.'),
+          h('p', { class: 'muted' }, 'Compete with friends in a weekly ranking. It is optional. If you join, your display name, questions answered this week, streak and level are visible only to people who add your friend code, or whose code you add: a friendship is mutual. You can leave at any time and it is deleted.'),
           h('div', { class: 'row' }, name, h('button', { class: 'btn small', onclick: async () => {
             try { const code = await Cloud.rpc('join_board', { p_name: name.value || 'Learner' }); put({ code }); await publish(); draw(); } catch (e) { msg.textContent = friendly(e); }
           } }, 'Join')), msg));

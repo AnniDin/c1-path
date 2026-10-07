@@ -90,5 +90,15 @@ window.validate = function () {
     if (st.t === 'speaking' && !((C1.speaking || {}).sets || []).some((x) => x.id === st.id)) issues.push('course ' + u.id + ': unknown speaking set ' + st.id);
     if (st.t === 'writing' && !((C1.writing || {}).tasks || []).some((x) => x.id === st.id)) issues.push('course ' + u.id + ': unknown writing task ' + st.id);
   }));
+  /* difficulty goes up along the course: levels never go down */
+  const LR = { B2: 1, 'B2–C1': 2, C1: 3 }, lr = (C1.course || []).map((u) => LR[u.level] || 0);
+  (C1.course || []).forEach((u, i) => { if (!lr[i]) issues.push('course ' + u.id + ': unknown level ' + u.level); else if (i && lr[i] < lr[i - 1]) issues.push('course ' + u.id + ' (' + u.level + ') comes after an easier-to-harder jump back: levels must not go down'); });
+  /* every practice set, listening set, writing task and speaking set has a difficulty rating from 1 to 5 */
+  const LV = C1.levels || {}, okLv = (n) => Number.isInteger(n) && n >= 1 && n <= 5;
+  C1.practice.forEach((p) => { const a = (LV.practice || {})[p.id] || []; if (a.length !== p.sets.length) issues.push('levels: ' + p.id + ' has ' + a.length + ' ratings for ' + p.sets.length + ' sets'); else a.forEach((n, i) => { if (!okLv(n)) issues.push('levels: ' + p.id + '/' + i + ' is not 1-5'); }); });
+  [['listening', C1.listening || []], ['writing', (C1.writing || {}).tasks || []], ['speaking', (C1.speaking || {}).sets || []]].forEach(([k, list]) => {
+    const m = LV[k] || {}; list.forEach((x) => { if (!okLv(m[x.id])) issues.push('levels: ' + k + ' ' + x.id + ' has no rating 1-5'); });
+    Object.keys(m).forEach((id) => { if (!list.some((x) => x.id === id)) issues.push('levels: ' + k + ' rating for unknown id ' + id); });
+  });
   return issues;
 };

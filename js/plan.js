@@ -11,6 +11,8 @@
   A.topicLabels.weak = 'Weak spots';
   const weakTopics = () => Object.entries(Store.state.stats).filter(([, s]) => s.t >= 5).map(([k, s]) => [k, s.c / s.t]).filter(([, a]) => a < 0.75).sort((a, b) => a[1] - b[1]).slice(0, 3);
 
+  A.weakTopics = weakTopics;
+
   /* ---------- exam countdown (Home) and plan page ---------- */
   const examDays = () => { const ex = Store.state.exam; return ex && ex.date ? daysTo(ex.date) : null; };
   /* Home: the countdown only when a date is set; otherwise a quiet prompt inside "More". */

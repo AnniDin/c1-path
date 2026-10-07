@@ -309,8 +309,9 @@
       window.C1 && C1.audio && C1.audio.listening ? null : voiceTip(),
       h('div', { class: 'callout' }, h('strong', {}, 'How to practise. '), h('ol', {}, h('li', {}, 'Read the questions first and underline the key words.'), h('li', {}, 'Play the recording. The real exam plays it twice, so allow yourself two plays.'), h('li', {}, 'Answer, check, then open the transcript and find the evidence for every answer, including the ones you got right.'))),
       sectionHead('Recordings'),
-      h('div', { class: 'grid' }, L.map((x) => h('a', { class: 'card', href: '#/skills/listening/' + x.id },
-        h('div', {}, A.scoreChip('listen:' + x.id) || h('span', { class: 'chip' }, 'new')), h('h3', { style: 'margin:.4em 0 .2em' }, x.title), h('p', { class: 'muted', style: 'margin:0' }, x.format)))),
+      h('p', { class: 'muted' }, 'Listed from easier to harder (an expert estimate of how hard the questions are).'),
+      h('div', { class: 'grid' }, A.ranked('listening', L).map((x) => h('a', { class: 'card', href: '#/skills/listening/' + x.id },
+        h('div', {}, A.itemChip('listening', x.id), A.scoreChip('listen:' + x.id) || h('span', { class: 'chip' }, 'new')), h('h3', { style: 'margin:.4em 0 .2em' }, x.title), h('p', { class: 'muted', style: 'margin:0' }, x.format)))),
       sectionHead('Dictation and your own audio', 'Train your ear for connected speech.'),
       h('a', { class: 'card', href: '#/skills/listening/own' }, h('h3', { style: 'margin:0 0 .2em' }, 'Practise with your own audio'), h('p', { class: 'muted', style: 'margin:0' }, 'Load a real recording (a past exam track, a podcast, a video soundtrack): slow it down, loop a difficult passage, write what you hear and compare it with the transcript.')),
       h('a', { class: 'card', style: 'margin-top:14px', href: '#/skills/dictation' }, h('h3', { style: 'margin:0 0 .2em' }, 'Listen and type'), h('p', { class: 'muted', style: 'margin:0' }, 'Six sentences from the vocabulary you are learning. You hear each one and type it; the app shows exactly which words you missed.')));
@@ -502,8 +503,9 @@
       h('p', { class: 'lead' }, 'Speak aloud, out loud, every time. Each set follows the four parts of the exam with a timer and a recorder so you can listen back to yourself.'),
       h('div', { class: 'row' }, link('#/skills/speaking/guide', 'Guide: the 4 parts, criteria and useful phrases', 'btn ghost'), link('#/skills/pronunciation', 'Pronunciation lab', 'btn ghost')),
       sectionHead('Practice sets'),
-      h('div', { class: 'grid' }, S.map((x) => { const d = Store.skill('speaking:' + x.id) || {}; return h('a', { class: 'card', href: '#/skills/speaking/' + x.id },
-        h('div', {}, d.done ? h('span', { class: 'tag ok' }, 'Done') : h('span', { class: 'chip' }, 'new')), h('h3', { style: 'margin:.4em 0 .2em' }, x.title), h('p', { class: 'muted', style: 'margin:0' }, x.part1[0])); })));
+      h('p', { class: 'muted' }, 'Listed from easier to harder.'),
+      h('div', { class: 'grid' }, A.ranked('speaking', S).map((x) => { const d = Store.skill('speaking:' + x.id) || {}; return h('a', { class: 'card', href: '#/skills/speaking/' + x.id },
+        h('div', {}, A.itemChip('speaking', x.id), d.done ? h('span', { class: 'tag ok' }, 'Done') : h('span', { class: 'chip' }, 'new')), h('h3', { style: 'margin:.4em 0 .2em' }, x.title), h('p', { class: 'muted', style: 'margin:0' }, x.part1[0])); })));
   }
 
   function speakingGuide() {
@@ -634,9 +636,10 @@
       h('p', { class: 'lead' }, 'Write a full text under exam conditions, check it with the analyser, then compare it with an annotated model. Your draft is saved in this browser as you type.'),
       h('div', { class: 'row' }, link('#/skills/writing/guide', 'Guide: criteria, text types and checklist', 'btn ghost')),
       sectionHead('Tasks'),
-      h('div', { class: 'grid' }, W.map((t) => { const d = Store.draft(t.id), sk = Store.skill('writing:' + t.id) || {};
+      h('p', { class: 'muted' }, 'Listed from easier to harder.'),
+      h('div', { class: 'grid' }, A.ranked('writing', W).map((t) => { const d = Store.draft(t.id), sk = Store.skill('writing:' + t.id) || {};
         return h('a', { class: 'card', href: '#/skills/writing/' + t.id },
-          h('div', {}, h('span', { class: 'tag' }, t.genre[0].toUpperCase() + t.genre.slice(1)), (sk.ai && sk.ai.length ? h('span', { class: 'tag' }, 'AI: ' + (sk.ai[sk.ai.length - 1].level || 'checked')) : null), sk.done ? h('span', { class: 'tag ok' }, 'Done') : d ? h('span', { class: 'chip' }, d.words + ' words drafted') : h('span', { class: 'chip' }, 'new')),
+          h('div', {}, A.itemChip('writing', t.id), h('span', { class: 'tag' }, t.genre[0].toUpperCase() + t.genre.slice(1)), (sk.ai && sk.ai.length ? h('span', { class: 'tag' }, 'AI: ' + (sk.ai[sk.ai.length - 1].level || 'checked')) : null), sk.done ? h('span', { class: 'tag ok' }, 'Done') : d ? h('span', { class: 'chip' }, d.words + ' words drafted') : h('span', { class: 'chip' }, 'new')),
           h('h3', { style: 'margin:.4em 0 .2em' }, t.title), h('p', { class: 'muted', style: 'margin:0' }, `${t.min}–${t.max} words`)); })));
   }
 

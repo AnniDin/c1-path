@@ -324,6 +324,7 @@
         h('p', { class: 'muted' }, pct >= 80 ? 'Strong. Read any explanation you missed, then move on.' :
           pct >= 50 ? 'Good progress. Read the explanations: they tell you why, not just what.' :
             'This topic needs another look. Re-read the lesson idea, then try again.'),
+        window.App && App.recommend ? App.recommend(opts.source, pct, res) : null,
         wrong && opts.source ? h('p', { class: 'muted' }, `${wrong} mistake${wrong === 1 ? '' : 's'} saved. `, h('a', { href: '#/mistakes' }, 'Review them with explanations')) : null,
         h('div', { class: 'row' }, again)].filter(Boolean));
       result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

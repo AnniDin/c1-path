@@ -121,6 +121,13 @@ window.App = { routes: {}, cleanup: [] };
       prev ? link(prev.href, '← ' + prev.label, 'btn ghost small') : link('#/course/' + u.id, '← Unit overview', 'btn ghost small'),
       next ? link(next.href, 'Next: ' + next.label + ' →', 'btn small') : link('#/course/' + u.id, 'Back to the unit', 'btn small'));
   }
+  /* the step after this one in the unit the learner came from (or null) */
+  function nextInUnit(kind, id, set) {
+    const u = unitCtx && unitById(unitCtx);
+    if (!u) return null;
+    const list = u.steps.concat([{ t: 'review' }]), idx = list.findIndex((s) => s.t === kind && s.id === id && (set == null || s.set === set));
+    return idx < 0 ? null : unitSteps(u)[idx + 1] || null;
+  }
   const uq = () => (unitCtx ? '?u=' + unitCtx : '');
   /* "Part of the course" crumb, shown when a page was opened from the Library instead of from a unit. */
   function partOf(kind, id, set) {
@@ -492,19 +499,21 @@ window.App = { routes: {}, cleanup: [] };
       view(back('#/practice', 'Practice'), h('h1', {}, p.title), h('p', { class: 'muted' }, p.exam),
         h('div', { class: 'callout' }, h('strong', {}, 'Strategy'), h('div', { html: p.strategy })),
         sectionHead('Sets', `${setsDone(p)} of ${p.sets.length} completed`),
-        h('div', { class: 'grid' }, p.sets.map((s, i) =>
-          h('a', { class: 'card', href: `#/practice/${id}/${i}` }, h('div', {}, scoreChip(setKey(id, i)) || h('span', { class: 'chip' }, 'new')),
-            h('h3', { style: 'margin:.4em 0 .2em' }, s.title), h('p', { class: 'muted', style: 'margin:0' }, s.note || '')))));
+        h('p', { class: 'muted' }, 'Sets are listed from easier to harder, so work from the top. The difficulty is an expert estimate of how hard the questions are.'),
+        h('div', { class: 'grid' }, (App.setOrder ? App.setOrder(id) : p.sets.map((_, i) => i)).map((i) => { const s = p.sets[i];
+          return h('a', { class: 'card', href: `#/practice/${id}/${i}` }, h('div', {}, App.levelChip ? App.levelChip(App.setLevel(id, i)) : null, scoreChip(setKey(id, i)) || h('span', { class: 'chip' }, 'new')),
+            h('h3', { style: 'margin:.4em 0 .2em' }, s.title), h('p', { class: 'muted', style: 'margin:0' }, s.note || '')); })));
       return;
     }
     const s = p.sets[setIdx];
     if (!s) return notFound();
     const uf = unitFooter('practice', id, setIdx);
+    const ord = App.setOrder ? App.setOrder(id) : p.sets.map((_, i) => i), pos = ord.indexOf(setIdx), prevSet = pos > 0 ? ord[pos - 1] : null, nextSet = pos >= 0 && pos + 1 < ord.length ? ord[pos + 1] : null;
     view(unitBack() || back('#/practice/' + id, p.title), partOf('practice', id, setIdx), h('h1', {}, s.title), h('p', { class: 'muted' }, p.instruction),
       quiz(s.items, { source: { topic: 'u-' + id, label: p.title + ' · ' + s.title, href: `#/practice/${id}/${setIdx}` }, onRetry: () => practiceType(id, setIdx), onScore: (c, t) => { Store.record('u-' + id, c, t); Store.setScore(setKey(id, setIdx), c, t); } }),
       uf || h('div', { class: 'pager' },
-        setIdx > 0 ? link(`#/practice/${id}/${setIdx - 1}`, '← Previous set', 'btn ghost small') : h('span'),
-        setIdx + 1 < p.sets.length ? link(`#/practice/${id}/${setIdx + 1}`, 'Next set →', 'btn ghost small') : link('#/practice', 'All practice', 'btn ghost small')));
+        prevSet != null ? link(`#/practice/${id}/${prevSet}`, '← Easier set', 'btn ghost small') : h('span'),
+        nextSet != null ? link(`#/practice/${id}/${nextSet}`, 'Next set, a bit harder →', 'btn ghost small') : link('#/practice', 'All practice', 'btn ghost small')));
   }
 
   /* ---------- course: study by theme ---------- */
@@ -784,7 +793,7 @@ window.App = { routes: {}, cleanup: [] };
           h('li', {}, 'To delete your account and all cloud data at any time: open the account menu at the top right and choose "Delete my account". Copies on your own devices stay.'),
           h('li', {}, 'To get a copy of your data: use "Export backup" in Review.'),
           h('li', {}, 'The sign-in session token is kept in your browser\'s localStorage.')),
-        h('p', {}, 'Optional friends leaderboard: only if you join it, the server also stores a display name you choose, your questions answered this week, your streak, your level and a friend code. They are visible only to you and to people who add your code, and "Leave" in Review deletes them. Deleting your account removes them too.'),
+        h('p', {}, 'Optional friends leaderboard: only if you join it, the server also stores a display name you choose, your questions answered this week, your streak, your level and a friend code. They are visible only to you and to people who add your code, or whose code you add: a friendship is mutual, so both see each other. "Leave" in Review deletes them. Deleting your account removes them too.'),
         h('p', {}, 'Supabase and, if you choose Google sign-in, Google act as service providers under their own privacy policies.')) : null,
       h('h2', {}, 'Optional AI feedback'),
       h('p', {}, 'If you add your own API key (Google Gemini, Groq or Anthropic) and ask for feedback, the text you choose to submit is sent to that provider to produce the feedback. The key stays in your browser. Free plans of some providers may use submitted text to improve their models, so do not include personal details. Without a key, nothing is sent.'),
@@ -862,7 +871,7 @@ window.App = { routes: {}, cleanup: [] };
     stepsLeft: () => { const all = C1.course.flatMap((u) => unitSteps(u)); return { done: all.filter((x) => x.done).length, total: all.length }; },
     unitsDone: () => C1.course.filter((u) => unitDone(u) === unitSteps(u).length).length, unitCount: () => C1.course.length,
     topicHref, icon, view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
-    unitBack, unitFooter, uq, partOf, setKey, scoreChip, start: route, route
+    unitBack, unitFooter, uq, partOf, setKey, scoreChip, nextInUnit, nextCourseStep, dueIds, start: route, route
   });
   Object.defineProperty(window.App, 'unitCtx', { get: () => unitCtx });
 })();

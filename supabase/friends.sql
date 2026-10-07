@@ -46,18 +46,28 @@ $$;
 
 create or replace function public.add_friend(p_code text) returns boolean
 language plpgsql security definer set search_path = public as $$
-declare c text := upper(trim(p_code));
+declare c text := upper(trim(p_code)); other uuid; mine text;
 begin
   if auth.uid() is null then raise exception 'not signed in'; end if;
-  if not exists (select 1 from leaderboard where code = c and user_id <> auth.uid()) then return false; end if;
+  select user_id into other from leaderboard where code = c and user_id <> auth.uid();
+  if other is null then return false; end if;
+  select code into mine from leaderboard where user_id = auth.uid();
+  if mine is null then raise exception 'join the leaderboard first'; end if;
+  -- friendship is mutual: adding a code makes you and its owner visible to each other
   insert into friends (user_id, friend_code) values (auth.uid(), c) on conflict do nothing;
+  insert into friends (user_id, friend_code) values (other, mine) on conflict do nothing;
   return true;
 end $$;
 
 create or replace function public.remove_friend(p_code text) returns void
-language sql security definer set search_path = public as $$
-  delete from friends where user_id = auth.uid() and friend_code = upper(trim(p_code));
-$$;
+language plpgsql security definer set search_path = public as $$
+declare c text := upper(trim(p_code)); other uuid; mine text;
+begin
+  select user_id into other from leaderboard where code = c;
+  select code into mine from leaderboard where user_id = auth.uid();
+  delete from friends where user_id = auth.uid() and friend_code = c;
+  if other is not null and mine is not null then delete from friends where user_id = other and friend_code = mine; end if;
+end $$;
 
 create or replace function public.leave_board() returns void
 language sql security definer set search_path = public as $$

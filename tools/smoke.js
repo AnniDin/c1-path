@@ -77,7 +77,34 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
   wrap.all((n) => n.tag === 'input')[0].value = 'went';
   wrap.all((n) => n.tag === 'button' && /Check answers/.test(n.textContent))[0].ls.click.forEach((f) => f({}));
   const text = wrap.textContent;
-  check('perfect score shows the praise and no "null"', /Strong/.test(text) && !/null|undefined/.test(text), text.slice(-120));
+  check('perfect score shows the praise and no "null"', /Strong/.test(text) && /What to do next/.test(text) && !/null|undefined/.test(text), text.slice(-120));
+}
+
+/* ---- difficulty ladder and recommendations ---- */
+{
+  const A = sb.App, lvl = (t, i) => A.setLevel(t, i);
+  sb.C1.practice.forEach((p) => {
+    const ord = A.setOrder(p.id), levels = ord.map((i) => lvl(p.id, i));
+    check('sets of ' + p.id + ' are listed from easier to harder', levels.every((v, k) => !k || v >= levels[k - 1]) && ord.length === p.sets.length);
+  });
+  const hrefOf = (src, pct, wrongN) => A.recommendFor(src, pct, Array.from({ length: 6 }, (_, k) => ({ ok: k >= wrongN }))).map((r) => r.href);
+  /* a set with room above and below: pick a mid-level mcq set */
+  const type = 'mcq', mid = A.setOrder(type).find((i) => lvl(type, i) === 3), src = { topic: 'u-mcq', href: '#/practice/mcq/' + mid };
+  const levelOfHref = (h) => lvl(type, +h.split('/').pop());
+  const strong = A.recommendFor(src, 100, []), weak = A.recommendFor(src, 30, [{ ok: false }]);
+  const up = strong.map((r) => r.href).filter((h) => /#\/practice\/mcq\/\d+/.test(h)), down = weak.map((r) => r.href).filter((h) => /#\/practice\/mcq\/\d+/.test(h));
+  check('a perfect score recommends a harder or equal set, never the same one', up.length > 0 && up.every((h) => levelOfHref(h) >= 3 && h !== src.href), up.join());
+  check('a low score recommends an easier set, never the same one', down.length > 0 && down.every((h) => levelOfHref(h) <= 3 && h !== src.href), down.join());
+  check('a low score also recommends building the base', weak.some((r) => /^#\/(vocab|grammar)/.test(r.href)));
+  check('every recommendation points to a real page', [...strong, ...weak].every((r) => r.title && r.sub && /^#\//.test(r.href)));
+  const lesson = A.grammar[0], lsrc = { topic: 'g-' + lesson.id, href: '#/grammar/' + lesson.id };
+  check('a strong lesson score recommends practice or the next lesson', A.recommendFor(lsrc, 100, []).some((r) => /practice|grammar/.test(r.href) && r.href !== lsrc.href));
+  check('a weak lesson score recommends re-reading it', A.recommendFor(lsrc, 30, [{ ok: false }]).some((r) => r.href === lsrc.href));
+  const lis = sb.C1.listening[0], isrc = { topic: 'listen', href: '#/skills/listening/' + lis.id };
+  check('a weak listening score recommends dictation', A.recommendFor(isrc, 20, [{ ok: false }]).some((r) => /dictation/.test(r.href)));
+  check('unknown quiz sources still get advice', A.recommendFor({ topic: 'mix', href: '#/course/mix' }, 50, [{ ok: false }]).length >= 1);
+  check('at most three recommendations are shown', A.recommend(src, 50, [{ ok: false }]).children.slice(1).length <= 3);
+  void hrefOf;
 }
 
 /* ---- every route renders ---- */
