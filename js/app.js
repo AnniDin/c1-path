@@ -604,7 +604,7 @@ window.App = { routes: {}, cleanup: [] };
         tile('#/skills/writing', 'Writing', 'Exam-style tasks with a word count, text analysis and model answers.', `${sk.w[0]}/${sk.w[1]} tasks done`, 'writing')),
       App.limitsNote ? App.limitsNote() : null,
       sectionHead('Reference and tools'),
-      h('div', { class: 'row' }, link('#/mock', 'Full tests', 'btn'), link('#/tricks', 'Tricks', 'btn ghost'), link('#/generate', 'Generate with AI', 'btn ghost'), link('#/exams', 'The exams explained', 'btn ghost'), link('#/placement', 'Placement test', 'btn ghost'), link('#/vquiz', 'Vocabulary quiz', 'btn ghost'), link('#/review', 'Flashcards', 'btn ghost')));
+      h('div', { class: 'row' }, link('#/mock', 'Exams and full tests', 'btn'), link('#/tricks', 'Tricks', 'btn ghost'), link('#/generate', 'Generate with AI', 'btn ghost'), link('#/exams', 'The exams explained', 'btn ghost'), link('#/placement', 'Placement test', 'btn ghost'), link('#/vquiz', 'Vocabulary quiz', 'btn ghost'), link('#/review', 'Flashcards', 'btn ghost')));
   }
 
   /* ---------- full tests: hub and guided papers ---------- */
@@ -613,7 +613,7 @@ window.App = { routes: {}, cleanup: [] };
     return fresh.concat(rest).slice(0, n);
   };
   function guidedPaper(title, lead, minutes, steps, note) {
-    view(back('#/mock', 'Full tests'), h('h1', {}, title), h('p', { class: 'lead' }, lead),
+    view(back('#/mock', 'Exams'), h('h1', {}, title), h('p', { class: 'lead' }, lead),
       App.timer ? App.timer(minutes * 60, `Suggested time: ${minutes} minutes`) : null,
       h('div', { class: 'steps' }, steps.map((st, i) => h('div', { class: 'step' + (st.done ? ' done' : '') },
         h('span', { class: 'dot' }, i + 1),
@@ -649,7 +649,7 @@ window.App = { routes: {}, cleanup: [] };
   }
   function mockHub() {
     const card = (href, title, desc, tag, ic) => h('a', { class: 'card', href }, h('span', { class: 'tag' }, tag), h('h3', { style: 'margin:.4em 0 .2em' }, icon(ic), title), h('p', { class: 'muted', style: 'margin:0' }, desc));
-    view(back('#/toolkit', 'Library'), h('h1', {}, 'Full tests'),
+    view(h('h1', {}, 'Exams'),
       h('p', { class: 'lead' }, 'Practise a whole exam paper under time pressure instead of one task at a time. Each test picks material you have not done yet.'),
       h('div', { class: 'grid' },
         card('#/mock/reading', 'Reading and Use of English', 'All eight parts on one page, scored by part.', '90 min', 'practice'),
@@ -657,7 +657,10 @@ window.App = { routes: {}, cleanup: [] };
         card('#/mock/writing', 'Writing', 'An essay and a second text type.', '90 min', 'writing'),
         card('#/certacles', 'CertAcles-style paper', 'The four components in a typical university order, with approximate times.', 'Guide', 'review'),
         card('#/mock/speaking', 'Speaking', 'One full set: interview, long turn, discussion.', '15 min', 'speaking')),
-      h('div', { class: 'callout' }, 'These tests train timing and stamina. They give no official mark. For a realistic check, do a full paper from a past-paper book too.'));
+      App.planBanner ? App.planBanner() : null,
+      App.historyCard ? App.historyCard() : null,
+      h('div', { class: 'callout' }, 'These tests train timing and stamina. They give no official mark. For a realistic check, do a full paper from a past-paper book too.'),
+      h('div', { class: 'row' }, link('#/plan', 'Exam date and study plan', 'btn ghost'), link('#/exams', 'The exams explained', 'btn ghost')));
   }
   const mockRoute = (b) => (b === 'reading' ? mockTest() : b === 'listening' ? mockListening() : b === 'writing' ? mockWriting() : b === 'speaking' ? mockSpeaking() : mockHub());
 
@@ -699,7 +702,7 @@ window.App = { routes: {}, cleanup: [] };
           }
         }));
     });
-    view(back('#/mock', 'Full tests'), h('h1', {}, 'Full test: Reading and Use of English'),
+    view(back('#/mock', 'Exams'), h('h1', {}, 'Full test: Reading and Use of English'),
       h('p', { class: 'lead' }, 'One task of each kind in the order of the exam paper: Parts 1 to 8. It takes about an hour and a half. Work without looking anything up, check each part at the end of the part, and read every explanation afterwards.'),
       App.timer ? App.timer(5400, 'Suggested time: 90 minutes') : null,
       h('div', { class: 'callout' }, 'The real paper has eight parts and 90 minutes. Sets you have not done yet are chosen first.'),
@@ -794,7 +797,7 @@ window.App = { routes: {}, cleanup: [] };
   /* ---------- exams ---------- */
   function exams() {
     const E = C1.exams;
-    view(back('#/toolkit', 'Library'), h('h1', {}, 'The exams'), h('p', { class: 'lead', html: E.intro }),
+    view(back('#/mock', 'Exams'), h('h1', {}, 'The exams'), h('p', { class: 'lead', html: E.intro }),
       h('div', { class: 'callout warn', html: E.caution }),
       ...E.exams.map((ex) => h('div', {},
         h('h2', {}, ex.name), h('p', { html: ex.summary }),
@@ -818,9 +821,10 @@ window.App = { routes: {}, cleanup: [] };
     if (unitCtx && !unitById(unitCtx)) unitCtx = null;
     const parts = pathPart.split('/').filter(Boolean).map(decodeURIComponent);
     const [a, b, c] = parts;
-    const inLibrary = ['tricks', 'generate', 'certacles', 'grammar', 'vocab', 'practice', 'vquiz', 'skills', 'exams', 'toolkit', 'mock'].includes(a);
+    const inLibrary = ['tricks', 'generate', 'grammar', 'vocab', 'practice', 'vquiz', 'skills', 'toolkit'].includes(a);
+    const inExams = ['mock', 'certacles', 'exams', 'plan'].includes(a);
     const inReview = ['review', 'mistakes', 'progress', 'placement'].includes(a);
-    const navKey = !a ? 'home' : unitCtx && a !== 'course' ? 'course' : inLibrary ? 'toolkit' : inReview ? 'progress' : a;
+    const navKey = !a ? 'home' : unitCtx && a !== 'course' ? 'course' : inExams ? 'mock' : inLibrary ? 'toolkit' : inReview ? 'progress' : a;
     document.querySelectorAll('#nav a').forEach((el) => el.classList.toggle('active', el.dataset.r === navKey));
     if (!a && !Store.state.welcomed && !Store.totalAnswered()) { location.replace('#/welcome'); return; }
     if (a === 'welcome') return welcome(b);

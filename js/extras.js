@@ -67,7 +67,7 @@
   /* ---------- CertAcles-style paper ---------- */
   A.routes.certacles = () => {
     const row = (label, sub, href) => h('div', { class: 'step' }, h('span', { class: 'dot' }, '›'), h('div', {}, h('strong', {}, label), h('div', { class: 'muted' }, sub)), link(href, 'Open', 'btn small ghost'));
-    view(back('#/mock', 'Full tests'), h('h1', {}, 'CertAcles-style paper'),
+    view(back('#/mock', 'Exams'), h('h1', {}, 'CertAcles-style paper'),
       h('p', { class: 'lead' }, 'Each university designs its own CertAcles exam, so there is no single official format. This guide puts the usual four components in a typical order, using the closest tasks on this site.'),
       h('div', { class: 'steps' },
         row('1 · Reading and use of language', 'Typically 60 to 90 minutes. Full Reading and Use of English test (gapped texts, rewriting, comprehension).', '#/mock/reading'),

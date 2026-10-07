@@ -50,7 +50,7 @@
         weak.length ? h('div', {}, h('h2', {}, 'Your weak spots'), weak.map(([k, a]) => h('div', { class: 'trow' }, link(A.topicHref ? A.topicHref(k) : '#/', A.topicLabels[k] || k), bar(a, barCls(a)), h('span', {}, Math.round(a * 100) + '%'))), link('#/weak', 'Train them now', 'btn small')) : null
       ];
     }
-    view(back('#/progress', 'Review'), h('h1', {}, 'Exam plan'), h('p', { class: 'lead' }, 'Tell the site when your exam is and it will spread what is left over the weeks you have.'),
+    view(back('#/mock', 'Exams'), h('h1', {}, 'Exam plan'), h('p', { class: 'lead' }, 'Tell the site when your exam is and it will spread what is left over the weeks you have.'),
       cardBlock('Exam date', row), ...body.filter(Boolean));
   };
 
