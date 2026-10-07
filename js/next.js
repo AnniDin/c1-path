@@ -40,9 +40,40 @@
   };
   const grammarHas = (id) => A.grammar.some((g) => g.id === id);
 
+  const kindOf = (t) => (/harder set|next level/i.test(t) ? 'harder' : /easier|Step down/i.test(t) ? 'easier' : /Another set at this level/i.test(t) ? 'same' : /mistake/i.test(t) ? 'mistakes'
+    : /base first|Fix a pattern|Go back one lesson/i.test(t) ? 'base' : /Retry/i.test(t) ? 'retry' : /Continue (your unit|the course)/i.test(t) ? 'unit' : /Dictation/i.test(t) ? 'dictation'
+      : /weak spots/i.test(t) ? 'weak' : /Re-read|Read the idea|strategy|Listen again/i.test(t) ? 'reread' : 'other');
+
+  /* ---------- local feedback loop: did the suggestions you followed help? (this device only) ---------- */
+  const PEND = 'c1path.recpend', FX = 'c1path.recfx';
+  const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || 'null') || d; } catch (e) { return d; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* ignore */ } };
+  /* a kind of suggestion followed at least 5 times whose next quiz scored 5+ points lower on average is shown last
+     (harder sets and unit steps are exempt: a lower score is expected there) */
+  const demoted = (k) => { const o = lsGet(FX, {})[k]; return !['harder', 'unit'].includes(k) && !!o && o.n >= 5 && o.sum / o.n <= -5; };
+  A.afterQuiz = (res, source, pct) => {
+    A.diagnoseRecord && A.diagnoseRecord(res, source);
+    const p = lsGet(PEND, null);
+    if (p && Date.now() - p.ts < 864e5) { const fx = lsGet(FX, {}), o = fx[p.kind] || (fx[p.kind] = { n: 0, sum: 0 }); o.n++; o.sum += pct - p.pct; lsSet(FX, fx); }
+    lsSet(PEND, null);
+  };
+
+  /* ---------- spaced retries: a weak set comes back after 2 days, a middling one after 7, a good one after 21 ---------- */
+  function retryDue() {
+    const now = Date.now(), out = [];
+    C1.practice.forEach((p) => p.sets.forEach((s, i) => {
+      const sc = Store.score(p.id + '/' + i), la = sc && sc.last;
+      if (!la) return;
+      const days = (now - la.ts) / 864e5, wait = la.p < 0.7 ? 2 : la.p < 0.85 ? 7 : 21;
+      if (days >= wait) out.push({ type: p.id, i, title: p.title + ' · ' + s.title, p: la.p, days: Math.floor(days), over: days / wait });
+    }));
+    return out.sort((a, b) => a.p - b.p || b.over - a.over);
+  }
+  A.retryDue = retryDue;
+
   function build(source, pct, res) {
     const recs = [], seen = new Set();
-    const R = (title, sub, href) => { if (href && !seen.has(href)) { seen.add(href); recs.push({ title, sub, href }); } };
+    const R = (title, sub, href) => { if (href && !seen.has(href)) { seen.add(href); recs.push({ title, sub, href, kind: kindOf(title) }); } };
     const wrong = res.filter((x) => !x.ok).length, href = source.href || '', topic = source.topic || '';
     const strong = pct >= 85, fair = pct >= 60, mistakes = Store.mistakes().length;
     const mistakeRec = () => mistakes && R(`Practise your ${mistakes} saved mistake${mistakes === 1 ? '' : 's'}`, 'Answer them correctly in two sessions and they leave your list.', '#/mistakes/practice');
@@ -53,7 +84,9 @@
       if (p) {
         /* the same percentage means more on a harder set: judge the score against the set's difficulty */
         const lvl = setLevel(type, i), comp = competence(type), adj = Math.round(pct + (lvl - 3) * 5);
-        const sStrong = adj >= 85, sFair = adj >= 60, why = lvl === 3 ? `${pct}%` : `${pct}% on a difficulty-${lvl} set counts as ${Math.min(100, Math.max(0, adj))}%`;
+        const accT = (() => { const st = Store.state.stats['u-' + type]; return st && st.t >= 20 ? st.c / st.t : null; })(); // your overall accuracy in this exam part moves the bar
+        const strongT = accT != null && accT >= 0.85 ? 90 : accT != null && accT < 0.6 ? 80 : 85, fairT = accT != null && accT < 0.6 ? 55 : 60;
+        const sStrong = adj >= strongT, sFair = adj >= fairT, why = lvl === 3 ? `${pct}%` : `${pct}% on a difficulty-${lvl} set counts as ${Math.min(100, Math.max(0, adj))}%`;
         const unitNext = A.nextInUnit('practice', type, i);
         const up = pickAt(type, Math.min(5, Math.max(comp, lvl) + 1), i), down = pickAt(type, Math.max(1, Math.min(lvl - 1, comp || lvl - 1)), i);
         if (sStrong) {
@@ -120,6 +153,15 @@
       else { mistakeRec(); R('Train your weak spots', 'Questions only from the topics you get wrong most.', '#/weak'); }
     }
 
+    /* what you keep missing in this very result */
+    const top = (A.diagnoseWrong ? A.diagnoseWrong(res, source) : [])[0];
+    if (top && (top.n >= 2 || res.length <= 6) && !seen.has(top.href)) {
+      seen.add(top.href);
+      recs.splice(Math.min(1, recs.length), 0, { title: 'Fix a pattern: ' + top.label, sub: `You missed ${top.n} question${top.n === 1 ? '' : 's'} on this. A short look at the cause helps more than more answers.`, href: top.href, kind: 'base' });
+    }
+    const rd = retryDue()[0];
+    if (recs.length < 3 && rd) R('Retry ' + rd.title, `You scored ${Math.round(rd.p * 100)}% ${rd.days} day${rd.days === 1 ? '' : 's'} ago. A spaced retry is what makes it stick.`, `#/practice/${rd.type}/${rd.i}`);
+
     /* always useful: cards due, weak spots, the exam date, the next course step */
     const due = A.dueIds().length;
     if (recs.length < 3 && due) R(`Review ${due} flashcard${due === 1 ? '' : 's'} due today`, 'Short spaced reviews fix vocabulary.', '#/review');
@@ -129,7 +171,7 @@
     if (recs.length < 3 && ex) { const n = Math.round((new Date(ex + 'T00:00:00') - new Date(Store.today() + 'T00:00:00')) / 864e5); if (n >= 0 && n <= 21) R('Do a full timed test', `${n} day${n === 1 ? '' : 's'} to your exam: practise stamina and timing.`, '#/mock'); }
     const nc = A.nextCourseStep && A.nextCourseStep();
     if (recs.length < 3 && nc) R('Continue the course: ' + nc.info.label, 'The next step on your path.', nc.info.href);
-    return recs;
+    return recs.map((r, i) => [r, i]).sort((a, b) => demoted(a[0].kind) - demoted(b[0].kind) || a[1] - b[1]).map((x) => x[0]);
   }
 
   A.recommend = (source, pct, res) => {
@@ -141,11 +183,26 @@
           const here = location.hash.split('?')[0] === r.href.split('?')[0], cls = 'btn small' + (i ? ' ghost' : '');
           /* a link to the page you are already on fires no hashchange, so redraw the page instead */
           return h('div', { class: 'nextrow' }, h('div', {}, h('strong', {}, r.title), h('div', { class: 'muted' }, r.sub)),
-            here ? h('a', { class: cls, href: r.href, onclick: (e) => { e.preventDefault(); A.route(); } }, i ? 'Open' : 'Go') : link(r.href, i ? 'Open' : 'Go', cls));
+            (() => { const el = here ? h('a', { class: cls, href: r.href, onclick: (e) => { e.preventDefault(); A.route(); } }, i ? 'Open' : 'Go') : link(r.href, i ? 'Open' : 'Go', cls);
+              el.addEventListener('click', () => lsSet(PEND, { kind: r.kind, pct, ts: Date.now() })); return el; })());
         }));
     } catch (e) { return null; }
   };
   A.recommendFor = build; // used by the tests
+
+  A.skillsCard = () => {
+    const rows = (A.subSkillStats ? A.subSkillStats() : []).filter((x) => x.t >= 5).slice(0, 5);
+    if (!rows.length) return null;
+    return A.cardBlock('Your skills, weakest first', h('p', { class: 'muted' }, 'Every answer is tagged with the skill it tests. These are the ones you miss most (kept on this device).'),
+      ...rows.map((x) => { const a = x.c / x.t; return h('div', { class: 'trow' }, link(x.href, x.label), A.bar(a, a >= 0.8 ? 'ok' : a >= 0.6 ? 'warn' : 'bad'), h('span', {}, `${Math.round(a * 100)}% · ${x.t}`)); }));
+  };
+  const KIND = { harder: 'A harder set', easier: 'An easier set', same: 'A set at the same level', mistakes: 'Practising mistakes', base: 'A base lesson', retry: 'A spaced retry', unit: 'The next unit step', dictation: 'Dictation', weak: 'Weak spots', reread: 'Re-reading' };
+  A.recsCard = () => {
+    const fx = lsGet(FX, {}), rows = Object.entries(fx).filter(([, o]) => o.n >= 2);
+    if (!rows.length) return null;
+    return A.cardBlock('Do the suggestions help?', h('p', { class: 'muted' }, 'The score of your next quiz after you followed each kind of suggestion, against the quiz before it. A harder set scores lower by design. A kind that keeps lowering your score is shown last. Kept on this device.'),
+      ...rows.map(([k, o]) => { const d = Math.round(o.sum / o.n); return h('div', { class: 'trow' }, h('span', {}, KIND[k] || k), h('span', {}, `${o.n} times`), h('span', { class: d >= 0 ? 'a-ok' : 'a-warn' }, (d > 0 ? '+' : '') + d + ' points')); }));
+  };
   A.competence = competence;
 
   /* Home: the next best steps, in priority order (spaced repetition first, then the weakest exam part, mistakes, the course, the exam date) */
@@ -158,6 +215,10 @@
     /* the exam part with the lowest accuracy (at least 5 answers), and the set that suits the learner's level there */
     const parts = C1.practice.map((p) => { const s = st.stats['u-' + p.id]; return s && s.t >= 5 ? { p, acc: s.c / s.t } : null; }).filter(Boolean).filter((x) => x.acc < 0.75).sort((a, b) => a.acc - b.acc);
     if (parts[0]) { const { p, acc } = parts[0], j = pickAt(p.id, Math.max(1, competence(p.id)) , -1); if (j != null) push(`${p.title}: your weakest exam part`, `${Math.round(acc * 100)}% correct so far. A difficulty-${setLevel(p.id, j)} set suits your level.`, `#/practice/${p.id}/${j}`, 'Practise'); }
+    const rd = retryDue()[0];
+    if (rd) push('Retry ' + rd.title, `You scored ${Math.round(rd.p * 100)}% ${rd.days} day${rd.days === 1 ? '' : 's'} ago. Spaced retries make it stick.`, `#/practice/${rd.type}/${rd.i}`, 'Retry');
+    const ws = A.weakestSkill ? A.weakestSkill() : null;
+    if (ws) push('Your weakest skill: ' + ws.label, `${Math.round(ws.acc * 100)}% over ${ws.n} questions. Study it, then test it again.`, ws.href, 'Study');
     const nMist = Store.mistakes().length;
     if (nMist) push(`Review ${nMist} mistake${nMist === 1 ? '' : 's'}`, 'Questions you got wrong, with the reason for each', '#/mistakes', 'Review');
     const nc = A.nextCourseStep && A.nextCourseStep();

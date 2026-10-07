@@ -262,6 +262,8 @@ window.App = { routes: {}, cleanup: [] };
       ...tbl, !entries.length ? h('p', { class: 'muted' }, 'Nothing here yet. Do a lesson or a practice set and your results will appear.') : null,
       App.aiCard ? App.aiCard() : null,
       App.weekCard ? App.weekCard() : null,
+      App.skillsCard ? App.skillsCard() : null,
+      App.recsCard ? App.recsCard() : null,
       App.historyCard ? App.historyCard() : null,
       App.friendsCard ? App.friendsCard() : null,
       App.neuralCard ? App.neuralCard() : null,

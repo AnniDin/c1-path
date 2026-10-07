@@ -105,6 +105,48 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
   check('unknown quiz sources still get advice', A.recommendFor({ topic: 'mix', href: '#/course/mix' }, 50, [{ ok: false }]).length >= 1);
   check('at most three recommendations are shown', A.recommend(src, 50, [{ ok: false }]).children.slice(1).length <= 3);
   void hrefOf;
+  /* sub-skill diagnosis, spaced retries, personal thresholds and the feedback loop */
+  {
+    const ls = sb.localStorage, tg = (item, topic, href) => A.skillTag(item, { topic, href: href || '' }).id;
+    check('a key word transformation with inversion is tagged inversion', tg({ type: 'kwt', key: 'HARDLY', why: 'Hardly had + past perfect is an inversion.' }, 'u-kwt') === 'inversion');
+    check('an open gap with "in" is a preposition', tg({ type: 'gap', q: 'He is interested ___ art.', answers: ['in'], why: 'Dependent preposition.' }, 'u-cloze') === 'prepositions');
+    check('an open gap with "although" is a linker', tg({ type: 'gap', q: '___ it rained, we went.', answers: ['although', 'though'], why: 'Concession.' }, 'u-cloze') === 'linkers');
+    check('a word formation gap with a negative prefix is a prefix', tg({ type: 'gap', q: 'an <span class="muted">(CONVENTION)</span> choice ___', answers: ['unconventional'], why: 'Negative meaning: un- prefix.' }, 'u-wf') === 'prefixes');
+    check('a multiple-choice gap about a phrasal verb is a phrasal verb', tg({ type: 'mcq', q: 'x', options: ['a', 'b', 'c', 'd'], answer: 0, why: 'This phrasal verb means delay.' }, 'u-mcq', '#/practice/mcq/1') === 'phrasal');
+    const wrongRes = [1, 2, 3].map(() => ({ ok: false, item: { type: 'gap', q: 'I look ___ it.', answers: ['at'], why: 'x' } })).concat([{ ok: true, item: { type: 'gap', q: 'q', answers: ['the'], why: 'x' } }]);
+    check('the skill missed most in a result is found', A.diagnoseWrong(wrongRes, { topic: 'u-cloze', href: '#/practice/cloze/1' })[0].id === 'prepositions' && A.diagnoseWrong(wrongRes, { topic: 'u-cloze' })[0].n === 3);
+    ls.removeItem('c1path.sub'); for (let k = 0; k < 3; k++) A.diagnoseRecord(wrongRes, { topic: 'u-cloze', href: '#/practice/cloze/1' });
+    const ws = A.weakestSkill();
+    check('after enough misses the weakest skill shows up', ws && ws.id === 'prepositions' && ws.acc < 0.65, JSON.stringify(ws));
+    check('a recommendation after a miss names that skill', A.recommendFor({ topic: 'u-cloze', href: '#/practice/cloze/1' }, 40, wrongRes).some((r) => /Fix a pattern: Prepositions/.test(r.title)));
+    ls.removeItem('c1path.sub');
+
+    const key = 'wf/0', keepScore = sb.Store.state.scores[key], day = 864e5;
+    sb.Store.state.scores[key] = { p: 0.5, c: 4, t: 8, last: { p: 0.5, ts: Date.now() - 3 * day } };
+    check('a weak set tried 3 days ago is due for a retry', A.retryDue().some((x) => x.type === 'wf' && x.i === 0));
+    sb.Store.state.scores[key] = { p: 0.5, c: 4, t: 8, last: { p: 0.5, ts: Date.now() - day / 2 } };
+    check('a weak set tried today is not due yet', !A.retryDue().some((x) => x.type === 'wf' && x.i === 0));
+    sb.Store.state.scores[key] = { p: 0.95, c: 9, t: 10, last: { p: 0.95, ts: Date.now() - 10 * day } };
+    check('a strong set waits three weeks', !A.retryDue().some((x) => x.type === 'wf' && x.i === 0));
+    if (keepScore) sb.Store.state.scores[key] = keepScore; else delete sb.Store.state.scores[key];
+
+    const st = sb.Store.state, keepStats = st.stats['u-cloze'];
+    const type2 = 'cloze', three = A.setOrder(type2).find((i) => lvl(type2, i) === 3), srcC = { topic: 'u-cloze', href: '#/practice/cloze/' + three };
+    const harder = (pct) => A.recommendFor(srcC, pct, [{ ok: false }]).some((r) => /harder set/.test(r.title));
+    st.stats['u-cloze'] = { c: 10, t: 30 }; const lowAcc = harder(82);
+    st.stats['u-cloze'] = { c: 28, t: 30 }; const highAcc = harder(88);
+    st.stats['u-cloze'] = { c: 20, t: 30 }; const mid = harder(88);
+    if (keepStats) st.stats['u-cloze'] = keepStats; else delete st.stats['u-cloze'];
+    check('the bar moves with your accuracy: easier to progress when struggling, stricter when strong', lowAcc && !highAcc && mid, [lowAcc, highAcc, mid].join());
+
+    ls.setItem('c1path.recfx', JSON.stringify({ easier: { n: 6, sum: -60 } }));
+    const order = A.recommendFor({ topic: 'u-cloze', href: '#/practice/cloze/' + three }, 30, [{ ok: false }]).map((r) => r.kind);
+    check('a kind of suggestion that keeps lowering your score is shown last', order.indexOf('easier') === order.length - 1 && order.length > 1, order.join());
+    ls.removeItem('c1path.recfx');
+    ls.setItem('c1path.recpend', JSON.stringify({ kind: 'same', pct: 50, ts: Date.now() })); A.afterQuiz([{ ok: true }], {}, 70);
+    check('finishing a quiz after following a suggestion logs the change', JSON.parse(ls.getItem('c1path.recfx')).same.sum === 20);
+    ls.removeItem('c1path.recfx'); ls.removeItem('c1path.recpend');
+  }
   /* adaptive: the harder set follows the learner's level, and a score counts against the set's difficulty */
   {
     const one = (t, l) => A.setOrder(t).find((i) => lvl(t, i) === l), lowSet = one('cloze', 1), hiSet = one('cloze', 5), midSet = one('cloze', 3);
@@ -157,7 +199,7 @@ for (const r of routes) {
       if (b) { try { (b.ls.click || []).forEach((f) => f({ preventDefault() {} })); check('quiz result on #/' + r + ' has no null/undefined text', !/null|undefined|\[object/.test(app.textContent), app.textContent.match(/.{20}(null|undefined).{10}/)); } catch (e) { check('checking answers on #/' + r, false, e.message); } }
     }
     check('route #/' + r + ' renders', redirected || app.children.length > 0 && app.textContent.trim().length > 20 && !/^Not found/.test(app.textContent), 'empty or not found');
-  } catch (e) { check('route #/' + r + ' renders', false, e.message); }
+  } catch (e) { check('route #/' + r + ' renders', false, e.stack.split(String.fromCharCode(10)).slice(0, 3).join(' / ')); }
 }
 /* ---- recordings and links ---- */
 {

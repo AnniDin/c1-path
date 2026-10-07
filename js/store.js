@@ -76,7 +76,8 @@
     setScore(key, c, t) {
       act('set');
       const p = t ? c / t : 0;
-      if (!state.scores[key] || p > state.scores[key].p) state.scores[key] = { p, c, t };
+      const last = { p, ts: Date.now() }, old = state.scores[key];
+      state.scores[key] = !old || p > old.p ? { p, c, t, last } : Object.assign({}, old, { last }); // best score, plus the latest attempt
       save();
     },
     score(key) { return state.scores[key] || null; },
@@ -109,7 +110,7 @@
       each(s.tomb, (k, v) => { if (v < cutoff) delete s.tomb[k]; });
       each(r.cards, (k, v) => { const c = s.cards[k]; if (!c || (v.ts && c.ts ? v.ts > c.ts : v.box > c.box || (v.box === c.box && v.due > c.due))) s.cards[k] = v; }); // newest rating wins, so Again on one device sticks; copies without a time keep the old rule
       each(r.lessons, (k, v) => { if (v) s.lessons[k] = v; });
-      each(r.scores, (k, v) => { if (!s.scores[k] || v.p > s.scores[k].p) s.scores[k] = v; });
+      each(r.scores, (k, v) => { const o = s.scores[k], best = !o || v.p > o.p ? Object.assign({}, v) : Object.assign({}, o), la = [o && o.last, v.last].filter(Boolean).sort((a, b) => b.ts - a.ts)[0]; if (la) best.last = la; s.scores[k] = best; });
       each(r.mistakes, (k, v) => { const m = s.mistakes[k]; if (!m || v.ts > m.ts) s.mistakes[k] = v; else if (v.ts === m.ts) m.right = Math.max(m.right || 0, v.right || 0); });
       each(s.mistakes, (k, v) => { if ((s.tomb['m:' + k] || 0) >= v.ts) delete s.mistakes[k]; });
       each(r.drafts, (k, v) => { if (!s.drafts[k] || v.ts > s.drafts[k].ts) s.drafts[k] = v; });

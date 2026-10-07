@@ -314,6 +314,7 @@
         done = true;
         if (opts.source && window.Store && Store.logResults) Store.logResults(res, opts.source);
         opts.onScore && opts.onScore(correct, res.length, res);
+        if (window.App && App.afterQuiz) { try { App.afterQuiz(res, opts.source || {}, Math.round((100 * correct) / res.length)); } catch (e) { /* diagnosis is optional */ } }
       }
       rendered.forEach((r) => r.el.dispatchEvent(new CustomEvent('quizchecked')));
       const pct = Math.round((100 * correct) / res.length);

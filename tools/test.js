@@ -143,6 +143,17 @@ const sync = (a, b) => { b.Store.mergeData(a.Store.exportData()); a.Store.mergeD
   eq('a vocabulary card gives one mistake entry however its options are shuffled', A.Store.itemId(item), A.Store.itemId(shuffled));
 }
 
+/* --- the latest attempt of a set travels with the best score --- */
+{
+  const A = device(), B = device();
+  A.Store.setScore('wf/1', 9, 10); B.Store.setScore('wf/1', 4, 10);
+  B.Store.state.scores['wf/1'].last.ts += 5000; // B tried again later, with a worse result
+  sync(A, B);
+  const a = A.Store.score('wf/1'), b = B.Store.score('wf/1');
+  eq('the best score is kept on both devices', [a.p, b.p], [0.9, 0.9]);
+  eq('the most recent attempt is kept on both devices', [a.last.p, b.last.p], [0.4, 0.4]);
+}
+
 /* --- content data sanity: tricks and pronunciation --- */
 {
   const C = device(['data/tricks.js', 'data/tricks2.js', 'data/tricks3.js', 'data/pron.js']).C1;
