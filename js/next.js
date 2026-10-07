@@ -137,7 +137,12 @@
       const recs = build(source || {}, pct, res || []).slice(0, 3);
       if (!recs.length) return null;
       return h('div', { class: 'next' }, h('h3', {}, 'What to do next'),
-        recs.map((r, i) => h('div', { class: 'nextrow' }, h('div', {}, h('strong', {}, r.title), h('div', { class: 'muted' }, r.sub)), link(r.href, i ? 'Open' : 'Go', 'btn small' + (i ? ' ghost' : '')))));
+        recs.map((r, i) => {
+          const here = location.hash.split('?')[0] === r.href.split('?')[0], cls = 'btn small' + (i ? ' ghost' : '');
+          /* a link to the page you are already on fires no hashchange, so redraw the page instead */
+          return h('div', { class: 'nextrow' }, h('div', {}, h('strong', {}, r.title), h('div', { class: 'muted' }, r.sub)),
+            here ? h('a', { class: cls, href: r.href, onclick: (e) => { e.preventDefault(); A.route(); } }, i ? 'Open' : 'Go') : link(r.href, i ? 'Open' : 'Go', cls));
+        }));
     } catch (e) { return null; }
   };
   A.recommendFor = build; // used by the tests

@@ -143,7 +143,7 @@
       const items = filtered();
       list.replaceChildren(...(items.length ? items.map(card) : [h('div', { class: 'card' }, h('p', {}, all.length ? 'No mistakes in this category.' : 'No mistakes saved. Every wrong answer from lessons, practice and quizzes appears here with its explanation, so you can revise exactly what you got wrong.'),
         link('#/course', 'Go to the course', 'btn'))]));
-      document.getElementById('mbadge').textContent = all.length ? String(all.length) : '';
+      A.updateBadge();
     }
     const n = Store.mistakes().length;
     view(back('#/progress', 'Review'), h('h1', {}, 'My mistakes'),
@@ -343,7 +343,7 @@
     file.addEventListener('change', () => {
       if (url) URL.revokeObjectURL(url);
       if (!file.files[0]) return;
-      url = URL.createObjectURL(file.files[0]); player.src = url; player.style.display = ''; a = b = null; loop = false; loopInfo.textContent = 'Set A and B to repeat a short passage.';
+      url = URL.createObjectURL(file.files[0]); player.src = url; player.style.display = ''; a = b = null; loop = false; const lb = document.querySelector('#app [data-loop]'); if (lb) lb.textContent = 'Loop: off'; loopInfo.textContent = 'Set A and B to repeat a short passage.';
     });
     player.addEventListener('timeupdate', () => { if (loop && b != null && a != null && player.currentTime >= b) player.currentTime = a; });
     const fmt = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
@@ -354,7 +354,7 @@
         h('div', { class: 'row', style: 'margin-top:10px' }, h('label', { class: 'muted' }, 'Speed ', rate),
           h('button', { class: 'btn small ghost', onclick: () => { a = player.currentTime; loopInfo.textContent = `A = ${fmt(a)}${b != null ? ', B = ' + fmt(b) : ''}`; } }, 'Set A here'),
           h('button', { class: 'btn small ghost', onclick: () => { b = player.currentTime; loopInfo.textContent = `A = ${a != null ? fmt(a) : '–'}, B = ${fmt(b)}`; } }, 'Set B here'),
-          h('button', { class: 'btn small', onclick: (e) => { loop = !loop; if (loop && a != null) player.currentTime = a; e.target.textContent = loop ? 'Loop: on' : 'Loop: off'; } }, 'Loop: off'),
+          h('button', { class: 'btn small', 'data-loop': '', onclick: (e) => { loop = !loop; if (loop && a != null) player.currentTime = a; e.target.textContent = loop ? 'Loop: on' : 'Loop: off'; } }, 'Loop: off'),
           loopInfo)),
       h('h3', {}, 'What I heard'), heard, h('h3', {}, 'Official transcript'), official,
       h('div', { class: 'row', style: 'margin-top:10px' },
@@ -674,7 +674,7 @@
     }
     let to = null;
     area.addEventListener('input', () => { paint(); savedMsg.textContent = 'Saving…'; clearTimeout(to); to = setTimeout(() => { Store.saveDraft(id, area.value); savedMsg.textContent = 'Saved.'; }, 700); });
-    A.cleanup.push(() => { clearTimeout(to); Store.saveDraft(id, area.value); });
+    A.cleanup.push(() => { clearTimeout(to); const cur = Store.draft(id); if (area.value !== (cur ? cur.text : '')) Store.saveDraft(id, area.value); }); // an untouched draft must not get a newer time than the real one on another device
 
     function runAnalysis() {
       if (count() < 40) { analysis.replaceChildren(h('p', { class: 'fb' }, 'Write at least a few sentences first.')); return; }

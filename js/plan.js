@@ -9,7 +9,8 @@
   const fmt = (d) => new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   const barCls = (a) => (a >= 0.8 ? 'ok' : a >= 0.6 ? 'warn' : 'bad');
   A.topicLabels.weak = 'Weak spots';
-  const weakTopics = () => Object.entries(Store.state.stats).filter(([, s]) => s.t >= 5).map(([k, s]) => [k, s.c / s.t]).filter(([, a]) => a < 0.75).sort((a, b) => a[1] - b[1]).slice(0, 3);
+  const TRAINABLE = (k) => /^g-/.test(k) || (/^u-/.test(k) && !['u-reading', 'u-cross', 'u-matching'].includes(k)); // topics #/weak can build questions for
+  const weakTopics = () => Object.entries(Store.state.stats).filter(([k, s]) => TRAINABLE(k) && s.t >= 5).map(([k, s]) => [k, s.c / s.t]).filter(([, a]) => a < 0.75).sort((a, b) => a[1] - b[1]).slice(0, 3);
 
   A.weakTopics = weakTopics;
 
@@ -36,13 +37,14 @@
       const learn = weeks > 3 ? weeks - 2 : weeks, perWeek = Math.ceil(left / learn), mins = Math.min(90, Math.max(15, Math.round((perWeek * 18) / 6 / 5) * 5));
       const weak = weakTopics();
       body = [
-        h('div', { class: 'stats' },
+        left === 0 ? h('div', { class: 'callout' }, `${n} day${n === 1 ? '' : 's'} left, and every course step is done. Spend the time on full timed tests, your weak spots and the cards due each day.`) : null,
+        left === 0 ? null : h('div', { class: 'stats' },
           h('div', { class: 'stat' }, h('b', {}, n), h('span', {}, n === 1 ? 'day left' : 'days left')),
           h('div', { class: 'stat' }, h('b', {}, left), h('span', {}, 'course steps to go')),
           h('div', { class: 'stat' }, h('b', {}, perWeek), h('span', {}, 'steps a week to finish'))),
         perWeek > 14 ? h('div', { class: 'callout bad' }, 'That pace is very high. Focus on Use of English, Listening and Writing, and on your weak spots, rather than the whole course.') : null,
-        h('h2', {}, weeks > 3 ? `Now until ${fmt(new Date(new Date(date + 'T00:00:00') - 14 * DAY).toLocaleDateString('sv'))}: learn` : 'Until the exam: learn and practise'),
-        h('p', {}, `Aim for about ${perWeek} course step${perWeek === 1 ? '' : 's'} a week, around ${mins} minutes a day on six days. Keep one day for rest.`),
+        h('h2', {}, weeks > 3 ? `Now until ${fmt((() => { const x = new Date(date + 'T00:00:00'); x.setDate(x.getDate() - 14); return x.toLocaleDateString('sv'); })())}: learn` : 'Until the exam: learn and practise'),
+        left === 0 ? null : h('p', {}, `Aim for about ${perWeek} course step${perWeek === 1 ? '' : 's'} a week, around ${mins} minutes a day on six days. Keep one day for rest.`),
         h('div', { class: 'steps' }, [['Mon', 'Grammar lesson or Use of English set', '#/course'], ['Tue', 'Vocabulary and flashcards', '#/review'], ['Wed', 'Listening set and dictation', '#/skills/listening'],
           ['Thu', 'Writing task: plan, write, analyse', '#/skills/writing'], ['Fri', 'Speaking set and mistakes review', '#/skills/speaking'], ['Sat', 'One full test paper, timed', '#/mock'], ['Sun', 'Rest, or ten minutes of cards', '#/review']].map(([d, t, href]) =>
           h('div', { class: 'step' }, h('span', { class: 'dot' }, d), h('div', {}, h('strong', {}, t)), link(href, 'Open', 'btn small ghost')))),
@@ -77,7 +79,7 @@
 
   /* ---------- this week against last week (Review) ---------- */
   A.weekCard = () => {
-    const sum = (from, to) => { let t = 0, d = 0; for (let i = from; i < to; i++) { const x = new Date(midnight() - i * DAY).toLocaleDateString('sv'), n = Store.state.days[x] || 0; t += n; if (n > 0) d++; } return [t, d]; };
+    const sum = (from, to) => { let t = 0, d = 0; for (let i = from; i < to; i++) { const dd = midnight(); dd.setDate(dd.getDate() - i); const x = dd.toLocaleDateString('sv'), n = Store.state.days[x] || 0; t += n; if (n > 0) d++; } return [t, d]; };
     const [a, da] = sum(0, 7), [b] = sum(7, 14);
     if (!a && !b) return null;
     const diff = a - b, msg = !b ? 'Your first full week of data. Keep going.' : diff > 0 ? `${diff} more answers than last week.` : diff < 0 ? `${-diff} fewer answers than last week. A short daily session beats a long one on Sunday.` : 'The same as last week.';

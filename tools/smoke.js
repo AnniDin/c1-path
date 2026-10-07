@@ -126,6 +126,15 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
   }
 }
 
+/* ---- the Grammar page lists every lesson, and Weak spots only counts topics it can train ---- */
+{
+  sb.location.hash = '#/grammar'; app.children = []; sb.App.route();
+  check('the Grammar page lists every lesson', app.all((n) => n.tag === 'a' && /^#\/grammar\/./.test(n.attrs.href || '')).length === sb.C1.grammar.length);
+  const st = sb.Store.state, keep = st.stats;
+  st.stats = { listen: { c: 1, t: 10 }, mix: { c: 1, t: 10 }, 'g-inversion': { c: 4, t: 10 } };
+  check('weak topics skip topics that have no questions to train', sb.App.weakTopics().map((x) => x[0]).join() === 'g-inversion');
+  st.stats = keep;
+}
 /* ---- every route renders ---- */
 const C1 = sb.C1, routes = ['', 'welcome', 'course', 'course/mix', 'toolkit', 'progress', 'review', 'mistakes', 'mistakes/practice', 'placement', 'exams', 'privacy', 'mock', 'tricks', 'generate', 'certacles', 'plan', 'weak',
   'grammar', 'vocab', 'practice', 'skills', 'skills/listening', 'skills/writing', 'skills/writing/guide', 'skills/speaking', 'skills/pronunciation', 'vquiz/all'];

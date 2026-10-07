@@ -18,7 +18,7 @@ Push to GitHub and enable Pages on the `main` branch (root folder). Nothing else
 
 ## Two ways to study
 
-- **Course**: ten themed units (work, technology, health, nature, cities, education, society, culture, law and media, consumers and arts). Each combines vocabulary, grammar and exam practice, ends with a mixed review, and there is a general mixed review for revising everything.
+- **Course**: 22 units from B2 to C1 (work, technology, everyday English, health, word power, nature, cities, education, society, culture, law and media, consumers and arts, travel, family, sport, talk skills, society and work, lifestyle and language, then the listening, writing and Use of English labs). Each combines vocabulary, grammar and exam practice, ends with a mixed review, and there is a general mixed review for revising everything.
 - **Full test**: one task of each Reading and Use of English part with a 60-minute timer, scored by part.
 - **Library**: every area on one page, to study in any order: grammar, vocabulary (flashcards and quizzes), Use of English and Reading, Listening (recordings read aloud by the browser, plus dictation), Speaking (timer, recorder, self-assessment) and Writing (workspace with word count, text analyser, annotated models), plus the exam guide.
 - **Optional AI feedback** (Review page): paste your own API key (Google Gemini or Groq, both with free plans, or paid Anthropic Claude) to get examiner-style feedback on writing and speaking and extra explanations of wrong answers. The key stays in your browser and is never part of backups or sync.

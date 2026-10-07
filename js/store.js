@@ -107,10 +107,10 @@
       each(r.tomb, (k, v) => { s.tomb[k] = Math.max(s.tomb[k] || 0, v); });
       const cutoff = Date.now() - 90 * 86400000;
       each(s.tomb, (k, v) => { if (v < cutoff) delete s.tomb[k]; });
-      each(r.cards, (k, v) => { const c = s.cards[k]; if (!c || v.box > c.box || (v.box === c.box && v.due > c.due)) s.cards[k] = v; });
+      each(r.cards, (k, v) => { const c = s.cards[k]; if (!c || (v.ts && c.ts ? v.ts > c.ts : v.box > c.box || (v.box === c.box && v.due > c.due))) s.cards[k] = v; }); // newest rating wins, so Again on one device sticks; copies without a time keep the old rule
       each(r.lessons, (k, v) => { if (v) s.lessons[k] = v; });
       each(r.scores, (k, v) => { if (!s.scores[k] || v.p > s.scores[k].p) s.scores[k] = v; });
-      each(r.mistakes, (k, v) => { if (!s.mistakes[k] || v.ts > s.mistakes[k].ts) s.mistakes[k] = v; });
+      each(r.mistakes, (k, v) => { const m = s.mistakes[k]; if (!m || v.ts > m.ts) s.mistakes[k] = v; else if (v.ts === m.ts) m.right = Math.max(m.right || 0, v.right || 0); });
       each(s.mistakes, (k, v) => { if ((s.tomb['m:' + k] || 0) >= v.ts) delete s.mistakes[k]; });
       each(r.drafts, (k, v) => { if (!s.drafts[k] || v.ts > s.drafts[k].ts) s.drafts[k] = v; });
       /* a skill record holds several fields (done, self-ratings, AI checks): merge field by field so one device never erases what the other did */
@@ -130,13 +130,14 @@
       s.mocks = s.mocks || []; (r.mocks || []).forEach((m) => { if (!s.mocks.some((x) => x.ts === m.ts)) s.mocks.push(m); }); s.mocks.sort((a, b) => a.ts - b.ts); s.mocks = s.mocks.slice(-60);
       s.acts = s.acts || {}; each(r.acts, (d, v) => { s.acts[d] = Object.assign(s.acts[d] || {}, v); });
       s.badges = s.badges || {}; each(r.badges, (k, v) => { if (!s.badges[k] || v < s.badges[k]) s.badges[k] = v; });
-      if (r.placement && (!s.placement || r.placement.date > s.placement.date)) s.placement = r.placement;
+      if (r.placement && (!s.placement || (r.placement.ts || 0) > (s.placement.ts || 0) || (!r.placement.ts && !s.placement.ts && r.placement.date > s.placement.date))) s.placement = r.placement;
+      if ((r.goalTs || 0) > (s.goalTs || 0)) { s.goal = r.goal; s.goalTs = r.goalTs; }
       save();
     },
 
     /* ---- mistakes log ---- */
     itemId(item) {
-      const str = (item.type || '') + '|' + (item.q || item.first || item.second || '') + '|' + (item.options ? item.options.join('/') : '');
+      const str = item.uid ? 'uid|' + item.uid : (item.type || '') + '|' + (item.q || item.first || item.second || '') + '|' + (item.options ? item.options.join('/') : '');
       let hsh = 5381; for (let i = 0; i < str.length; i++) hsh = ((hsh * 33) ^ str.charCodeAt(i)) >>> 0;
       return 'm' + hsh.toString(36);
     },
@@ -179,10 +180,10 @@
     setSkill(key, data) { act('skill'); state.skills[key] = Object.assign({}, state.skills[key], data, { ts: Date.now() }); save(); },
     setVoice(slot, name) { state.voices = Object.assign({ a: '', b: '' }, state.voices, { [slot]: name }); save(); },
     goal() { return state.goal || 20; },
-    setGoal(n) { state.goal = n; save(); },
+    setGoal(n) { state.goal = n; state.goalTs = Date.now(); save(); },
     todayCount() { return state.days[dayStr()] || 0; },
     markLesson(id) { act('lesson'); state.lessons[id] = true; save(); },
-    setPlacement(p) { state.placement = p; save(); },
+    setPlacement(p) { state.placement = Object.assign({}, p, { ts: Date.now() }); save(); },
     setTheme(t) { state.theme = t; save(); },
     setExam(date) { state.exam = date ? { date, ts: Date.now() } : { date: '', ts: Date.now() }; save(); },
     addMock(m) { state.mocks = (state.mocks || []).concat([m]).slice(-60); save(); },
@@ -204,6 +205,7 @@
       else if (rating === 3) c.box = Math.min(max, c.box + 2);
       else c.box = Math.max(1, c.box);
       c.due = rating === 0 ? dayStr() : addDays(Store.INTERVALS[c.box]);
+      c.ts = Math.max(Date.now(), (c.ts || 0) + 1); // always newer than the copy it replaces
       state.cards[id] = c;
       if (isNew) { state.newToday[dayStr()] = (state.newToday[dayStr()] || 0) + 1; state.own.newToday[dayStr()] = (state.own.newToday[dayStr()] || 0) + 1; }
       save();

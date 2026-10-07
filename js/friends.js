@@ -3,7 +3,7 @@
   const { h } = Engine;
   const A = window.App;
   const KEY = 'c1path.board';
-  const get = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } };
+  const get = () => { try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); const u = window.Cloud && Cloud.user && Cloud.user(); return v && u && v.uid && v.uid !== u.id ? null : v; } catch (e) { return null; } }; // another account on this browser is not joined
   const put = (v) => { try { if (v) localStorage.setItem(KEY, JSON.stringify(v)); else localStorage.removeItem(KEY); } catch (e) { /* ignore */ } };
   const monday = () => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.toLocaleDateString('sv'); };
   const weekAnswers = () => Object.entries(Store.state.days).filter(([k]) => k >= monday()).reduce((a, [, n]) => a + n, 0);
@@ -30,7 +30,7 @@
         return box.replaceChildren(card(
           h('p', { class: 'muted' }, 'Compete with friends in a weekly ranking. It is optional. If you join, your display name, questions answered this week, streak and level are visible only to people who add your friend code, or whose code you add: a friendship is mutual. You can leave at any time and it is deleted.'),
           h('div', { class: 'row' }, name, h('button', { class: 'btn small', onclick: async () => {
-            try { const code = await Cloud.rpc('join_board', { p_name: name.value || 'Learner' }); put({ code }); await publish(); draw(); } catch (e) { msg.textContent = friendly(e); }
+            try { const code = await Cloud.rpc('join_board', { p_name: name.value || 'Learner' }); put({ code, uid: Cloud.user().id }); await publish(); draw(); } catch (e) { msg.textContent = friendly(e); }
           } }, 'Join')), msg));
       }
       box.replaceChildren(card(h('p', { class: 'muted' }, 'Loading…')));

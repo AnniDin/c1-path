@@ -24,6 +24,11 @@
   /* ---- automatic sync ---- */
   let running = false, timer = null, armed = false;
   const ROUTES_SAFE = ['', '#/', '#/progress', '#/course', '#/toolkit'];
+  /* redraw after a background merge, unless the learner is in the middle of typing; keep the scroll position */
+  const redraw = () => {
+    if (document.querySelector('#app :focus') || [...document.querySelectorAll('#app input, #app textarea')].some((i) => i.type !== 'checkbox' && i.type !== 'radio' && i.value)) return;
+    const y = window.scrollY; A.route(); window.scrollTo(0, y);
+  };
   async function run(interactive) {
     if (running) return;
     const hd = await getHandle();
@@ -42,7 +47,7 @@
       const merged = Store.exportData();
       if (merged !== text) { const w = await hd.createWritable(); await w.write(merged); await w.close(); }
       sync.status = 'ok'; sync.error = ''; sync.at = Date.now(); write({ at: sync.at });
-      if (merged !== before && ROUTES_SAFE.includes(location.hash) && A.route) A.route();
+      if (merged !== before && ROUTES_SAFE.includes(location.hash) && A.route) redraw();
     } catch (e) {
       sync.status = 'error'; sync.error = e.message || String(e);
     } finally { running = false; emit(); }
@@ -76,7 +81,7 @@
       const merged = JSON.parse(Store.exportData());
       if (!remote || stable(remote) !== stable(merged)) await Cloud.push(merged);
       cloud.status = 'ok'; cloud.error = ''; cloud.at = Date.now();
-      if (Store.exportData() !== before && ROUTES_SAFE.includes(location.hash) && A.route) A.route();
+      if (Store.exportData() !== before && ROUTES_SAFE.includes(location.hash) && A.route) redraw();
     } catch (e) { cloud.status = 'error'; cloud.error = e.message || String(e); }
     finally { cloudRunning = false; emit(); }
   }

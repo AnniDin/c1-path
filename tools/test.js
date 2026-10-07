@@ -126,6 +126,23 @@ const sync = (a, b) => { b.Store.mergeData(a.Store.exportData()); a.Store.mergeD
   eq('a higher second AI score earns Rewriter', !!D.Store.state.badges.rewrite, true);
 }
 
+/* --- a flashcard lapse, the daily goal, the placement result and mistake progress all sync the right way --- */
+{
+  const A = device(), B = device();
+  A.Store.rate('c1', 3); A.Store.rate('c1', 3); // easy twice: a long interval
+  sync(A, B);
+  B.Store.rate('c1', 0); // forgotten on B: due today
+  sync(A, B);
+  eq('"Again" on one device is not undone by the other', [A.Store.card('c1').box, B.Store.card('c1').box], [0, 0]);
+  A.Store.setGoal(60); sync(A, B);
+  eq('the daily goal follows the newest choice', [B.Store.goal(), A.Store.goal()], [60, 60]);
+  A.Store.setPlacement({ date: '2026-05-01', summary: 'A' }); B.Store.setPlacement({ date: '2026-05-01', summary: 'B' });
+  B.Store.state.placement.ts += 5000; sync(A, B);
+  eq('the newer placement result wins even on the same day', [A.Store.state.placement.summary, B.Store.state.placement.summary], ['B', 'B']);
+  const item = { type: 'mcq', q: 'x', options: ['a', 'b', 'c', 'd'], answer: 0, uid: 'v:card7' }, shuffled = Object.assign({}, item, { options: ['d', 'c', 'b', 'a'], answer: 3 });
+  eq('a vocabulary card gives one mistake entry however its options are shuffled', A.Store.itemId(item), A.Store.itemId(shuffled));
+}
+
 /* --- content data sanity: tricks and pronunciation --- */
 {
   const C = device(['data/tricks.js', 'data/tricks2.js', 'data/tricks3.js', 'data/pron.js']).C1;

@@ -11,7 +11,8 @@ window.App = { routes: {}, cleanup: [] };
     { name: 'Verbs and time', blurb: 'How verbs express time, certainty and unreality.' },
     { name: 'Sentence structure', blurb: 'Building, reshaping and emphasising clauses.' },
     { name: 'Reporting and voice', blurb: 'Who does what, and who said what.' },
-    { name: 'Words and patterns', blurb: 'Patterns that words demand: forms, quantities, comparisons, linkers.' }
+    { name: 'Words and patterns', blurb: 'Patterns that words demand: forms, quantities, comparisons, linkers.' },
+    { name: 'Speaking and Writing skills', blurb: 'Phrases and moves for the Speaking and Writing papers: hedging, conceding, signposting and the parts of the interview.' }
   ];
   const VOCAB_SECTIONS = [
     { name: 'Phrasal verbs', blurb: 'Grouped by the particle or verb that gives them their logic.' },
@@ -33,7 +34,7 @@ window.App = { routes: {}, cleanup: [] };
   const topicLabels = { 'v-cards': 'Vocabulary cards', 'v-quiz': 'Vocabulary quizzes', placement: 'Placement test', mix: 'Mixed review', 'unit-review': 'Unit reviews' };
   C1.grammar.forEach((g) => (topicLabels['g-' + g.id] = g.title));
   C1.practice.forEach((p) => (topicLabels['u-' + p.id] = p.title));
-  const topicHref = (k) => k.startsWith('g-') ? '#/grammar/' + k.slice(2) : k.startsWith('u-') ? '#/practice/' + k.slice(2) : k.startsWith('v-') ? '#/vocab' : '#/';
+  const topicHref = (k) => k.startsWith('g-') ? '#/grammar/' + k.slice(2) : k.startsWith('u-') ? '#/practice/' + k.slice(2) : k.startsWith('v-') ? (k === 'v-quiz' ? '#/vquiz' : '#/vocab') : ({ listen: '#/skills/listening', mix: '#/course/mix', placement: '#/placement', dictation: '#/skills/dictation', pron: '#/skills/pronunciation', retry: '#/mistakes', 'unit-review': '#/course', ai: '#/generate', weak: '#/weak' })[k] || '#/progress';
 
   const allCards = C1.vocab.flatMap((g) => g.cards.map((c, i) => Object.assign({ id: g.id + '-' + i, group: g.id, groupTitle: g.title, section: g.section }, c)));
   const cardById = Object.fromEntries(allCards.map((c) => [c.id, c]));
@@ -148,7 +149,7 @@ window.App = { routes: {}, cleanup: [] };
     const opts = []; pool.forEach((x) => { if (opts.length < 3 && !opts.includes(x.phrase)) opts.push(x.phrase); });
     const all = shuffle([c.phrase].concat(opts));
     return {
-      type: 'mcq', options: all, answer: all.indexOf(c.phrase),
+      type: 'mcq', uid: 'v:' + c.id, options: all, answer: all.indexOf(c.phrase),
       q: `<span class="muted">${c.meaning}</span><br>` + c.ex.replace(/\[\[(.+?)\]\]/g, '<span class="blank"></span>'),
       why: `<em>${c.phrase}</em>: ${c.meaning}. ${c.logic || ''}`
     };
@@ -194,7 +195,7 @@ window.App = { routes: {}, cleanup: [] };
     const row = (label, href, done, total) => h('a', { class: 'prow', href }, h('span', {}, label), bar(total ? done / total : 0), h('span', { class: 'muted' }, `${done}/${total}`));
 
     const acc = (() => { const t = Store.totalAnswered(); const c = Object.values(st.stats).reduce((a, s) => a + s.c, 0); return t ? pct(c / t) + '%' : '–'; })();
-    const weak = Object.entries(st.stats).filter(([, s]) => s.t >= 5).map(([k, s]) => [k, s.c / s.t]).filter(([, a]) => a < 0.75).sort((a, b) => a[1] - b[1]).slice(0, 3);
+    const weak = App.weakTopics ? App.weakTopics() : [];
     const fig = (n, label) => h('div', {}, h('b', {}, n), h('span', {}, label));
 
     view(hero,
@@ -253,7 +254,7 @@ window.App = { routes: {}, cleanup: [] };
         h('div', { class: 'stat' }, h('b', {}, Store.streak()), h('span', {}, 'day streak')),
         h('div', { class: 'stat' }, h('b', {}, Store.totalAnswered()), h('span', {}, 'answers so far')),
         h('div', { class: 'stat' }, h('b', {}, Object.keys(st.cards).length), h('span', {}, 'vocabulary items started')),
-        h('div', { class: 'stat' }, h('b', {}, Object.keys(st.scores).length), h('span', {}, 'practice sets completed'))),
+        h('div', { class: 'stat' }, h('b', {}, Object.keys(st.scores).filter((k) => /^[a-z]+\/\d+$/.test(k)).length), h('span', {}, 'practice sets completed'))),
       cardBlock('Daily goal', h('p', { class: 'muted' }, 'How many questions or cards do you want to answer each day? Reaching it fills the bar on the home page.'),
         h('div', { class: 'row' }, [10, 20, 40, 60].map((n) => h('button', { class: 'btn small' + (Store.goal() === n ? '' : ' ghost'), onclick: () => { Store.setGoal(n); progress(); } }, n + ' answers')))),
       App.rewards ? App.rewards.shelf() : null,
@@ -455,7 +456,7 @@ window.App = { routes: {}, cleanup: [] };
         front.replaceChildren(
           h('div', { class: 'big hl' }, c.phrase), h('div', {}, c.meaning),
           h('div', { class: 'eg', html: c.ex.replace(/\[\[(.+?)\]\]/g, '<em>$1</em>') }),
-          c.logic ? h('div', { class: 'callout' }, '' + c.logic) : null,
+          c.logic ? h('div', { class: 'callout' }, '' + c.logic) : '',
           h('div', { class: 'rate' }, [['Again', 0], ['Hard', 1], ['Good', 2], ['Easy', 3]].map(([label, r]) =>
             h('button', { class: 'btn', 'data-rate': r, onclick: () => rateIt(r) }, label, h('small', {}, Store.intervalLabel(id, r))))));
       }
@@ -738,7 +739,7 @@ window.App = { routes: {}, cleanup: [] };
         body: () => [
           h('div', { class: 'steps' },
             [['Home', 'Your next best step and a quick look at your progress.', '#/'],
-              ['Course', 'Ten themed units in a fixed order. The easiest way to follow a plan.', '#/course'],
+              ['Course', `${C1.course.length} themed units in a fixed order, from B2 to C1. The easiest way to follow a plan.`, '#/course'],
               ['Library', 'All the material by area, to study anything in any order. Includes full practice tests.', '#/toolkit'],
               ['Review', 'Flashcards due, your saved mistakes, progress and sync between devices.', '#/progress'],
               ['Notes', 'A notebook that opens from any page (button at the top, or Alt+N).', null]].map(([t, d, href], i) =>
@@ -812,12 +813,14 @@ window.App = { routes: {}, cleanup: [] };
 
   function notFound() { view(h('h1', {}, 'Not found'), link('#/', 'Back to home', 'btn')); }
 
+  /* the number on Review: saved mistakes plus cards due. One helper, so every page agrees */
+  function updateBadge() { const todo = Store.mistakes().length + dueIds().length, badge = document.getElementById('mbadge'); if (badge) badge.textContent = todo ? String(todo) : ''; }
+
   /* ---------- router ---------- */
   function route() {
     App.cleanup.splice(0).forEach((f) => f());
     Engine.Speech.stop();
-    const todo = Store.mistakes().length + dueIds().length, badge = document.getElementById('mbadge');
-    if (badge) badge.textContent = todo ? String(todo) : '';
+    updateBadge();
     const [pathPart, query] = location.hash.replace(/^#\/?/, '').split('?');
     unitCtx = new URLSearchParams(query || '').get('u');
     if (unitCtx && !unitById(unitCtx)) unitCtx = null;
@@ -864,7 +867,7 @@ window.App = { routes: {}, cleanup: [] };
     stepsLeft: () => { const all = C1.course.flatMap((u) => unitSteps(u)); return { done: all.filter((x) => x.done).length, total: all.length }; },
     unitsDone: () => C1.course.filter((u) => unitDone(u) === unitSteps(u).length).length, unitCount: () => C1.course.length,
     topicHref, icon, view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
-    unitBack, unitFooter, uq, partOf, setKey, scoreChip, nextInUnit, nextCourseStep, dueIds, freshCards: () => Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length)), start: route, route
+    unitBack, unitFooter, uq, partOf, setKey, scoreChip, nextInUnit, nextCourseStep, dueIds, updateBadge, freshCards: () => Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length)), start: route, route
   });
   Object.defineProperty(window.App, 'unitCtx', { get: () => unitCtx });
 })();

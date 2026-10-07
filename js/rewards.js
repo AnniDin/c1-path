@@ -13,7 +13,7 @@
     const done = (re) => Object.keys(S.skills).filter((k) => re.test(k) && S.skills[k].done).length;
     return {
       total, right, best: Math.max(best, Store.streak()),
-      lessons: Object.values(S.lessons).filter(Boolean).length, cards: Object.keys(S.cards).length, sets: Object.keys(S.scores).length,
+      lessons: Object.values(S.lessons).filter(Boolean).length, cards: Object.keys(S.cards).length, sets: Object.keys(S.scores).filter((k) => /^[a-z]+\/\d+$/.test(k)).length,
       listen: Object.keys(S.scores).filter((k) => k.startsWith('listen:')).length, speak: done(/^speaking:/), write: done(/^writing:/),
       units: A.unitsDone ? A.unitsDone() : 0, allUnits: A.unitCount ? A.unitCount() : 99, placement: !!S.placement,
       mocks: (S.mocks || []).length,

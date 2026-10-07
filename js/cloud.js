@@ -83,7 +83,7 @@
     },
     async signOut() {
       try { if (session) await fetch(base + '/auth/v1/logout?scope=local', { method: 'POST', headers: headers(session.access_token) }); } catch (e) { /* offline: local sign-out still works */ }
-      session = null; write(null); emit();
+      session = null; write(null); try { localStorage.removeItem('c1path.board'); } catch (e) { /* ignore */ } emit();
     },
 
     /* Returns the stored progress object, or null if this account has none yet. */
@@ -114,7 +114,7 @@
       const t = await token();
       const res = await fetch(base + '/rest/v1/rpc/delete_my_account', { method: 'POST', headers: headers(t), body: '{}' });
       if (!res.ok) throw await errorOf(res);
-      session = null; write(null); emit();
+      session = null; write(null); try { localStorage.removeItem('c1path.board'); } catch (e) { /* ignore */ } emit();
     }
   };
   window.Cloud = Cloud;
