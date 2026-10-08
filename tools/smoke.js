@@ -189,6 +189,24 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
   check('weak topics skip topics that have no questions to train', sb.App.weakTopics().map((x) => x[0]).join() === 'g-inversion');
   st.stats = keep;
 }
+/* ---- friends: a code typed as a name is refused; name and a friend's code can be given when joining ---- */
+const pending = [];
+pending.push((async () => {
+  const calls = [], keepUser = sb.Cloud.user, keepRpc = sb.Cloud.rpc, keepEnabled = sb.Cloud.enabled;
+  sb.Cloud.user = () => ({ id: 'u1', email: 'ana@example.com' }); sb.Cloud.enabled = true;
+  sb.Cloud.rpc = async (name, body) => { calls.push(name + ':' + JSON.stringify(body)); return name === 'join_board' ? 'ABC123' : name === 'friend_board' ? [] : true; };
+  sb.localStorage.removeItem('c1path.board');
+  const card = sb.App.friendsCard();
+  const inputs = card.all((n) => n.tag === 'input'), join = card.all((n) => n.tag === 'button' && /Join the ranking/.test(n.textContent))[0];
+  check('the join form has a name box and a separate friend-code box', inputs.length === 2 && !!join);
+  inputs[0].value = 'EEFA07'; inputs[1].value = '';
+  await join.ls.click[0]();
+  check('a friend code typed as the name is refused', !calls.some((c) => c.startsWith('join_board')) && /looks like a friend code/.test(card.textContent));
+  inputs[0].value = 'Ana'; inputs[1].value = '7d379a';
+  await join.ls.click[0]();
+  check('joining with a name and a friend code calls join_board and add_friend', calls.some((c) => c.startsWith('join_board:{"p_name":"Ana"')) && calls.some((c) => c.startsWith('add_friend:{"p_code":"7d379a"')), calls.join(' | '));
+  sb.Cloud.user = keepUser; sb.Cloud.rpc = keepRpc; sb.Cloud.enabled = keepEnabled; sb.localStorage.removeItem('c1path.board');
+})());
 /* ---- every route renders ---- */
 const C1 = sb.C1, routes = ['', 'welcome', 'course', 'course/mix', 'toolkit', 'progress', 'review', 'progress/progress', 'progress/settings', 'account', 'mistakes', 'mistakes/practice', 'placement', 'exams', 'privacy', 'mock', 'tricks', 'generate', 'certacles', 'plan', 'weak',
   'grammar', 'vocab', 'practice', 'skills', 'skills/listening', 'skills/writing', 'skills/writing/guide', 'skills/speaking', 'skills/pronunciation', 'vquiz/all'];
@@ -262,5 +280,7 @@ for (const r of routes) {
 sb.location.hash = '#/nope'; sb.App.route();
 check('unknown route shows Not found', /Not found/.test(app.textContent));
 
+Promise.all(pending).then(() => {
 console.log(`${ok} checks passed, ${failed} failed, ${routes.length} routes visited`);
 process.exit(failed ? 1 : 0);
+});
