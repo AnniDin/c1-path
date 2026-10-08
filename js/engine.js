@@ -302,7 +302,7 @@
       rendered.push(r); wrap.append(r.el);
     });
     const hasQuestions = n > 0;
-    const result = h('div', { class: 'card', style: 'display:none' });
+    const result = h('div', { class: 'card', style: 'display:none', role: 'status', 'aria-live': 'polite' });
     const btn = h('button', { class: 'btn', onclick: check }, 'Check answers');
     const again = h('button', { class: 'btn ghost', onclick: () => opts.onRetry && opts.onRetry() }, 'Try again');
     let done = false;

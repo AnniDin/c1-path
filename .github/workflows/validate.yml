@@ -15,5 +15,7 @@ jobs:
         run: node tools/test.js
       - name: Render every page
         run: node tools/smoke.js
+      - name: End-to-end checks in headless Chrome (pages, quizzes, axe-core, phone width, light and dark)
+        run: node tools/e2e.js
       - name: Syntax check scripts
         run: for f in js/*.js data/*.js sw.js; do node --check "$f"; done

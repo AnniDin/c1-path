@@ -1,0 +1,10 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>E2E running</title>
+<!-- End-to-end checks in a real browser: run with `node tools/e2e.js` (headless Chrome or Edge), or open this page from a local server.
+     It drives the real site in an iframe and runs axe-core on many pages, in light and dark, at phone and desktop width. -->
+<style>body{font:13px/1.4 monospace;margin:8px}iframe{border:1px solid #888;height:900px}</style>
+<iframe id="f" title="site under test"></iframe>
+<pre id="out"></pre>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.0/axe.min.js"></script>
+<script src="e2e-page.js"></script>
