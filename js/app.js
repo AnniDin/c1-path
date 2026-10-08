@@ -182,10 +182,12 @@ window.App = { routes: {}, cleanup: [] };
     const steps = App.homeSteps ? App.homeSteps() : [['Mixed review', 'A few questions from grammar, vocabulary and rewriting', '#/course/mix', 'Start']];
     const [first, ...rest] = steps;
     const hero = h('section', { class: 'hero' },
-      h('p', { class: 'eyebrow' }, st.placement || Store.totalAnswered() ? 'Next up' : 'Start here'),
+      h('p', { class: 'eyebrow' }, 'What to do now'),
       h('h1', {}, first[0]),
       h('p', { class: 'lead' }, first[1]),
-      link(first[2], first[3], 'btn'));
+      link(first[2], first[3], 'btn'),
+      rest.length ? h('div', { class: 'then' }, h('p', { class: 'eyebrow' }, 'Then'),
+        rest.slice(0, 2).map(([t, d, href, cta]) => h('a', { class: 'pathrow', href }, h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), h('span', { class: 'muted' }, cta + ' →')))) : null);
 
     const gDone = grammar.filter((g) => st.lessons[g.id]).length;
     const seen = allCards.filter((c) => Store.card(c.id)).length;
@@ -212,9 +214,7 @@ window.App = { routes: {}, cleanup: [] };
         row('Grammar lessons', '#/grammar', gDone, grammar.length),
         row('Vocabulary items', '#/vocab', seen, allCards.length),
         row('Practice sets', '#/practice', pDone, pTotal)),
-      h('details', { class: 'more' }, h('summary', {}, 'More: other things to do, weak spots, achievements'),
-        rest.length ? h('section', {}, h('h2', {}, 'Also on the list'),
-          rest.slice(0, 3).map(([t, d, href, cta]) => h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), link(href, cta, 'btn small ghost')))) : null,
+      h('details', { class: 'more' }, h('summary', {}, 'More: weak spots and achievements'),
         weak.length ? h('section', {}, h('h2', {}, 'Needs work'),
           weak.map(([k, a]) => h('div', { class: 'trow' }, link(topicHref(k), topicLabels[k] || k), bar(a, 'bad'), h('span', {}, pct(a) + '%'))),
           h('p', { class: 'muted' }, 'Topics below 75% after at least 5 answers. ', link('#/weak', 'Train them now →'))) : null,
@@ -529,13 +529,21 @@ window.App = { routes: {}, cleanup: [] };
       cardBlock(null, h('div', { class: 'pathrow' },
         h('div', {}, h('strong', {}, 'Mixed review'), h('div', { class: 'muted' }, 'Eleven questions from across the whole course: grammar, vocabulary and rewriting.')),
         link('#/course/mix', 'Start', 'btn small ghost'))),
-      h('div', { class: 'grid', style: 'margin-top:14px' }, C1.course.map((u, n) => {
-        const t = unitSteps(u).length, d = unitDone(u);
-        return h('a', { class: 'card', href: '#/course/' + u.id },
-          h('div', {}, h('span', { class: 'tag' + (d === t ? ' ok' : '') }, d === t ? 'Complete' : 'Unit ' + (n + 1)), h('span', { class: 'tag' }, u.level)),
-          h('h3', { style: 'margin:.5em 0 .2em' }, u.title), h('p', { class: 'muted', style: 'margin:0 0 8px' }, u.goals[0]),
-          bar(d / t), h('div', { class: 'muted', style: 'font-size:.85rem;margin-top:4px' }, `${d} of ${t} steps`));
-      })));
+      ...(() => {
+        /* a table of contents: one ruled list per level, a status on the right of each row */
+        const groups = [];
+        C1.course.forEach((u, n) => { let g = groups[groups.length - 1]; if (!g || g.level !== u.level) groups.push(g = { level: u.level, rows: [] }); g.rows.push([u, n]); });
+        return groups.map((g) => h('section', { class: 'toc-group' },
+          h('h2', { class: 'toc-h' }, g.level, h('span', { class: 'muted' }, ` ${g.rows.length} units`)),
+          h('ol', { class: 'toclist' }, g.rows.map(([u, n]) => {
+            const t = unitSteps(u).length, d = unitDone(u), cur = nc && nc.u === u;
+            const status = d === t ? 'Complete' : d ? `${d} of ${t} steps` : `${t} steps`;
+            return h('li', {}, h('a', { href: '#/course/' + u.id, class: d === t ? 'done' : cur ? 'cur' : '' },
+              h('span', { class: 'tn' }, String(n + 1).padStart(2, '0')),
+              h('span', { class: 'tt' }, h('strong', {}, u.title), h('span', { class: 'muted' }, u.goals[0])),
+              h('span', { class: 'ts' + (d === t ? ' ok' : '') }, cur ? 'Up next' : status, d && d < t ? bar(d / t) : null)));
+          }))));
+      })());
   }
 
   function unitPage(id) {
@@ -607,7 +615,7 @@ window.App = { routes: {}, cleanup: [] };
       h('div', { class: 'grid' },
         tile('#/grammar', 'Grammar', `${grammar.length} lessons in four themes, each explaining why the structure exists.`, `${gRead}/${grammar.length} read`, 'grammar'),
         tile('#/vocab', 'Vocabulary', 'Phrasal verbs, collocations, idioms and topic language, with flashcards and quizzes.', `${seen}/${allCards.length} started`, 'vocab')),
-      sectionHead('Exam papers', 'Practise each paper of the exam.'),
+      sectionHead('Practise by skill', 'Untimed exercises for each part of the exam. For timed full papers, use the Exams tab.'),
       h('div', { class: 'grid' },
         tile('#/practice', 'Use of English and Reading', 'Exam-style tasks with a strategy for each type.', `${pDone}/${pTot} sets done`, 'practice'),
         tile('#/skills/listening', 'Listening', 'Recorded dialogues with exam-style questions, plus dictation.', `${sk.l[0]}/${sk.l[1]} done`, 'listening'),

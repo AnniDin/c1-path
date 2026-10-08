@@ -284,7 +284,7 @@ for (const r of routes) {
   }
   check('with everything done, no page prints NaN/undefined/null or throws', !bad.length, bad.slice(0, 5).join(' || '));
   const home = (sb.location.hash = '#/', app.children = [], sb.App.route(), app.textContent);
-  check('with everything done, home still says what to do next', /Next up/.test(home) && home.length > 200);
+  check('with everything done, home still says what to do next', /What to do now/.test(home) && home.length > 200);
 }
 sb.location.hash = '#/nope'; sb.App.route();
 check('unknown route shows Not found', /Not found/.test(app.textContent));
