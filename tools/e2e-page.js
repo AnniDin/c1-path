@@ -25,8 +25,8 @@
 
   /* ---------- 1. navigation ---------- */
   let w = await boot(1024);
-  ok('home shows the five tabs', $$(w, '#nav a').map((a) => a.textContent.trim().replace(/\s+\d+$/, '')).join('|') === 'Home|Course|Study|Exams|Review');
-  for (const [hash, tab] of [['#/mock', 'Exams'], ['#/certacles', 'Exams'], ['#/exams', 'Exams'], ['#/plan', 'Exams'], ['#/practice', 'Study'], ['#/progress', 'Review'], ['#/course', 'Course']]) {
+  ok('home shows the five tabs', $$(w, '#nav a').map((a) => a.textContent.trim().replace(/\s+\d+$/, '')).join('|') === 'Home|Course|Study|Exams|Progress');
+  for (const [hash, tab] of [['#/mock', 'Exams'], ['#/certacles', 'Exams'], ['#/exams', 'Exams'], ['#/plan', 'Exams'], ['#/practice', 'Study'], ['#/progress', 'Progress'], ['#/course', 'Course']]) {
     await go(w, hash); const active = $$(w, '#nav a.active').map((a) => a.textContent.trim().replace(/\s+\d+$/, ''));
     ok('tab for ' + hash + ' is highlighted', active.join() === tab, active.join());
   }
@@ -71,7 +71,7 @@
 
   /* ---------- 6. the Review page and the Exams tab ---------- */
   await go(w, '#/progress', 500);
-  ok('Review has three sections', $$(w, 'nav.tabs a').map((a) => a.textContent.trim()).join('|') === 'Today|Progress|Settings' && $(w, 'nav.tabs a.on').textContent === 'Today');
+  ok('Review has three sections', $$(w, 'nav.tabs a').map((a) => a.textContent.trim()).join('|') === 'Today|Results|Settings' && $(w, 'nav.tabs a.on').textContent === 'Today');
   ok('Review (Today) opens with the to-do list', /do now/i.test(text(w)) && /Daily goal/.test(text(w)) && !/Help calibrate|Better voices|Achievements|Your data|Friends/.test(text(w)));
   await go(w, '#/progress/settings', 400); ok('Settings section has AI, voices, offline and a link to the account', ['AI feedback', 'Better voices', 'Use it offline', 'Open my account'].every((t) => text(w).includes(t)) && !/Your data|Sync between devices/.test(text(w)));
   await go(w, '#/account', 500); ok('the account page has friends, calibration, sync and data', ['My account', 'Friends', 'Help calibrate the difficulty', 'Sync between devices', 'Your data'].every((t) => text(w).includes(t)), text(w).slice(0, 120));

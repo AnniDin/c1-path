@@ -330,7 +330,16 @@
         h('div', { class: 'row' }, again)].filter(Boolean));
       result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-    if (hasQuestions) wrap.append(h('div', { class: 'row', style: 'margin-top:14px' }, btn), result);
+    /* "3 of 8 answered": counts selects, text boxes and radio groups, and updates as the learner works */
+    const counter = h('span', { class: 'muted' });
+    const tally = () => {
+      const fields = [...wrap.querySelectorAll('select, input[type=text], input[type=radio]')], groups = {};
+      fields.forEach((f, i) => { const k = f.type === 'radio' ? 'r:' + (f.name || i) : 'f' + i; groups[k] = groups[k] || (f.type === 'radio' ? f.checked : String(f.value).trim() !== ''); if (f.type === 'radio' && f.checked) groups[k] = true; });
+      const all = Object.values(groups);
+      counter.textContent = all.length > 1 ? `${all.filter(Boolean).length} of ${all.length} answered` : '';
+    };
+    wrap.addEventListener('input', tally); wrap.addEventListener('change', tally); tally();
+    if (hasQuestions) wrap.append(h('div', { class: 'row', style: 'margin-top:14px' }, btn, counter), result);
     return wrap;
   }
 

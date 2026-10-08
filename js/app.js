@@ -220,7 +220,7 @@ window.App = { routes: {}, cleanup: [] };
           h('p', { class: 'muted' }, 'Topics below 75% after at least 5 answers. ', link('#/weak', 'Train them now →'))) : null,
         App.rewards && App.rewards.recent ? App.rewards.recent() : null,
         App.planPrompt ? App.planPrompt() : null),
-      h('p', { class: 'muted' }, link('#/progress', 'Review and progress →'), ' · ', link('#/welcome', 'How C1 Path works')));
+      h('p', { class: 'muted' }, link('#/progress', 'Your progress →'), ' · ', link('#/welcome', 'How C1 Path works')));
   }
 
   /* ---------- progress ---------- */
@@ -269,7 +269,7 @@ window.App = { routes: {}, cleanup: [] };
     /* Review is four pages, so each one has a single job */
     const PAGES = {
       today: ['Today', 'What to do now, how this week is going and your daily goal.', [doNow, numbers, App.weekCard ? App.weekCard() : null, goal]],
-      progress: ['Progress', 'How you are doing: activity, achievements, full tests, skills and accuracy by topic.', [
+      progress: ['Results', 'How you are doing: activity, achievements, full tests, skills and accuracy by topic.', [
         cardBlock('Last 12 weeks', heat, h('p', { class: 'muted' }, 'Darker = more answers that day. Answer at least one question to keep your streak.')),
         App.rewards ? App.rewards.shelf() : null, App.historyCard ? App.historyCard() : null, App.skillsCard ? App.skillsCard() : null, App.recsCard ? App.recsCard() : null,
         ...tbl, !entries.length ? h('p', { class: 'muted' }, 'Nothing here yet. Do a lesson or a practice set and your results will appear.') : null]],
@@ -278,8 +278,8 @@ window.App = { routes: {}, cleanup: [] };
         cardBlock('Account, friends, sync and data', h('p', { class: 'muted' }, 'Sign in, the friends ranking, syncing between devices and your backup live on the account page.'), link('#/account', 'Open my account', 'btn small'))]]
     };
     const tab = PAGES[which] ? which : 'today';
-    view(h('h1', {}, 'Review'),
-      h('nav', { class: 'tabs', 'aria-label': 'Review sections' }, Object.entries(PAGES).map(([k, p]) =>
+    view(h('h1', {}, 'Progress'),
+      h('nav', { class: 'tabs', 'aria-label': 'Progress sections' }, Object.entries(PAGES).map(([k, p]) =>
         h('a', { href: '#/progress' + (k === 'today' ? '' : '/' + k), class: k === tab ? 'on' : '', 'aria-current': k === tab ? 'page' : false }, p[0]))),
       h('p', { class: 'lead' }, PAGES[tab][1]),
       ...PAGES[tab][2]);
@@ -763,7 +763,7 @@ window.App = { routes: {}, cleanup: [] };
             [['Home', 'Your next best step and a quick look at your progress.', '#/'],
               ['Course', `${C1.course.length} themed units in a fixed order, from B2 to C1. The easiest way to follow a plan.`, '#/course'],
               ['Study', 'All the material by area, to study anything in any order.', '#/toolkit'],
-              ['Review', 'Today\'s to-do list, your progress and your settings.', '#/progress'],
+              ['Progress', 'Today\'s to-do list, your results and your settings.', '#/progress'],
               ['Notes', 'A notebook that opens from any page (button at the top, or Alt+N).', null]].map(([t, d, href], i) =>
               h('div', { class: 'step' }, h('span', { class: 'dot' }, i + 1), h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), href ? link(href, 'Look', 'btn small ghost') : h('span')))),
           h('p', { class: 'muted' }, 'Your progress is saved in this browser. Sign in at the top if you want it safe and synced across devices.')
