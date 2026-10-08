@@ -242,6 +242,7 @@ window.App = { routes: {}, cleanup: [] };
   }
 
   function progress(which) {
+    if (which === 'settings') return App.routes.account();
     const st = Store.state;
     const heat = h('div', { class: 'heat' }, Store.lastDays(84).map((d) =>
       h('i', { class: d.n >= 20 ? 'l3' : d.n >= 8 ? 'l2' : d.n > 0 ? 'l1' : '', title: `${d.day}: ${d.n} answers` })));
@@ -273,9 +274,6 @@ window.App = { routes: {}, cleanup: [] };
         cardBlock('Last 12 weeks', heat, h('p', { class: 'muted' }, 'Darker = more answers that day. Answer at least one question to keep your streak.')),
         App.rewards ? App.rewards.shelf() : null, App.historyCard ? App.historyCard() : null, App.skillsCard ? App.skillsCard() : null, App.recsCard ? App.recsCard() : null,
         ...tbl, !entries.length ? h('p', { class: 'muted' }, 'Nothing here yet. Do a lesson or a practice set and your results will appear.') : null]],
-      settings: ['Settings', 'AI feedback, better voices and offline use. Your account, friends, sync and backup are under the account button at the top right.', [
-        App.aiCard ? App.aiCard() : null, App.neuralCard ? App.neuralCard() : null, App.offlineCard ? App.offlineCard() : null,
-        cardBlock('Account, friends, sync and data', h('p', { class: 'muted' }, 'Sign in, the friends ranking, syncing between devices and your backup live on the account page.'), link('#/account', 'Open my account', 'btn small'))]]
     };
     const tab = PAGES[which] ? which : 'today';
     view(h('h1', {}, 'Progress'),
@@ -360,9 +358,14 @@ window.App = { routes: {}, cleanup: [] };
   }
 
   /* ---------- vocabulary ---------- */
+  /* hear a phrase and read its phonetic transcription (British IPA, machine-generated: data/ipa.js) */
+  const spoken = (t) => t.replace(/\([^)]*\)/g, ' ').replace(/sb/g, 'somebody').replace(/sth/g, 'something').replace(/\//g, ' ').replace(/\s+/g, ' ').trim();
+  const sayBtn = (text, label, slow) => h('button', { class: 'icon-btn say', type: 'button', title: label, 'aria-label': label, onclick: () => Engine.Speech.say(text, slow ? 0.7 : 1) }, icon('listening'));
+  const phraseLine = (c) => h('span', { class: 'phrase' }, sayBtn(spoken(c.phrase), 'Listen to "' + c.phrase + '"'),
+    C1.ipa && C1.ipa[c.phrase] ? h('span', { class: 'ipa', lang: 'en-fonipa', title: 'British English, machine-generated' }, C1.ipa[c.phrase]) : null);
   function cardView(c, showGroup) {
     return h('div', { class: 'vcard' },
-      h('div', {}, h('span', { class: 'hl' }, c.phrase), ' ', h('span', { class: 'tag' }, c.kind), showGroup ? h('span', { class: 'muted' }, ' ' + c.groupTitle) : null),
+      h('div', {}, h('span', { class: 'hl' }, c.phrase), ' ', phraseLine(c), ' ', h('span', { class: 'tag' }, c.kind), showGroup ? h('span', { class: 'muted' }, ' ' + c.groupTitle) : null),
       h('div', {}, c.meaning),
       h('div', { class: 'eg', html: c.ex.replace(/\[\[(.+?)\]\]/g, '<em>$1</em>') }),
       c.logic ? h('div', { class: 'muted' }, '' + c.logic) : null,
@@ -462,8 +465,8 @@ window.App = { routes: {}, cleanup: [] };
 
       function reveal() {
         front.replaceChildren(
-          h('div', { class: 'big hl' }, c.phrase), h('div', {}, c.meaning),
-          h('div', { class: 'eg', html: c.ex.replace(/\[\[(.+?)\]\]/g, '<em>$1</em>') }),
+          h('div', { class: 'big hl' }, c.phrase, ' ', phraseLine(c)), h('div', {}, c.meaning),
+          h('div', { class: 'eg', html: c.ex.replace(/\[\[(.+?)\]\]/g, '<em>$1</em>') }), h('div', {}, sayBtn(spoken(c.ex.replace(/\[\[|\]\]/g, '')), 'Listen to the example sentence'), h('span', { class: 'muted' }, ' Hear the example')),
           c.logic ? h('div', { class: 'callout' }, '' + c.logic) : '',
           h('div', { class: 'rate' }, [['Again', 0], ['Hard', 1], ['Good', 2], ['Easy', 3]].map(([label, r]) =>
             h('button', { class: 'btn', 'data-rate': r, onclick: () => rateIt(r) }, label, h('small', {}, Store.intervalLabel(id, r))))));
@@ -806,10 +809,10 @@ window.App = { routes: {}, cleanup: [] };
         h('ul', {},
           h('li', {}, 'Each account can read and change only its own data (row-level security).'),
           h('li', {}, 'Your data is kept until you delete your account.'),
-          h('li', {}, 'To delete your account and all cloud data at any time: open the account menu at the top right and choose "Delete my account". Copies on your own devices stay.'),
-          h('li', {}, 'To get a copy of your data: use "Export backup" in Review.'),
+          h('li', {}, 'To delete your account and all cloud data at any time: open My account (top right) and choose "Delete my account". Copies on your own devices stay.'),
+          h('li', {}, 'To get a copy of your data: use "Export backup" on the account page.'),
           h('li', {}, 'The sign-in session token is kept in your browser\'s localStorage.')),
-        h('p', {}, 'Optional difficulty calibration: only if you switch it on (Review) and are signed in, the server stores, for each practice or listening set, your score on your FIRST attempt, linked to your account so one learner counts once. Nobody else can read these rows. The site only shows averages for sets with at least ten learners, and uses them to adjust the difficulty rating of each set. "Stop sharing" deletes your rows, and deleting your account deletes them too. Optional friends leaderboard: only if you join it, the server also stores a display name you choose, your questions answered this week, your streak, your level and a friend code. They are visible only to you and to people who add your code, or whose code you add: a friendship is mutual, so both see each other. "Leave" in Review deletes them. Deleting your account removes them too.'),
+        h('p', {}, 'Optional difficulty calibration: only if you switch it on (My account) and are signed in, the server stores, for each practice or listening set, your score on your FIRST attempt, linked to your account so one learner counts once. Nobody else can read these rows. The site only shows averages for sets with at least ten learners, and uses them to adjust the difficulty rating of each set. "Stop sharing" deletes your rows, and deleting your account deletes them too. Optional friends leaderboard: only if you join it, the server also stores a display name you choose, your questions answered this week, your streak, your level, a friend code and, if you choose one, a small profile picture. They are visible only to you and to people who add your code, or whose code you add: a friendship is mutual, so both see each other. "Leave" in Review deletes them. Deleting your account removes them too.'),
         h('p', {}, 'Supabase and, if you choose Google sign-in, Google act as service providers under their own privacy policies.')) : null,
       h('h2', {}, 'Optional AI feedback'),
       h('p', {}, 'If you add your own API key (Google Gemini, Groq or Anthropic) and ask for feedback, the text you choose to submit is sent to that provider to produce the feedback. The key stays in your browser. Free plans of some providers may use submitted text to improve their models, so do not include personal details. Without a key, nothing is sent.'),

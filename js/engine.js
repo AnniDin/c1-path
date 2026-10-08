@@ -319,6 +319,7 @@
       rendered.forEach((r) => r.el.dispatchEvent(new CustomEvent('quizchecked')));
       const pct = Math.round((100 * correct) / res.length);
       const wrong = res.length - correct;
+      if (window.Sound && !result.dataset.heard) { result.dataset.heard = '1'; Sound.play(pct >= 80 ? 'right' : pct >= 50 ? 'ok' : 'wrong'); }
       result.style.display = '';
       result.innerHTML = '';
       result.append(...[h('div', { class: 'score' }, `${correct} / ${res.length}  (${pct}%)`),

@@ -4,6 +4,51 @@
   const A = window.App;
   const cloudOn = () => !!(window.Cloud && Cloud.enabled);
 
+  /* ---- profile picture: a photo cropped to a small square, or an initial on a colour. Kept on this device only. ---- */
+  const AK = 'c1path.avatar', CK = 'c1path.avatarcolour';
+  const COLOURS = ['#a63d15', '#4d6a22', '#2f6f73', '#7a4a7e', '#b5801a', '#3d5a80'];
+  const lget = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const lset = (k, v) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); return true; } catch (e) { return false; } };
+  A.avatarOf = (name, photo, small) => h('span', { class: 'avatar' + (small ? ' small' : ''), 'aria-hidden': 'true' }, photo ? h('img', { src: photo, alt: '' }) : String(name || '?')[0].toUpperCase());
+  A.myAvatar = () => lget(AK) || '';
+  /* picture saved with the friends board on another device: keep it here too when this device has none */
+  A.adoptAvatar = (src) => { if (src && !lget(AK) && /^data:image\/jpeg;base64,/.test(src)) { lset(AK, src); document.dispatchEvent(new CustomEvent('c1avatar')); } };
+  A.avatar = (name, big) => {
+    const photo = lget(AK), col = lget(CK);
+    const el = h('span', { class: 'avatar' + (big ? ' big' : ''), 'aria-hidden': 'true' }, photo ? h('img', { src: photo, alt: '' }) : String(name || '?')[0].toUpperCase());
+    if (!photo && col) { el.style.background = col; el.style.color = '#fff'; }
+    return el;
+  };
+  /* centre-crop to a 128px square and re-encode, so a phone photo becomes a few kilobytes */
+  const squarePhoto = (file) => new Promise((ok, no) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const s = Math.min(img.width, img.height), c = document.createElement('canvas');
+      c.width = c.height = 128;
+      c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 128, 128);
+      URL.revokeObjectURL(url); ok(c.toDataURL('image/jpeg', .85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); no(new Error('That file is not an image the browser can read.')); };
+    img.src = url;
+  });
+  const pictureCard = A.pictureCard = (name) => {
+    const msg = h('p', { class: 'muted', role: 'status' });
+    const redraw = () => { document.dispatchEvent(new CustomEvent('c1avatar')); if (A.shareAvatar) A.shareAvatar(); A.route(); };
+    const file = h('input', { type: 'file', accept: 'image/*', style: 'display:none', 'aria-label': 'Choose a profile picture' });
+    file.addEventListener('change', async () => {
+      if (!file.files[0]) return;
+      try { if (lset(AK, await squarePhoto(file.files[0]))) redraw(); else msg.textContent = 'Could not save the picture: browser storage is full or blocked.'; }
+      catch (e) { msg.textContent = e.message; }
+    });
+    return A.cardBlock('Profile picture',
+      h('div', { class: 'row' }, A.avatar(name, true),
+        h('button', { class: 'btn small', onclick: () => file.click() }, lget(AK) ? 'Change photo' : 'Choose a photo'), file,
+        lget(AK) ? h('button', { class: 'btn small ghost', onclick: () => { lset(AK, null); redraw(); } }, 'Remove photo') : null),
+      lget(AK) ? null : h('div', { class: 'row swatches', role: 'group', 'aria-label': 'Colour for your initial' }, COLOURS.map((c) =>
+        h('button', { class: 'swatch' + ((lget(CK) || COLOURS[0]) === c ? ' on' : ''), style: 'background:' + c, 'aria-label': 'Colour ' + c, 'aria-pressed': String((lget(CK) || COLOURS[0]) === c), onclick: () => { lset(CK, c); redraw(); } }))),
+      h('p', { class: 'muted' }, 'The photo is cropped to a small square. If you have joined the friends ranking, the friends you add can see it next to your name (it is deleted if you leave the ranking or delete your account). Otherwise it stays on this device.'), msg);
+  };
+
   /* ---- the account page (#/account): who you are, friends, sync, backup ---- */
   A.routes.account = () => {
     const user = cloudOn() && Cloud.user && Cloud.user();
@@ -22,8 +67,11 @@
         if (!confirm('Delete your account and the progress stored in the cloud? Progress on your devices is kept, but it will no longer sync.')) return;
         try { await Cloud.deleteAccount(); A.toast && A.toast('Account deleted'); A.route(); } catch (e) { alert('Could not delete the account: ' + e.message); }
       } }, 'Delete my account')) : null;
-    A.view(h('h1', {}, 'My account'), h('p', { class: 'lead' }, 'Who you are, your friends, syncing between devices and your data.'),
-      who, A.friendsCard ? A.friendsCard() : null, A.calibCard ? A.calibCard() : null, A.syncCard ? A.syncCard() : null, A.dataCard(() => A.routes.account()), del);
+    A.view(h('h1', {}, 'My account'), h('p', { class: 'lead' }, 'Who you are, your friends, settings, syncing between devices and your data.'),
+      who, user ? pictureCard(user.email) : null, A.friendsCard ? A.friendsCard() : null, A.calibCard ? A.calibCard() : null, A.syncCard ? A.syncCard() : null,
+      h('h2', {}, 'Settings'), h('p', { class: 'muted' }, 'AI feedback, better voices, offline use and sounds.'),
+      A.aiCard ? A.aiCard() : null, window.Sound ? window.Sound.card() : null, A.neuralCard ? A.neuralCard() : null, A.offlineCard ? A.offlineCard() : null,
+      A.dataCard(() => A.routes.account()), del);
   };
   if (cloudOn() && Cloud.onChange) Cloud.onChange(() => { if (location.hash === '#/account' && !document.querySelector('#app :focus')) A.route(); });
 
@@ -78,13 +126,14 @@
   const label = (u) => (u.email || '?');
   function paint() {
     const u = Cloud.user();
-    btn.textContent = u ? '' : 'Sign in';
+    btn.textContent = u ? '' : 'Account';
     btn.classList.toggle('signed', !!u);
-    if (u) { btn.append(h('span', { class: 'avatar', 'aria-hidden': 'true' }, (u.email || '?')[0].toUpperCase())); btn.setAttribute('aria-label', 'Account: ' + label(u)); btn.title = label(u); } else { btn.removeAttribute('aria-label'); btn.title = 'Sign in to sync your progress'; }
+    if (u) { btn.append(A.avatar(u.email)); btn.setAttribute('aria-label', 'Account: ' + label(u)); btn.title = label(u); } else { btn.removeAttribute('aria-label'); btn.title = 'Account, settings and sync'; }
   }
-  btn.addEventListener('click', () => { if (Cloud.user()) location.hash = '#/account'; else openSignIn(); });
+  btn.addEventListener('click', () => { location.hash = '#/account'; });
   Cloud.onChange(() => { paint(); if (Cloud.user() && dlg.open) dlg.close(); });
   document.addEventListener('c1sync', paint);
+  document.addEventListener('c1avatar', paint);
 
   const a = Cloud.arrival();
   if (a) setTimeout(() => (A.toast ? A.toast(a) : alert(a)), 600);

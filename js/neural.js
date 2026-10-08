@@ -60,7 +60,7 @@
   Speech.neural = { active: flag, play, stop };
 
   /* ---------- Review card and hint ---------- */
-  A.neuralHint = () => (flag() ? null : h('p', { class: 'muted' }, 'Do the voices sound robotic? ', h('a', { href: '#/progress/settings' }, 'Turn on neural voices'), ' (a one-time download of about 90 MB).'));
+  A.neuralHint = () => (flag() ? null : h('p', { class: 'muted' }, 'Do the voices sound robotic? ', h('a', { href: '#/account' }, 'Turn on neural voices'), ' (a one-time download of about 90 MB).'));
   A.neuralCard = () => {
     const status = h('p', { class: 'muted', role: 'status' }), bar = h('progress', { max: 100, value: 0, style: 'width:100%;display:none' });
     const btn = h('button', { class: 'btn small', type: 'button' });

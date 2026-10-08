@@ -86,7 +86,7 @@
       if (lv > 1 && Store.earn('lvl:' + lv)) fresh.push('Level ' + lv + ' · ' + levelOf(xpOf(s)).title);
       if (Store.todayCount() >= Store.goal() && Store.earn('goal:' + Store.today())) fresh.push('Daily goal reached');
       if (quests().every((q) => q.done) && Store.earn('quest:' + Store.today())) fresh.push('All daily quests done (+50 XP)');
-      if (fresh.length && !first) confetti();
+      if (fresh.length && !first) { confetti(); if (window.Sound) Sound.play('win'); }
       if (fresh.length && !first) toast('🏅 ' + (fresh.length > 2 ? fresh.length + ' new achievements' : fresh.join(' · ')));
     } finally { busy = false; }
   }

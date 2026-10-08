@@ -25,6 +25,15 @@
     const lv = A.rewards ? A.rewards.level().n : 1;
     await Cloud.rpc('update_board', { p_week: monday(), p_answers: weekAnswers(), p_streak: Store.streak(), p_level: lv });
   }
+  /* the picture goes to the board only for people who joined it, and only when it changed */
+  const SENT = 'c1path.avatarsent';
+  A.shareAvatar = async () => {
+    if (!get() || !window.Cloud || !Cloud.user()) return;
+    const mine = A.myAvatar ? A.myAvatar() : '';
+    let last = ''; try { last = localStorage.getItem(SENT) || ''; } catch (e) { /* ignore */ }
+    if (mine === last) return;
+    try { await Cloud.rpc('set_avatar', { p_avatar: mine }); try { localStorage.setItem(SENT, mine); } catch (e) { /* ignore */ } } catch (e) { /* the picture is optional: older servers do not have set_avatar */ }
+  };
   let t;
   Store.onChange(() => { if (get()) { clearTimeout(t); t = setTimeout(() => publish().catch(() => {}), 8000); } });
 
@@ -57,13 +66,15 @@
       box.replaceChildren(card(h('p', { class: 'muted' }, 'Loading…')));
       try {
         await publish();
+        if (A.shareAvatar) await A.shareAvatar();
         const rows = ((await Cloud.rpc('friend_board', {})) || []).map((r) => Object.assign({}, r, { answers: r.week === monday() ? r.answers : 0 })).sort((a, b) => b.answers - a.answers || b.streak - a.streak);
+        const mineRow = rows.find((r) => r.me); if (mineRow && mineRow.avatar && A.adoptAvatar) A.adoptAvatar(mineRow.avatar);
         const friend = h('input', { type: 'text', maxlength: 8, placeholder: 'Friend code', 'aria-label': 'Friend code', style: 'text-transform:uppercase;width:9em' });
         box.replaceChildren(card(
           h('p', { class: 'muted' }, 'Give your code to a friend and they type it under "Add a friend" below: you will see each other.'),
           h('p', {}, 'Your friend code: ', h('strong', { class: 'fcode' }, me.code), ' ', h('button', { class: 'btn small ghost', onclick: () => { navigator.clipboard && navigator.clipboard.writeText(me.code); msg.textContent = 'Code copied. Send it to a friend.'; } }, 'Copy')),
           rows.length > 1 ? null : h('p', { class: 'muted' }, 'Add a friend with their code to see the ranking.'),
-          ...rows.map((r, i) => h('div', { class: 'trow friend' + (r.me ? ' me' : '') }, h('span', {}, `${i + 1}. ${r.name}${r.me ? ' (you)' : ''}`), A.bar(Math.min(1, r.answers / Math.max(1, rows[0].answers || 1)), r.me ? 'ok' : ''),
+          ...rows.map((r, i) => h('div', { class: 'trow friend' + (r.me ? ' me' : '') }, h('span', { class: 'fwho' }, A.avatarOf ? A.avatarOf(r.name, r.avatar, true) : null, `${i + 1}. ${r.name}${r.me ? ' (you)' : ''}`), A.bar(Math.min(1, r.answers / Math.max(1, rows[0].answers || 1)), r.me ? 'ok' : ''),
             h('span', { class: 'muted' }, `${r.answers} this week · 🔥${r.streak} · L${r.level}`),
             r.me ? h('span') : h('button', { class: 'icon-btn', 'aria-label': 'Remove ' + r.name, onclick: async () => { await Cloud.rpc('remove_friend', { p_code: r.code }); draw(); } }, '✕'))),
           h('div', { class: 'row' }, h('label', { for: 'fname2' }, 'Your name'), h('input', { type: 'text', id: 'fname2', maxlength: 24, value: ((rows.find((r) => r.me) || {}).name) || '' }),

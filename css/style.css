@@ -412,3 +412,18 @@ main:focus, main:focus-visible { outline: none; }
 details > summary { min-height: 44px; display: flex; align-items: center; }
 .tabs a, .toc a { min-height: 40px; display: inline-flex; align-items: center; }
 .stats + h2, .stats + .card, .stats + section { margin-top: 24px; }
+
+/* profile picture */
+.avatar { overflow: hidden; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar.big { width: 72px; height: 72px; font-size: 1.8rem; }
+.swatches { gap: 8px; }
+.swatch { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; }
+.swatch.on { box-shadow: 0 0 0 2px var(--ink); }
+.avatar.small { width: 24px; height: 24px; font-size: .8rem; margin-right: 8px; vertical-align: middle; }
+.fwho { display: flex; align-items: center; }
+
+/* vocabulary: listen and phonetics */
+.phrase { display: inline-flex; align-items: center; gap: 6px; }
+.icon-btn.say { width: 30px; height: 30px; color: var(--accent); }
+.ipa { font-family: "Segoe UI", "Noto Sans", "DejaVu Sans", sans-serif; color: var(--muted); font-size: .95rem; letter-spacing: .01em; }
