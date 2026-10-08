@@ -404,3 +404,11 @@ main:focus, main:focus-visible { outline: none; }
 
 .then { margin-top: 22px; } .then .eyebrow { margin-bottom: 2px; }
 .then .pathrow { text-decoration: none; color: inherit; } .then .pathrow:hover strong { color: var(--accent); }
+
+/* usability: spacing between the small labels, comfortable touch targets, bigger radio buttons */
+.chip { margin-right: 10px; }
+.opt input[type=radio], .opt input[type=checkbox] { width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.opt { padding: 10px 12px; }
+details > summary { min-height: 44px; display: flex; align-items: center; }
+.tabs a, .toc a { min-height: 40px; display: inline-flex; align-items: center; }
+.stats + h2, .stats + .card, .stats + section { margin-top: 24px; }

@@ -164,7 +164,7 @@ window.App = { routes: {}, cleanup: [] };
       if (lvl - prev > 1) { el.setAttribute('aria-level', String(prev + 1)); prev = prev + 1; } else prev = lvl;
     });
   }
-  function view(...nodes) { app.replaceChildren(...nodes.flat(Infinity).filter((n) => n != null && n !== false)); fixHeadings(); window.scrollTo(0, 0); app.focus({ preventScroll: true }); }
+  function view(...nodes) { app.replaceChildren(...nodes.flat(Infinity).filter((n) => n != null && n !== false)); fixHeadings(); window.scrollTo({ top: 0, behavior: 'instant' }); app.focus({ preventScroll: true }); }
   const cardBlock = (title, ...kids) => h('div', { class: 'card' }, title ? h('h2', { style: 'margin-top:0' }, title) : null, ...kids);
 
   /* ---------- home ---------- */
