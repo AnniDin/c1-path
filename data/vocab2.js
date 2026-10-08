@@ -126,7 +126,7 @@ window.C1 = window.C1 || {}; C1.vocab = C1.vocab || [];
     {
       id: 'separable', title: 'Separable vs inseparable verbs', short: 'The pronoun rule in twelve examples.',
       section: 'Phrasal verbs',
-      idea: `<p><strong>The rule.</strong> A phrasal verb with an object is either <em>separable</em> (the object can go between verb and particle) or <em>inseparable</em> (it cannot). With a <strong>noun</strong> you can often choose: <em>hand in the form / hand the form in</em>. With a <strong>pronoun</strong> a separable verb <em>must</em> be split: <em>hand it in</em> (never <em>hand in it</em>). Inseparable verbs never split: <em>deal with it</em>. Verbs with two particles (look forward to, put up with) are always inseparable.</p>`,
+      idea: `<p>Two sentences, one wrong: <em>I handed it in</em> is right, <em>I handed in it</em> is not. Why? With some phrasal verbs, an object can sit in the middle; with others, it cannot. These are called <em>separable</em> and <em>inseparable</em> verbs.</p><p>A phrasal verb with a <strong>noun</strong> object is often flexible: <em>hand in the form / hand the form in</em>. With a <strong>pronoun</strong> (it, them, him) a separable verb <em>must</em> be split: <em>hand it in</em>, never <em>hand in it</em>. Inseparable verbs never split: <em>deal with it</em>. Verbs with two particles (look forward to, put up with) are always inseparable.</p>`,
       cards: [
         pv('switch off', 'to stop a machine or light by pressing a button', 'Please [[switch]] the lights [[off]] when you leave.', 'Separable: with a pronoun, <em>switch them off</em>, never <em>switch off them</em>.'),
         pv('throw away', 'to get rid of as rubbish', 'You should never [[throw]] good food [[away]].', 'Separable: <em>throw it away</em>.'),
@@ -147,7 +147,7 @@ window.C1 = window.C1 || {}; C1.vocab = C1.vocab || [];
     {
       id: 'dep-prepositions', title: 'Dependent prepositions', short: 'Adjective, verb or noun + the correct preposition.',
       section: 'Collocations and patterns',
-      idea: `<p>Prepositions after adjectives, verbs and nouns are <strong>not translatable from Spanish</strong>: <em>depend on</em> (not <em>depend of</em>), <em>interested in</em>, <em>a solution to</em> (not <em>of</em>). Learn them as fixed chunks, ideally with the noun or adjective family: <em>solution / answer / key / reaction / response + to</em>, <em>increase / rise / fall / decrease + in</em>. After the preposition comes a noun or an -ing form, never an infinitive.</p>`,
+      idea: `<p>In Spanish you say <em>depender de</em>. In English you cannot say <em>depend of</em>: it is <em>depend on</em>. The preposition after an adjective, verb or noun is usually a habit of the word, not a translation.</p><p>Learn them in families, not one by one: <em>solution / answer / key / reaction / response + to</em> (each points <em>to</em> the thing it answers or reacts to; <em>a solution to</em> a problem, not <s>of</s>), and <em>increase / rise / fall / decrease + in</em> (the change happens <em>in</em> something, like prices). After the preposition comes a noun or an -ing form, never an infinitive.</p>`,
       cards: [
         co('be capable of', 'to have the ability to do something', 'She is [[capable of]] running a marathon in under four hours.', 'Followed by -ing: <em>capable of doing</em>.'),
         co('blame someone for', 'to say that a person is responsible for something bad', 'Don\'t [[blame]] me [[for]] the mistake.', 'Pattern: blame + person + for + thing. The alternative is <em>blame something on someone</em>.'),
@@ -168,7 +168,7 @@ window.C1 = window.C1 || {}; C1.vocab = C1.vocab || [];
     {
       id: 'word-patterns', title: 'Delexical verbs: make, do, take, have, give', short: 'Common verbs that take their meaning from the noun.',
       section: 'Collocations and patterns',
-      idea: `<p>In these expressions the verb is nearly empty (<em>delexical</em>): the noun carries the meaning. So you must learn which verb goes with which noun. Loose guide: <strong>make</strong> = create or produce a result (decision, effort, mistake), <strong>do</strong> = activity or work (research, harm, justice), <strong>take</strong> = action or choice (advantage, a stand, precautions), <strong>have</strong> = experience or state (an impact, second thoughts), <strong>give</strong> = offer or produce (priority, rise to, a talk).</p>`,
+      idea: `<p>Spanish says <em>hacer los deberes</em> and English says <em>do the homework</em> (not <s>make</s>); Spanish says <em>tomar una decisión</em> and English says <em>make a decision</em>. In expressions like these, the verb is almost empty and the <strong>noun carries the meaning</strong>. So the only question is which verb goes with which noun, and the verb has a loose feeling behind it. (Linguists call these <em>delexical</em> verbs, meaning "emptied of meaning".)</p><p>Loose guide: <strong>make</strong> = create or produce a result (decision, effort, mistake), <strong>do</strong> = activity or work (research, harm, justice), <strong>take</strong> = action or choice (advantage, a stand, precautions), <strong>have</strong> = experience or state (an impact, second thoughts), <strong>give</strong> = offer or produce (priority, rise to, a talk).</p>`,
       cards: [
         co('make a decision', 'to choose after thinking', 'It\'s time to [[make a decision]] about your future.', '<em>Make a decision</em> is the safest form. British English also accepts <em>take a decision</em> (common in business).'),
         co('do research', 'to study a subject carefully', 'She has been [[doing research]] into rare diseases.', '<em>Research</em> is uncountable: never <em>a research</em>.'),
@@ -254,7 +254,7 @@ window.C1 = window.C1 || {}; C1.vocab = C1.vocab || [];
     {
       id: 'idioms-feelings', title: 'Idioms: feelings, relationships and opinions', short: 'Delight, irritation, agreement, hesitation.',
       section: 'Idioms and expressions',
-      idea: `<p>English talks about emotion with <strong>body, weather and physical position</strong>: <em>on cloud nine</em> (high above), <em>down in the dumps</em> (low), <em>cold feet</em> (fear), <em>get something off your chest</em> (relief). Sort the idioms into two mood groups (up or down) and one relationship group (agreement or friction) and they are easier to recall.</p>`,
+      idea: `<p>Why does English say a happy person is <em>on cloud nine</em> and a sad one is <em>down in the dumps</em>? Because we feel mood as <strong>height</strong>: good feelings lift us up, bad ones drag us down. Nerves are felt in the body (<em>cold feet</em>: losing your nerve before a big step), and relief is something you physically put down (<em>get something off your chest</em>). The picture makes the meaning much easier to remember.</p><p>Sort the cards into three groups as you learn them: <strong>up moods</strong>, <strong>down moods</strong>, and <strong>getting on or falling out with people</strong> (agreement or friction).</p>`,
       cards: [
         id('over the moon', 'extremely happy', 'She was [[over the moon]] about the news.', 'High = happy. Compare <em>on cloud nine</em>.'),
         id('down in the dumps', 'sad and depressed', 'He\'s been [[down in the dumps]] since the break-up.', 'Low = unhappy.'),
@@ -275,7 +275,7 @@ window.C1 = window.C1 || {}; C1.vocab = C1.vocab || [];
     {
       id: 'register', title: 'Formal vs informal: register', short: 'Formal expressions for essays, reports and emails.',
       section: 'Idioms and expressions',
-      idea: `<p>C1 writing needs the right <strong>register</strong>: the same idea can be phrased informally in speech and formally in reports, letters and academic essays. Each card gives you the informal equivalent on the front, and you must produce the formal chunk. Rule of thumb: formal English prefers <em>longer, Latin-based words</em> and <em>noun phrases</em>; informal English prefers short verbs and phrasal verbs.</p>`,
+      idea: `<p>You would not text your boss the way you text a friend, and an essay is not a chat. <strong>Register</strong> just means how formal or casual your words are, and the same idea has a version for each: <em>find out</em> in speech, <em>ascertain</em> in a report. C1 writing needs the formal version. Each card gives you the informal equivalent on the front, and you produce the formal chunk.</p><p>Rule of thumb: formal English prefers <em>longer, Latin-based words</em> and <em>noun phrases</em>; informal English prefers short verbs and phrasal verbs.</p>`,
       cards: [
         ex('commence', 'formal version of "begin" or "start"', 'The ceremony will [[commence]] at noon.', 'Latin-based, same job as <em>start</em>.'),
         ex('in the absence of', 'formal way of saying "without" or "if there is no"', '[[In the absence of]] clear evidence, no action was taken.', 'Followed by a noun.'),

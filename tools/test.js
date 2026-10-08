@@ -166,6 +166,19 @@ const sync = (a, b) => { b.Store.mergeData(a.Store.exportData()); a.Store.mergeD
   eq('the number of attempts of a set is counted', A.Store.score('wf/2').n, 2);
 }
 
+/* --- weekly sub-skill buckets add up across devices, and merging twice changes nothing --- */
+{
+  const A = device(), B = device();
+  A.Store.addSubs([{ id: 'prep', label: 'Prepositions', href: '#/x', c: 3, t: 5 }]);
+  B.Store.addSubs([{ id: 'prep', label: 'Prepositions', href: '#/x', c: 1, t: 4 }, { id: 'link', label: 'Linkers', href: '#/y', c: 2, t: 2 }]);
+  sync(A, B); sync(A, B);
+  const week = Object.keys(A.Store.state.wk)[0];
+  eq('weekly buckets from two devices are summed', [Object.keys(A.Store.state.wk).length, A.Store.state.wk[week].prep, A.Store.state.wk[week].link], [1, [4, 9], [2, 2]]);
+  eq('the other device sees the same weeks', B.Store.state.wk, A.Store.state.wk);
+  eq('daily buckets are summed too', [Object.keys(A.Store.state.dk).length, A.Store.state.dk[Object.keys(A.Store.state.dk)[0]].prep], [1, [4, 9]]);
+  eq('weekly total matches the running total', A.Store.state.wk[week].prep[1], A.Store.state.sub.prep.t);
+}
+
 /* --- content data sanity: tricks and pronunciation --- */
 {
   const C = device(['data/tricks.js', 'data/tricks2.js', 'data/tricks3.js', 'data/pron.js']).C1;

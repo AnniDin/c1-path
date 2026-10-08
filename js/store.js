@@ -21,19 +21,21 @@
       state.dev = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       state.own = { stats: clone(state.stats), days: clone(state.days), newToday: clone(state.newToday) };
     }
-    state.own.sub = state.own.sub || {}; state.own.fx = state.own.fx || {};
+    state.own.sub = state.own.sub || {}; state.own.fx = state.own.fx || {}; state.own.wk = state.own.wk || {}; state.own.dk = state.own.dk || {};
     state.peers = state.peers || {}; state.tomb = state.tomb || {};
   }
   function recompute() {
-    const stats = {}, days = {}, nt = {}, subs = {}, fx = {};
+    const stats = {}, days = {}, nt = {}, subs = {}, fx = {}, wk = {}, dk = {};
     [state.own].concat(Object.values(state.peers)).forEach((p) => {
       Object.keys(p.stats || {}).forEach((k) => { const a = stats[k] || (stats[k] = { c: 0, t: 0 }); a.c += p.stats[k].c; a.t += p.stats[k].t; });
       Object.keys(p.days || {}).forEach((k) => { days[k] = (days[k] || 0) + p.days[k]; });
       Object.keys(p.newToday || {}).forEach((k) => { nt[k] = (nt[k] || 0) + p.newToday[k]; });
       Object.keys(p.sub || {}).forEach((k) => { const a = subs[k] || (subs[k] = { label: p.sub[k].label, href: p.sub[k].href, c: 0, t: 0 }); a.c += p.sub[k].c; a.t += p.sub[k].t; });
       Object.keys(p.fx || {}).forEach((k) => { const a = fx[k] || (fx[k] = { n: 0, sum: 0 }); a.n += p.fx[k].n; a.sum += p.fx[k].sum; });
+      Object.keys(p.wk || {}).forEach((w) => Object.keys(p.wk[w]).forEach((id) => { const a = ((wk[w] = wk[w] || {})[id] = wk[w][id] || [0, 0]); a[0] += p.wk[w][id][0]; a[1] += p.wk[w][id][1]; }));
+      Object.keys(p.dk || {}).forEach((w) => Object.keys(p.dk[w]).forEach((id) => { const a = ((dk[w] = dk[w] || {})[id] = dk[w][id] || [0, 0]); a[0] += p.dk[w][id][0]; a[1] += p.dk[w][id][1]; }));
     });
-    state.stats = stats; state.days = days; state.newToday = nt; state.sub = subs; state.fx = fx;
+    state.stats = stats; state.days = days; state.newToday = nt; state.sub = subs; state.fx = fx; state.wk = wk; state.dk = dk;
   }
   const act = (kind) => { const d = dayStr(); state.acts = state.acts || {}; (state.acts[d] = state.acts[d] || {})[kind] = 1; Object.keys(state.acts).sort().slice(0, -14).forEach((k) => delete state.acts[k]); };
   const bury = (kind, id) => { state.tomb[kind + ':' + id] = Date.now(); };
@@ -45,6 +47,7 @@
   }
 
   const dayStr = (d) => (d || new Date()).toLocaleDateString('sv'); // YYYY-MM-DD, local time
+  const weekStr = () => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return dayStr(d); }; // the Monday of this week
   const addDays = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return dayStr(d); };
 
   const Store = {
@@ -86,7 +89,17 @@
     },
     score(key) { return state.scores[key] || null; },
     /* sub-skill tallies (rows: [{ id, label, href, c, t }]) and the log of how suggestions worked, counted per device and added up on merge */
-    addSubs(rows) { rows.forEach((r) => { const o = state.own.sub[r.id] || (state.own.sub[r.id] = { label: r.label, href: r.href, c: 0, t: 0 }); o.c += r.c; o.t += r.t; }); recompute(); save(); },
+    addSubs(rows) {
+      const w = (state.own.wk[weekStr()] = state.own.wk[weekStr()] || {}), dd = (state.own.dk[dayStr()] = state.own.dk[dayStr()] || {});
+      rows.forEach((r) => {
+        const o = state.own.sub[r.id] || (state.own.sub[r.id] = { label: r.label, href: r.href, c: 0, t: 0 }); o.c += r.c; o.t += r.t;
+        const x = w[r.id] || (w[r.id] = [0, 0]); x[0] += r.c; x[1] += r.t;
+        const y = dd[r.id] || (dd[r.id] = [0, 0]); y[0] += r.c; y[1] += r.t;
+      });
+      Object.keys(state.own.dk).sort().slice(0, -60).forEach((k) => delete state.own.dk[k]);
+      Object.keys(state.own.wk).sort().slice(0, -26).forEach((k) => delete state.own.wk[k]); // half a year of weeks is plenty
+      recompute(); save();
+    },
     addFx(kind, n, sum) { const o = state.own.fx[kind] || (state.own.fx[kind] = { n: 0, sum: 0 }); o.n += n; o.sum += sum; recompute(); save(); },
     exportData() { return JSON.stringify(state); },
     importData(json) {

@@ -1,12 +1,13 @@
 window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
 {
   id: 'relatives', category: 'Sentence structure', title: 'Relative clauses: defining, non-defining and reduced', level: 'B2–C1', tagline: 'A relative clause answers the question "which one?" or adds a bonus fact.',
-  idea: `<p>A relative clause is a small sentence hooked onto a noun. It does one of two jobs, and the whole grammar follows from which one it is:</p>
-  <ul><li><strong>Defining</strong>: it tells you <em>which</em> person or thing. Remove it and the sentence loses its meaning (<em>The students who cheated were expelled</em> = only some students).</li>
-  <li><strong>Non-defining</strong>: it adds an extra comment about something that is already identified. Remove it and the sentence still works (<em>My brother, who lives in Leeds, is a chef</em>).</li></ul>
-  <p>Because a non-defining clause is only a side comment, it is fenced off with commas (or pauses in speech) and it cannot use <em>that</em>. A defining clause is part of the noun phrase, so there are no commas.</p>`,
+  idea: `<p>Compare <em>The students who cheated were expelled.</em> and <em>The students, who cheated, were expelled.</em> The first: only the cheaters were expelled. The second: all the students cheated, and all were expelled. Two commas change who gets punished.</p>
+  <p>A relative clause is a small sentence hooked onto a noun (<em>who cheated</em>). It does one of two jobs, and the grammar follows from which one:</p>
+  <ul><li><strong>Defining</strong>: it tells you <em>which</em> ones. Remove it and the meaning changes (<em>The students who cheated…</em> = only some students).</li>
+  <li><strong>Non-defining</strong>: extra information about something already clear. You could remove it and nothing is lost (<em>My brother, who lives in Leeds, is a chef</em>).</li></ul>
+  <p>Because a non-defining clause is only a side comment, it is fenced off with commas (or pauses in speech) and it cannot use <em>that</em>. A defining clause is part of the noun it describes, so there are no commas.</p>`,
   parts: [
-    { h: 'Choosing the pronoun', body: `<div class="tablewrap"><table><tr><th>Refers to</th><th>Subject</th><th>Object</th><th>Possession</th></tr>
+    { h: 'Choosing the pronoun', body: `<p>The logic: <em>who</em> for people, <em>which</em> for things, <em>whose</em> for "belonging to", and in a defining clause the pronoun can disappear only when it is the <em>object</em> of its clause, because the sentence still has a subject to hold it together.</p><div class="tablewrap"><table><tr><th>Refers to</th><th>Subject</th><th>Object</th><th>Possession</th></tr>
       <tr><td>People</td><td>who / that</td><td>who / whom / that / (nothing)</td><td>whose</td></tr>
       <tr><td>Things</td><td>which / that</td><td>which / that / (nothing)</td><td>whose / of which</td></tr>
       <tr><td>Time, place, reason</td><td colspan="3">when / where / why (or that / nothing)</td></tr></table></div>
@@ -17,11 +18,11 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
       <div class="eg">Marta, <em>who</em> I met at university, now runs a gallery.</div>
       <div class="eg">The report, <em>which</em> was published on Monday, has been widely criticised.</div>
       <p><em>Which</em> can also refer to a <strong>whole clause</strong>: <em>He passed the exam at the first attempt, which surprised everyone.</em> Here <em>which</em> = "the fact that he passed". Also useful with prepositions in formal writing: <em>the person to <strong>whom</strong> the letter was addressed</em>, <em>many of <strong>whom</strong></em>, <em>none of <strong>which</strong></em>.</p>` },
-    { h: 'Reduced relative clauses', body: `<p>If the pronoun would be the <em>subject</em> of the clause, you can delete it together with a form of <em>be</em>. What is left is a participle or a phrase.</p>
+    { h: 'Reduced relative clauses', body: `<p>Formal and written English often shortens a relative clause: <em>The people who were invited…</em> becomes <em>The people invited…</em>. If the pronoun is the <em>subject</em> of the clause, you can delete it together with <em>be</em>, and what is left is an <em>-ed</em> or <em>-ing</em> form, or a phrase.</p>
       <div class="eg">The people <em>invited</em> to the launch were mostly journalists. <span class="muted">(who were invited: passive → -ed)</span></div>
       <div class="eg">Anyone <em>wishing</em> to apply should email us. <span class="muted">(who wishes: active → -ing)</span></div>
       <div class="eg">The only candidate <em>to have refused</em> the offer was Ms Ortiz. <span class="muted">(after first, last, only, superlatives: infinitive)</span></div>
-      <p>The logic is the same as for participle clauses: the deleted subject must be recoverable from the noun just before it.</p>` },
+      <p>The logic: the listener must still know who did what, so the deleted subject has to be the noun right before the clause.</p>` },
     { h: 'Where, when and prepositions', body: `<p>A pronoun needs a job inside its own clause. <em>The house <strong>where</strong> we grew up</em> works because <em>where</em> = <em>in which</em>. Without a place word, the preposition must stay: <em>The house <strong>which</strong> we grew up in</em> or (formal) <em>the house in <strong>which</strong> we grew up</em>. Never both: <s>the house where we grew up in</s>.</p>` }
   ],
   traps: `<ul><li><s>My sister, that lives in Oslo…</s> → <em>who</em>. Non-defining clauses never take <em>that</em>.</li>
@@ -41,7 +42,7 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
 },
 {
   id: 'reporting', category: 'Reporting and voice', title: 'Reported speech and reporting verbs', level: 'B2–C1', tagline: 'Report the meaning, not the words: the verb you choose does the interpreting.',
-  idea: `<p>When we report someone's words, we are not recording, we are <strong>summarising from a different place and time</strong>. That is why pronouns, time words and tenses shift: they must make sense for the person hearing the report <em>now</em>.</p>
+  idea: `<p>Compare <em>"I'll help you tomorrow," she said.</em> and <em>She said she would help me the next day.</em> Nearly every word has moved, because the report is told from a different place and time. When we report someone's words, we are not recording, we are <strong>summarising from where we are now</strong>. That is why pronouns, time words and tenses shift: they must make sense for the person hearing the report <em>now</em>.</p>
   <p>At C1 the real skill is the reporting verb. <em>She said she would help</em> is flat; <em>She promised to help</em> tells the reader what kind of speech act it was (a promise). One good verb replaces several words.</p>`,
   parts: [
     { h: 'Backshift: why tenses move back', body: `<p>A tense "moves back" because the words now belong to the past: they were said earlier. If the situation is still true or the report is immediate, backshift is optional.</p>
@@ -53,7 +54,7 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
       <tr><td>“I <em>was</em> ill.”</td><td>She said she <em>had been</em> ill. <span class="muted">(or stays <em>was</em>)</span></td></tr>
       <tr><td>“<em>Here / now / tomorrow / this</em>”</td><td><em>there / then / the next day / that</em></td></tr></table></div>
       <p><em>Might, should, could, would, must</em> often stay unchanged.</p>` },
-    { h: 'Reporting verbs and their patterns', body: `<p>Each verb has its own grammar. Learn them in families:</p>
+    { h: 'Reporting verbs and their patterns', body: `<p>The patterns follow the meaning. Promises, offers and refusals look <em>forward</em>, so they take <em>to</em> + infinitive. Admitting, denying and suggesting talk about an action as a fact or idea, so they take <em>-ing</em>. Verbs of persuading and warning need <em>someone</em> to persuade, so they take an object. Learn them in these families:</p>
       <div class="tablewrap"><table><tr><th>Pattern</th><th>Verbs</th><th>Example</th></tr>
       <tr><td>verb + <em>to</em> + infinitive</td><td>promise, offer, refuse, threaten, agree, claim</td><td><em>He refused to sign.</em></td></tr>
       <tr><td>verb + object + <em>to</em> + infinitive</td><td>advise, warn, urge, invite, remind, tell, ask, persuade</td><td><em>She warned us not to go.</em></td></tr>
@@ -81,7 +82,7 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
 },
 {
   id: 'patterns', category: 'Words and patterns', title: 'Verb patterns: -ing or infinitive?', level: 'B2–C1', tagline: 'The pattern is not random: the -ing form looks at the action, the infinitive looks forward.',
-  idea: `<p>Many verbs can be followed by <em>-ing</em> or <em>to</em> + infinitive, and choosing wrongly is one of the commonest errors at B2. There is a core logic to lean on:</p>
+  idea: `<p><em>He stopped smoking</em> and <em>He stopped to smoke</em> mean very different things: he gave up, or he paused in order to light one. Many verbs can be followed by <em>-ing</em> or <em>to</em> + infinitive, and choosing wrongly is a very common error. There is a core logic to lean on:</p>
   <ul><li><strong>-ing</strong> treats the action as a <em>real, existing thing</em>: something already happening, past, general or imagined as a fact (<em>enjoy swimming</em>, <em>remember locking</em>).</li>
   <li><strong>to + infinitive</strong> points <em>forward</em>: a purpose, a plan, an intention, something not yet done (<em>decide to leave</em>, <em>remember to lock</em>).</li></ul>
   <p>That is why verbs like <em>hope, plan, decide, refuse, manage</em> take the infinitive (the action lies in the future), while <em>enjoy, avoid, finish, mind, deny</em> take <em>-ing</em> (the action is real or already imagined).</p>`,
@@ -97,7 +98,7 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
       <p>In each pair, -ing = the action seen as a fact; infinitive = the action seen as a goal or a task.</p>` },
     { h: 'Little differences and fixed groups', body: `<p><strong>Little change in meaning:</strong> <em>begin, start, continue, like, love, hate, prefer</em>. (<em>I like <strong>to</strong> go</em> = a habit or choice; <em>I like going</em> = the enjoyment. <em>I'd like to go</em> always takes the infinitive.)</p>
       <p><strong>Prepositions take -ing</strong>, even when the preposition is <em>to</em>: <em>look forward to <strong>seeing</strong></em>, <em>be used to <strong>working</strong></em>, <em>in favour of <strong>banning</strong></em>, <em>object to <strong>paying</strong></em>. Test: can you put a noun there? <em>I'm used to <strong>the noise</strong></em>. If yes, it's -ing.</p>
-      <p><strong>Perception and permission:</strong> <em>let / make</em> + object + bare infinitive (<em>They made us wait</em>), but passive <em>we were made <strong>to</strong> wait</em>. <em>See / hear</em> + object + bare infinitive (whole action) or -ing (in progress): <em>I saw him cross</em> / <em>I saw him crossing</em>.</p>` },
+      <p><strong>Perception and permission:</strong> <em>let / make</em> + person + the verb without <em>to</em> (<em>They made us wait</em>), but in the passive <em>to</em> comes back: <em>we were made <strong>to</strong> wait</em>. <em>See / hear</em> + person + the verb without <em>to</em> (you saw the whole action) or -ing (you saw it in progress): <em>I saw him cross</em> / <em>I saw him crossing</em>.</p>` },
     { h: 'Structures with -ing/infinitive in phrases', body: `<div class="eg">It's no use / no good / (not) worth <em>+ -ing</em>: <em>It's not worth waiting.</em></div>
       <div class="eg">There's no point (in) <em>+ -ing</em>: <em>There's no point (in) arguing.</em></div>
       <div class="eg">can't help / can't stand / feel like <em>+ -ing</em>: <em>I couldn't help laughing.</em></div>
@@ -120,7 +121,7 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
 },
 {
   id: 'determiners', category: 'Words and patterns', title: 'Articles, determiners and quantifiers', level: 'B2–C1', tagline: 'Articles are not decoration: they tell the listener whether they already know the noun.',
-  idea: `<p>A determiner (<em>a, the, some, this, my, much</em>…) answers two questions before the noun even arrives: <strong>Do you know which one I mean?</strong> and <strong>How many/much?</strong></p>
+  idea: `<p><em>I saw a man.</em> and <em>I saw the man.</em> In the first, the listener has never heard of him; in the second, they know exactly who. That one small word changes what the listener understands. Little words before nouns (<em>a, the, some, this, my, much</em>…, called determiners) answer two questions before the noun even arrives: <strong>Do you know which one I mean?</strong> and <strong>How many/much?</strong></p>
   <ul><li><em>a/an</em> = one of a kind, <em>new</em> to the listener. <em>the</em> = <em>this specific one</em>, already known or unique. No article = general (plural or uncountable) or an abstract idea.</li>
   <li>Quantifiers are chosen by what kind of noun follows: <strong>countable</strong> (<em>many, few, several</em>) or <strong>uncountable</strong> (<em>much, little, a great deal of</em>).</li></ul>
   <p>Spanish uses articles very differently (<em>la vida es dura</em>, <em>me duele la cabeza</em>), which is why explicit rules of thumb matter.</p>`,
@@ -160,7 +161,7 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
 },
 {
   id: 'comparison', category: 'Words and patterns', title: "Comparison: comparatives, correlatives and 'as ... as'", level: 'B2–C1', tagline: 'Compare things, degrees and trends, and say exactly how big the difference is.',
-  idea: `<p>Comparison is about <strong>measuring distance</strong> on a scale. The core grammar is simple: <em>-er/more … than</em> for a difference, <em>as … as</em> for equality, <em>the -est/most</em> for the extreme of a group.</p>
+  idea: `<p>Compare <em>The new phone is better</em>, <em>The new phone is slightly better</em> and <em>The new phone is by far the best</em>: you are placing things on a scale, and the grammar tells the listener how far apart they are. Comparison is about <strong>measuring distance</strong> on a scale. The core grammar is simple: <em>-er/more … than</em> for a difference, <em>as … as</em> for equality, <em>the -est/most</em> for the extreme of a group.</p>
   <p>The C1 skill is the <strong>size of the difference</strong>. You can say how large it is (<em>far, slightly, twice as</em>) or link two changing things together (<em>the more … the more …</em>). Those "modifiers" and "correlatives" turn a basic comparison into a precise statement.</p>`,
   parts: [
     { h: 'Modifying the comparison', body: `<div class="tablewrap"><table><tr><th>Size of difference</th><th>Modifiers</th></tr>
@@ -227,17 +228,17 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
 },
 {
   id: 'formal', category: 'Verbs and time', title: "Formal structures: subjunctive, 'it is essential that', 'suggest that he go'", level: 'C1', tagline: 'When the verb "goes bare", it is formal English talking about what should happen.',
-  idea: `<p>The <strong>mandative subjunctive</strong> is used after words that express <em>demand, necessity or recommendation</em> (<em>insist, demand, recommend, suggest, essential, vital, important</em>). The verb takes its <strong>bare base form</strong> for every person: <em>It is essential that he <strong>be</strong> present</em>; <em>The board recommended that she <strong>resign</strong></em>.</p>
-  <p>Why the bare form? The clause does not describe a fact; it describes something that <em>ought to be</em> the case. The base form carries no tense and no agreement, so it sounds neutral and official, and that is why it appears in regulations, contracts and formal writing. British English often prefers <em>should</em> (<em>that he should resign</em>); American English uses the bare form more.</p>`,
+  idea: `<p>Read a rule in a contract or a school regulation: <em>It is essential that every student <strong>be</strong> present.</em> Not <em>is</em>, not <em>will be</em>: just <em>be</em>. Or a board's decision: <em>The board recommended that she <strong>resign</strong></em>, not <em>resigns</em>.</p>
+  <p>Why the bare verb? These sentences do not describe a fact; they describe something that <em>ought to happen</em>. The plain base form of the verb has no tense and no <em>-s</em>, so it sounds neutral and official: that is why it appears in regulations, contracts and formal writing. It appears after words of <em>demand, necessity or recommendation</em> (<em>insist, demand, recommend, suggest, essential, vital, important</em>). Grammar books call this the mandative subjunctive. British English often prefers <em>should</em> (<em>that she should resign</em>); American English uses the bare form more.</p>`,
   parts: [
     { h: 'The pattern', body: `<div class="eg">It is <em>essential / vital / important / necessary / advisable / desirable</em> that every applicant <em>submit</em> the form.</div>
       <div class="eg">The doctor <em>recommended / advised / insisted / demanded / proposed / suggested</em> that she <em>rest</em> for a week.</div>
       <div class="eg">The court <em>ordered</em> that the company <em>pay</em> compensation.</div>
       <p>Negative: <em>not</em> before the verb, with no <em>do</em>: <em>It is vital that he <strong>not</strong> be told.</em> The <em>be</em> passive: <em>It is essential that the documents <strong>be</strong> checked.</em></p>
-      <p>Alternatives with the same meaning: <em>should</em> + infinitive (<em>that he should resign</em>); or a plain noun/pronoun + <em>-ing</em> after some verbs (<em>suggested her resigning</em>); or the infinitive (<em>essential for everyone to be present</em>).</p>` },
-    { h: 'Were-subjunctive and fixed expressions', body: `<p>The <strong>past subjunctive</strong> <em>were</em> is used for unreal situations: <em>If I <strong>were</strong> you…</em>, <em>I wish she <strong>were</strong> here</em>, <em>as if he <strong>were</strong> the boss</em>. In formal writing use it for all persons; in informal speech <em>was</em> is common.</p>
+      <p>Alternatives with the same meaning: <em>should</em> (<em>that he should resign</em>), <em>-ing</em> after some verbs (<em>suggested her resigning</em>), or <em>for … to</em> (<em>essential for everyone to be present</em>).</p>` },
+    { h: 'Were-subjunctive and fixed expressions', body: `<p>You have already met a second use: <em>were</em> for things that are not real (the "distance" idea from conditionals): <em>If I <strong>were</strong> you…</em>, <em>I wish she <strong>were</strong> here</em>, <em>as if he <strong>were</strong> the boss</em>. In formal writing use it for all persons; in informal speech <em>was</em> is common.</p>
       <p>Inverted forms: <em><strong>Were</strong> the company to go bankrupt, hundreds would lose their jobs.</em> (= If the company were to go bankrupt…). <em><strong>Should</strong> you need help, call.</em> <em><strong>Had</strong> I known, I'd have come.</em></p>
-      <p>Fossilised phrases: <em>Come what <strong>may</strong>; be that as it <strong>may</strong>; God save the King; long live democracy; far be it from me; suffice it to say; so be it</em>.</p>` },
+      <p>A few old phrases kept the bare verb and are worth knowing as wholes: <em>Come what <strong>may</strong></em> (whatever happens), <em>be that as it <strong>may</strong></em> (even so), <em>far be it from me</em> (I would not presume), <em>suffice it to say</em>, <em>so be it</em> (let it be so), <em>God save the King</em>.</p>` },
     { h: 'Insist, suggest, demand: two meanings', body: `<p>Some verbs have <strong>two</strong> uses. Compare:</p>
       <div class="eg">She <em>insisted that he go</em> to hospital. <span class="muted">(she demanded it: subjunctive)</span></div>
       <div class="eg">She <em>insisted that he was</em> innocent. <span class="muted">(she claimed it was true: normal tense)</span></div>
@@ -261,7 +262,7 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
 },
 {
   id: 'concession', category: 'Words and patterns', title: 'Contrast, concession and purpose linkers', level: 'B2–C1', tagline: 'Linkers are grammar too: each one has its own pattern.',
-  idea: `<p>Linkers show how two ideas relate. The logic differs for each group: <strong>contrast</strong> says the two ideas oppose each other; <strong>concession</strong> admits something true but says the main point still stands (<em>Although it was risky, they went ahead</em>); <strong>purpose</strong> says <em>why</em> someone does something.</p>
+  idea: `<p><em>It rained. We went out.</em> The two sentences don't say how they connect. <em>Although it rained, we went out</em> (surprising) and <em>It rained, so we went out</em> (odd!) show that the linker carries the meaning. Linkers show how two ideas relate. The logic differs for each group: <strong>contrast</strong> says the two ideas oppose each other; <strong>concession</strong> admits something true but says the main point still stands (<em>Although it was risky, they went ahead</em>); <strong>purpose</strong> says <em>why</em> someone does something.</p>
   <p>The difficulty is that words with similar meanings need different grammar. <em>Although</em> takes a clause; <em>despite</em> takes a noun or <em>-ing</em>; <em>however</em> connects two separate sentences. Learn the <strong>pattern</strong>, not just the meaning.</p>`,
   parts: [
     { h: 'Contrast and concession: which pattern?', body: `<div class="tablewrap"><table><tr><th>Followed by</th><th>Linkers</th><th>Example</th></tr>
@@ -296,8 +297,10 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
 },
 {
   id: 'ellipsis', category: 'Sentence structure', title: "Substitution and ellipsis: 'so', 'do so', 'one', leaving words out", level: 'C1', tagline: 'Native speakers avoid repeating themselves: the missing words are still "there" in the listener\'s mind.',
-  idea: `<p>English hates repeating information that is obvious. It does this in two ways. <strong>Ellipsis</strong> deletes the repeated words entirely (<em>I wanted to go, but she didn't [want to go]</em>). <strong>Substitution</strong> replaces them with a small placeholder (<em>so, not, one, do so, that</em>).</p>
-  <p>Both rely on one principle: the listener must be able to <strong>recover</strong> the missing words from the context. That is why the auxiliary is left behind: it "remembers" the tense and the verb: <em>He hasn't finished, but I <strong>have</strong>.</em></p>`,
+  idea: `<p>Compare <em>"Is it going to rain?" "I hope it is going to rain."</em> with <em>"I hope so."</em> The first is correct but sounds like a robot. English avoids repeating what is obvious, in two ways:</p>
+  <ul><li><strong>Leaving words out</strong> (grammar books say ellipsis): <em>I wanted to go, but she didn't.</em></li>
+  <li><strong>Replacing them with a small placeholder</strong> (substitution): <em>so, not, one, do so, that</em>.</li></ul>
+  <p>Both rest on one idea: the listener must be able to <strong>fill in</strong> the missing words from what was just said. That is why a small auxiliary (helping verb) stays behind: it "remembers" the tense and the verb. <em>He hasn't finished, but I <strong>have</strong>.</em></p>`,
   parts: [
     { h: 'Substitution: so, not, one, do so', body: `<div class="tablewrap"><table><tr><th>Word</th><th>Replaces</th><th>Example</th></tr>
       <tr><td><em>so / not</em></td><td>a whole clause after <em>think, hope, believe, expect, suppose, be afraid, say</em></td><td><em>Will it rain? — I hope so. / I hope not.</em></td></tr>
@@ -305,13 +308,13 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
       <tr><td><em>one / ones</em></td><td>a countable noun (singular / plural)</td><td><em>I don't like this jacket. Show me a bigger one.</em></td></tr>
       <tr><td><em>that / those</em></td><td>a noun already mentioned (formal, with a specifying phrase)</td><td><em>The population of Spain is larger than that of Portugal.</em></td></tr></table></div>
       <p><strong>Negative with these verbs:</strong> <em>I don't think so</em> (not <s>I think not</s>, which is rather formal), <em>I suppose not</em>, <em>I expect so</em>, but for <em>hope</em> and <em>be afraid</em> only <em>so / not</em>: <em>I hope not.</em></p>` },
-    { h: 'Ellipsis: leaving words out', body: `<p><strong>After an auxiliary or modal</strong>, delete everything that repeats the earlier verb phrase:</p>
+    { h: 'Ellipsis: leaving words out', body: `<p><strong>After an auxiliary</strong> (<em>can, did, has, would…</em>), delete everything that repeats the earlier words:</p>
       <div class="eg">Can you swim? — Yes, I <em>can</em>. / He said he'd call, but he <em>didn't</em>.</div>
       <div class="eg">Tom passed the exam and <em>so did</em> Maria. <span class="muted">(so + auxiliary + subject; negative: <em>nor/neither did Maria</em>)</span></div>
       <p><strong>After to</strong>: keep <em>to</em> and drop the verb: <em>She wanted to apply for the job, but her parents didn't want her <strong>to</strong>.</em> <em>You can borrow my bike if you want [to].</em></p>
       <p><strong>Coordinated clauses:</strong> <em>She opened the door and [she] walked in.</em> <em>He was tired but [he was] happy.</em></p>
       <p><strong>Formal, written ellipsis:</strong> <em>When [she was] asked about the delay, the minister declined to comment.</em> <em>If [it is] necessary, we can arrange an interpreter.</em> <em>Though [he was] tired, he carried on.</em></p>` },
-    { h: 'Why the "leftover" auxiliary matters', body: `<p>You cannot delete the auxiliary along with the verb, because it carries tense, mood and polarity. <em>She said she would help, and she <strong>did</strong>.</em> The <em>did</em> tells us "past, positive"; without it the sentence would be unclear. If there is no auxiliary in the original (<em>She likes coffee</em>), <em>do</em> appears as a dummy: <em>She likes coffee, and so <strong>do</strong> I.</em></p>` }
+    { h: 'Why the "leftover" auxiliary matters', body: `<p>You cannot delete the auxiliary along with the main verb, because it tells us the tense and whether the sentence is positive or negative. <em>She said she would help, and she <strong>did</strong>.</em> The <em>did</em> says "past, positive"; without it the sentence would be unclear. If the original has no auxiliary (<em>She likes coffee</em>), <em>do</em> steps in, just as in questions: <em>She likes coffee, and so <strong>do</strong> I.</em></p>` }
   ],
   traps: `<ul><li><s>I think so not</s> / <s>I hope it not</s>: after <em>hope</em> and <em>be afraid</em> use <em>so</em> or <em>not</em> only: <em>I hope so; I'm afraid not.</em></li>
     <li>Don't repeat the whole verb: <s>He wanted to go, but I didn't want to go</s> sounds clumsy; <em>but I didn't</em> is natural. And with <em>to</em>: <em>I didn't want to</em>.</li>

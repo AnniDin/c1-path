@@ -602,6 +602,85 @@ C1.audio = {
     97.84,
     103.23
    ]
+  },
+  "phonein-rubbish-weight": {
+   "src": "audio/listening/phonein-rubbish-weight.mp3",
+   "dur": 116.0,
+   "marks": [
+    0.0,
+    13.29,
+    25.57,
+    35.59,
+    42.2,
+    54.08,
+    56.16,
+    69.3,
+    78.04,
+    80.38,
+    86.52,
+    100.04,
+    102.58,
+    112.96
+   ]
+  },
+  "seminar-printing-press": {
+   "src": "audio/listening/seminar-printing-press.mp3",
+   "dur": 134.0,
+   "marks": [
+    0.0,
+    12.54,
+    17.97,
+    37.66,
+    42.11,
+    51.67,
+    59.11,
+    70.39,
+    80.47,
+    99.54,
+    104.19,
+    116.83,
+    118.98
+   ]
+  },
+  "interview-bees-ecologist": {
+   "src": "audio/listening/interview-bees-ecologist.mp3",
+   "dur": 118.6,
+   "marks": [
+    0.0,
+    11.86,
+    24.29,
+    26.65,
+    33.79,
+    36.24,
+    53.18,
+    56.74,
+    70.53,
+    72.81,
+    88.25,
+    91.06,
+    99.51,
+    102.3,
+    117.25
+   ]
+  },
+  "presentation-desk-sharing": {
+   "src": "audio/listening/presentation-desk-sharing.mp3",
+   "dur": 106.3,
+   "marks": [
+    0.0,
+    10.77,
+    25.38,
+    29.03,
+    39.48,
+    41.92,
+    61.2,
+    66.09,
+    73.72,
+    76.53,
+    88.88,
+    93.91,
+    100.88
+   ]
   }
  }
 };

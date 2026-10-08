@@ -126,7 +126,7 @@ window.C1 = window.C1 || {};
     },
     {
       id: 'collocations', section: 'Collocations and patterns', title: 'Collocations', short: 'Words that "go together" for natural sounding English.',
-      idea: `<p>Collocations are word partners: we say <em>heavy rain</em> but not <em>strong rain</em>. They look arbitrary, but they are how natives recognise fluent English, and Cambridge tests them in every multiple-choice cloze. <strong>Learn the whole chunk</strong>, never the word alone, and notice the pattern: verbs of <em>reaching</em> (reach, draw) go with abstract results (a compromise, a conclusion); <em>adverb + adjective</em> pairs are fixed (highly unlikely, deeply rooted).</p>`,
+      idea: `<p>We say <em>heavy rain</em>, but not <em>strong rain</em>. Nobody can explain why; it is simply the pair English speakers use. These word partners (called <em>collocations</em>) are how natives recognise fluent English, and Cambridge tests them in every multiple-choice cloze. <strong>Learn the whole chunk</strong>, never the word alone, and notice the patterns: verbs of <em>reaching</em> (reach, draw) go with abstract results (a compromise, a conclusion); <em>adverb + adjective</em> pairs are fixed (highly unlikely, deeply rooted).</p>`,
       cards: [
         co('draw a conclusion', 'to decide something after considering facts', 'It is too early to [[draw a conclusion]] from these data.', 'You "draw" the answer out of the evidence.'),
         co('reach a compromise', 'to agree by each side giving up something', 'After hours of talks they [[reached a compromise]].', 'Reach = arrive at an outcome.'),
@@ -168,7 +168,7 @@ window.C1 = window.C1 || {};
     },
     {
       id: 'discourse', section: 'Idioms and expressions', title: 'Linking and stance expressions', short: 'Formal phrases for essays, reports and speaking.',
-      idea: `<p>These phrases organise your argument: <strong>generalising</strong> (on the whole), <strong>limiting</strong> (to a certain extent), <strong>reasoning</strong> (in view of), <strong>time frames</strong> (for the time being, in the long run). Using them naturally lifts a Writing or Speaking performance from B2 to C1.</p>`,
+      idea: `<p>Compare <em>Tourism brings jobs. It damages the coast.</em> with <em>On the whole, tourism brings jobs; to a certain extent, however, it damages the coast.</em> The second tells the reader how to take each idea: as a general view, then as a limit. These phrases do that job, and fall into four groups: <strong>generalising</strong> (on the whole), <strong>limiting</strong> (to a certain extent), <strong>giving a reason</strong> (in view of), <strong>time frames</strong> (for the time being, in the long run). Using them naturally lifts a Writing or Speaking performance from B2 to C1.</p>`,
       cards: [
         ex('by and large', 'mostly; in the great majority of cases', '[[By and large]], the project has been a success.', 'Fixed phrase: you cannot change any word. A safe generalising opener.'),
         ex('on the whole', 'in general, even if there are some exceptions', '[[On the whole]], I agree with the author.', 'Often opens the sentence, followed by a comma. Not the same as <em>as a whole</em>.'),

@@ -131,7 +131,8 @@
     if (u) { btn.append(A.avatar(u.email)); btn.setAttribute('aria-label', 'Account: ' + label(u)); btn.title = label(u); } else { btn.removeAttribute('aria-label'); btn.title = 'Account, settings and sync'; }
   }
   btn.addEventListener('click', () => { location.hash = '#/account'; });
-  Cloud.onChange(() => { paint(); if (Cloud.user() && dlg.open) dlg.close(); });
+  /* someone who signs in has either seen the introduction or has an account elsewhere: never show it again */
+  Cloud.onChange(() => { paint(); if (Cloud.user()) { if (window.Store) Store.setWelcomed(); if (dlg.open) dlg.close(); if (location.hash === '#/welcome' && A.autoWelcome) { A.autoWelcome = false; location.hash = '#/'; } } });
   document.addEventListener('c1sync', paint);
   document.addEventListener('c1avatar', paint);
 

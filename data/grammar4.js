@@ -1,8 +1,8 @@
 window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
 {
   id: 'wordfamilies', category: 'Words and patterns', title: 'Word families and suffixes by meaning', level: 'B2-C1', tagline: 'A suffix is a label: it tells you the word class and often a piece of the meaning.',
-  idea: `<p>Most English words come in <strong>families</strong>: <em>decide, decision, decisive, decisively</em>. The root carries the core idea; the <strong>suffix</strong> changes the word class (verb, noun, adjective, adverb) and often adds a meaning. If you read the ending, you can usually tell what job a word does in the sentence before you know the word.</p>
-  <p>This is exactly what the Use of English word-formation task tests: look at the gap, decide the <em>class</em> first (what do the words around it need?), then build the word and check the <strong>spelling</strong>. Learn suffixes by <em>meaning</em>, not as a list of endings, and you can decode new words in reading too.</p>`,
+  idea: `<p>The <em>employer</em> pays the <em>employee</em>. The <em>trainer</em> teaches the <em>trainee</em>. One small ending flips who is doing what. Most English words come in <strong>families</strong> like this: <em>decide, decision, decisive, decisively</em>. The root carries the core idea; the ending (a <strong>suffix</strong>) tells you the job the word does (action, thing, description, manner) and often adds a piece of meaning. Read the ending and you can guess a new word's job before you know the word.</p>
+  <p>This is what the Use of English word-formation task tests. Look at the gap and decide what the words around it need, then build the word and check the spelling. Learn endings by what they <em>mean</em>, not as a list, and you can decode new words in reading too.</p>`,
   parts: [
     { h: 'Who or what: -er, -or, -ee, -ist, -ian, -ant', body: `<p>These suffixes make nouns for people (or things that do the job).</p>
       <div class="tablewrap"><table><tr><th>Suffix</th><th>Meaning</th><th>Examples</th></tr>
@@ -12,7 +12,7 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
       <tr><td><em>-ian</em></td><td>a specialist or a person from a place</td><td><em>historian, politician, Italian</em></td></tr>
       <tr><td><em>-ant / -ent</em></td><td>a person who does something (often with a related -ance/-ence noun)</td><td><em>assistant, applicant, student, resident</em></td></tr></table></div>
       <p>The pair <em>employer / employee</em> shows the logic: the employer gives work; the employee receives it. <em>-ism</em> names the belief or system: <em>capitalism, tourism, criticism, realism</em>.</p>` },
-    { h: 'Abstract nouns: -ness, -ity, -ment, -tion, -al, -th', body: `<p>These turn adjectives and verbs into names for qualities, actions and results.</p>
+    { h: 'Abstract nouns: -ness, -ity, -ment, -tion, -al, -th', body: `<p>Say <em>She is kind</em> and you describe her. To talk about the quality itself (<em>Her kindness surprised me</em>) you need a name for it. These endings turn describing words and verbs into names for qualities, actions and results, so you can use them as the subject or object of a sentence.</p>
       <ul><li><strong>-ness</strong> is the all-purpose ending for adjectives: <em>kind, kindness; ill, illness; aware, awareness</em>.</li>
       <li><strong>-ity</strong> is common on Latin-based adjectives, often with a spelling change: <em>able, ability; active, activity; creative, creativity; responsible, responsibility; pure, purity</em>.</li>
       <li><strong>-ment, -tion / -sion, -al</strong> follow verbs: <em>achieve, achievement; educate, education; decide, decision; arrive, arrival; refuse, refusal</em>.</li>
@@ -26,7 +26,8 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
       <tr><td><em>-al, -ic</em></td><td>relating to</td><td><em>national, musical, economic, artistic</em></td></tr>
       <tr><td><em>-ly</em></td><td>makes the adverb</td><td><em>carefully, effectively, dramatically</em></td></tr></table></div>
       <p><em>-able</em> is the living ending (you can add it to almost any verb: <em>downloadable</em>); <em>-ible</em> appears on older Latin words and you simply have to learn it: <em>possible, responsible, incredible, sensible, flexible</em>. Beware of pairs with different meanings: <em>economic</em> (about the economy) / <em>economical</em> (cheap to use); <em>historic</em> (important in history) / <em>historical</em> (about the past).</p>` },
-    { h: 'Spelling changes when you add a suffix', body: `<ul><li><strong>Drop the final -e</strong> before a vowel suffix: <em>create, creative; decide, decisive; nerve, nervous</em>. Keep it before a consonant suffix: <em>achieve, achievement; care, careful</em>.</li>
+    { h: 'Spelling changes when you add a suffix', body: `<p>Most of these changes keep the word easy to say, but the rules are conventions, so check the dictionary when unsure.</p>
+      <ul><li><strong>Drop the final -e</strong> before an ending that starts with a vowel (the -e is silent and the new ending supplies its own vowel): <em>create, creative; decide, decisive; nerve, nervous</em>. Keep it before an ending that starts with a consonant: <em>achieve, achievement; care, careful</em>.</li>
       <li><strong>-y becomes -i-</strong> after a consonant: <em>happy, happiness, happily; beauty, beautiful; apply, application</em>.</li>
       <li><strong>Double the final consonant</strong> if the stress is on the last syllable and the word ends consonant-vowel-consonant: <em>begin, beginner; prefer, preferred</em>; but with stress on the first syllable, no doubling: <em>visit, visitor</em>.</li>
       <li><strong>Adjectives in -le</strong> lose it for -ly: <em>probable, probably; simple, simply</em>. Adjectives in <em>-ic</em> add <em>-ally</em>: <em>basic, basically; dramatic, dramatically</em> (exception: <em>publicly</em>).</li>
@@ -51,20 +52,22 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
 },
 {
   id: 'prefixes', category: 'Words and patterns', title: 'Negative and other prefixes', level: 'B2-C1', tagline: 'The prefix changes the meaning; the first letter of the root helps you choose which negative to use.',
-  idea: `<p>A <strong>prefix</strong> is added before a root and changes its meaning, but not usually its word class: <em>possible → impossible</em> (adjective stays adjective). The negative prefixes (<em>un-, in-, im-, il-, ir-, dis-, non-</em>) cause the most errors, because Spanish speakers often use the Spanish pattern (<em>in-</em> for everything) or guess.</p>
-  <p>There is no perfect rule, but there are strong <strong>tendencies</strong>. Learn those, then memorise the common exceptions as chunks. The same logic helps in Part 3: negative answers are tested every year, and a wrong prefix is a wrong answer.</p>`,
+  idea: `<p>A hospital with too few nurses is <em>understaffed</em>; with too many, <em>overstaffed</em>. A judge who has no stake in the case is <em>disinterested</em>; a bored student is <em>uninterested</em>. A small piece added to the front of a word (a <strong>prefix</strong>) changes the meaning, but the word keeps its job: <em>possible → impossible</em> is still a describing word.</p>
+  <p>The negative prefixes (<em>un-, in-, im-, il-, ir-, dis-, non-</em>) cause the most errors, because Spanish speakers often use <em>in-</em> for everything or guess. There is no perfect rule, but there are strong tendencies. Learn those, then keep the common exceptions as chunks. Negative answers are tested every year in Part 3, and a wrong prefix is a wrong answer.</p>`,
   parts: [
-    { h: 'Negative prefixes: the choice rules', body: `<div class="tablewrap"><table><tr><th>Prefix</th><th>Tendency</th><th>Examples</th></tr>
+    { h: 'Negative prefixes: the choice rules', body: `<p>Why <em>impossible</em> but <em>inactive</em>? The sound. <em>in-</em> before <em>p, b</em> and <em>m</em> is awkward to say, so the <em>n</em> becomes <em>m</em>; before <em>l</em> or <em>r</em> it copies that letter. That explains im-, il- and ir-. Choosing between <em>un-</em> and <em>in-</em> is mostly habit, so use the table:</p>
+      <div class="tablewrap"><table><tr><th>Prefix</th><th>Tendency</th><th>Examples</th></tr>
       <tr><td><em>un-</em></td><td>the default for adjectives, adverbs, participles; also reverses a verb</td><td><em>unhappy, unlikely, unable, unfairly, undo, unlock, untied</em></td></tr>
       <tr><td><em>in-</em></td><td>Latin-based adjectives and nouns, before most letters</td><td><em>incorrect, inactive, incapable, inability, insecure, invalid</em></td></tr>
-      <tr><td><em>im-</em></td><td>before <strong>m</strong> and <strong>p</strong></td><td><em>impossible, impatient, immature, immoral, impolite</em></td></tr>
+      <tr><td><em>im-</em></td><td>before <strong>b, m</strong> and <strong>p</strong></td><td><em>impossible, impatient, imbalance, immature, immoral, impolite</em></td></tr>
       <tr><td><em>il-</em></td><td>before <strong>l</strong></td><td><em>illegal, illegible, illogical, illiterate</em></td></tr>
       <tr><td><em>ir-</em></td><td>before <strong>r</strong></td><td><em>irregular, irresponsible, irrelevant, irreplaceable</em></td></tr>
       <tr><td><em>dis-</em></td><td>opposite or lack, on verbs and nouns as well as adjectives</td><td><em>disagree, dishonest, disappear, disadvantage, disloyal</em></td></tr>
       <tr><td><em>non-</em></td><td>simply "not", neutral and often technical, often with a hyphen</td><td><em>non-stop, non-smoker, non-fiction, non-existent</em></td></tr></table></div>
-      <p>So the first letter of the root helps you: <em>m/p</em> → <em>im-</em>, <em>l</em> → <em>il-</em>, <em>r</em> → <em>ir-</em>. Exceptions: <em>unlikely, unlucky, unreal, unreliable</em> (un- before l or r), and <em>unnecessary</em> (not <s>innecessary</s>).</p>
+      <p>So the first letter of the root helps you: <em>b/m/p</em> → <em>im-</em>, <em>l</em> → <em>il-</em>, <em>r</em> → <em>ir-</em>. Exceptions: <em>unlikely, unlucky, unreal, unreliable</em> (un- before l or r), and <em>unnecessary</em> (not <s>innecessary</s>).</p>
       <p>Careful with meaning: <em>disinterested</em> means impartial (<em>a disinterested judge</em>); <em>uninterested</em> means not interested. <em>Dishonest</em> describes a bad quality of character, not just the lack of honesty.</p>` },
-    { h: 'Prefixes that do not mean "not"', body: `<div class="tablewrap"><table><tr><th>Prefix</th><th>Meaning</th><th>Examples</th></tr>
+    { h: 'Prefixes that do not mean "not"', body: `<p><em>She was overworked and underpaid, so she quit and rebuilt her career.</em> Each prefix packs a whole idea (too much, too little, again) into one word, which is why they are so useful in writing.</p>
+      <div class="tablewrap"><table><tr><th>Prefix</th><th>Meaning</th><th>Examples</th></tr>
       <tr><td><em>mis-</em></td><td>wrongly, badly</td><td><em>misunderstand, misuse, mislead, misspell, misjudge</em></td></tr>
       <tr><td><em>over-</em></td><td>too much</td><td><em>overpaid, overworked, overreact, overestimate</em></td></tr>
       <tr><td><em>under-</em></td><td>too little, not enough</td><td><em>underpaid, undercooked, underestimate, understaffed</em></td></tr>
@@ -97,13 +100,14 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
 },
 {
   id: 'oddnouns', category: 'Words and patterns', title: 'Odd noun types: plural-looking, group and measurement nouns', level: 'B2-C1', tagline: 'English nouns have hidden rules about number: the ending of a noun is not a reliable guide.',
-  idea: `<p>A noun's <em>form</em> does not always match its <em>number</em>. <em>News</em> ends in -s but is singular; <em>police</em> has no -s but is plural. If you apply the Spanish pattern (<em>las noticias</em>, plural, <em>la gente</em>, singular), you will miss many agreement points. Use three tests when you meet an unusual noun:</p>
-  <ol><li><strong>Can it be counted?</strong> Can you say <em>one / two ...</em> or <em>a ...</em>?</li>
-  <li><strong>Which verb does it take?</strong> (<em>is</em> or <em>are</em>)</li>
-  <li><strong>Which determiner fits?</strong> (<em>a / many / few</em> or <em>much / little / some</em>)</li></ol>
-  <p>Agreement errors are some of the most frequent mistakes at C1, and they are very easy to avoid once you know the categories.</p>`,
+  idea: `<p><em>The news is good</em> but <em>the police are here</em>. <em>News</em> ends in -s yet takes <em>is</em>; <em>police</em> has no -s yet takes <em>are</em>. English decides by how you picture the thing: a single mass (news, advice), separate countable items, or a group of people. Spanish picks differently (<em>las noticias</em> is plural, <em>la gente</em> singular), so the Spanish habit misleads. Three questions help when a noun looks odd:</p>
+  <ol><li><strong>Can you count it?</strong> Can you say <em>one, two ...</em> or <em>a ...</em>?</li>
+  <li><strong>Which verb follows?</strong> <em>is</em> or <em>are</em>?</li>
+  <li><strong>Which small word goes before it?</strong> <em>a / many / few</em> for countable things, <em>much / little / some</em> for a mass.</li></ol>
+  <p>Agreement slips are very common at C1 and easy to avoid once you know the groups.</p>`,
   parts: [
-    { h: 'Uncountable nouns that end in -s, and pair nouns', body: `<ul><li><strong>Singular with -s:</strong> <em>news, politics, economics, physics, mathematics, athletics, measles, diabetes, billiards, darts</em>. <em>The news is good. Physics is a difficult subject.</em></li>
+    { h: 'Uncountable nouns that end in -s, and pair nouns', body: `<p>The logic: English treats a subject, a disease or a game as one thing, a pair of objects as two halves, and a mass (advice, furniture) as something you cannot cut into countable pieces.</p>
+      <ul><li><strong>Singular with -s:</strong> <em>news, politics, economics, physics, mathematics, athletics, measles, diabetes, billiards, darts</em>. <em>The news is good. Physics is a difficult subject.</em></li>
       <li><strong>Pair nouns are always plural:</strong> <em>trousers, jeans, glasses, scissors, pliers, shorts</em>. <em>My jeans are too tight.</em> To count them, use <em>a pair of</em>: <em>a pair of jeans</em>, <em>two pairs of scissors</em>.</li>
       <li><strong>Plural without -s:</strong> <em>the police, people, cattle</em>. <em>The police are looking for him.</em></li>
       <li><strong>Uncountable (never plural):</strong> <em>advice, information, research, furniture, luggage, equipment, accommodation, progress, traffic, work</em>. Use <em>a piece of / an item of / a bit of</em>: <em>a piece of advice, an item of furniture</em>.</li></ul>` },
@@ -142,16 +146,18 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
 },
 {
   id: 'statives', category: 'Words and patterns', title: 'Stative and dynamic verbs', level: 'B2-C1', tagline: 'Some verbs describe states, not actions, and refuse the continuous. Many of them change meaning when they become actions.',
-  idea: `<p>A <strong>dynamic verb</strong> describes an action or process that happens and can be started, stopped or done on purpose: <em>run, write, cook, think about</em>. A <strong>stative verb</strong> describes a state, a feeling or a fact: <em>know, love, belong, seem</em>. Stative verbs are normally used in simple tenses, <em>not</em> in the continuous: <em>I know the answer</em>, not <s>I am knowing the answer</s>.</p>
-  <p>A quick test: <em>can you do it on purpose?</em> You can <em>listen</em> carefully, but you cannot <em>know</em> carefully. The same verb can often be both, with different meanings: <em>I have a car</em> (state) vs <em>I'm having lunch</em> (action).</p>`,
+  idea: `<p>Compare <em>I have a car</em> and <em>I'm having lunch</em>. The first is a fact; the second is something in progress that you could interrupt. The continuous (<em>-ing</em>) form says "I am in the middle of this". That only makes sense for things with a middle: you can be in the middle of cooking, but not in the middle of knowing. So <em>I know the answer</em>, not <s>I am knowing the answer</s>.</p>
+  <p>Verbs for actions you do or stop on purpose (<em>run, write, cook</em>) are <strong>dynamic</strong>. Verbs for states, feelings and facts (<em>know, love, belong, seem</em>) are <strong>stative</strong>, and they normally stay in the simple form. Quick test: <em>can you do it on purpose?</em> You can <em>listen</em> carefully, but you cannot <em>know</em> carefully. Many verbs can be both, with different meanings: <em>have</em> (own) is a state, <em>have</em> (eat, take) is an action.</p>`,
   parts: [
-    { h: 'Groups of stative verbs', body: `<div class="tablewrap"><table><tr><th>Group</th><th>Verbs</th></tr>
+    { h: 'Groups of stative verbs', body: `<p>These verbs describe what is going on inside your head, how you feel, what you own, or what your senses tell you. None of these is something you start and stop like running, so they do not take the <em>-ing</em> form.</p>
+      <div class="tablewrap"><table><tr><th>Group</th><th>Verbs</th></tr>
       <tr><td>Thinking and opinion</td><td><em>know, believe, understand, realise, remember, doubt, suppose, mean, recognise, agree</em></td></tr>
       <tr><td>Feelings and preference</td><td><em>like, love, hate, prefer, want, wish, need, mind</em></td></tr>
       <tr><td>Possession and relation</td><td><em>have (possess), own, belong, contain, include, consist of, depend on</em></td></tr>
       <tr><td>Senses and appearance</td><td><em>see, hear, smell, taste, seem, appear, look (= seem), sound</em></td></tr></table></div>
       <p><em>Seem, belong, contain</em> and the rest rarely take <em>-ing</em>: <em>The box contains old letters.</em> <em>I don't understand.</em> In informal speech you may hear <em>I'm loving it</em> to show a feeling that is growing, but exams expect the simple form.</p>` },
-    { h: 'Verbs that have both uses', body: `<div class="tablewrap"><table><tr><th>Verb</th><th>State (simple)</th><th>Action (continuous OK)</th></tr>
+    { h: 'Verbs that have both uses', body: `<p><em>I think she is right</em> (my opinion, a state) but <em>I'm thinking about changing jobs</em> (my mind is busy with it right now). When a verb describes something you are actively doing, the continuous is allowed.</p>
+      <div class="tablewrap"><table><tr><th>Verb</th><th>State (simple)</th><th>Action (continuous OK)</th></tr>
       <tr><td><em>think</em></td><td><em>I think she is right.</em> (opinion)</td><td><em>I'm thinking about changing jobs.</em> (considering)</td></tr>
       <tr><td><em>have</em></td><td><em>She has two sisters.</em> (possession)</td><td><em>He's having a shower / a party / difficulty.</em></td></tr>
       <tr><td><em>see</em></td><td><em>I see what you mean.</em> (understand)</td><td><em>I'm seeing the dentist at 5.</em> (meeting)</td></tr>
@@ -160,7 +166,7 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
       <tr><td><em>weigh</em></td><td><em>The bag weighs 4 kilos.</em></td><td><em>She is weighing the flour.</em></td></tr>
       <tr><td><em>appear</em></td><td><em>She appears nervous.</em> (seems)</td><td><em>He is appearing in a new play.</em></td></tr></table></div>
       <p>The rule: the <em>state</em> meaning describes how things <em>are</em>; the <em>action</em> meaning is something you <em>do</em> and can interrupt.</p>` },
-    { h: 'Be + adjective: character or behaviour?', body: `<p>With <em>be</em>, the simple form describes a lasting characteristic; the continuous (<em>be being</em>) describes behaviour for a period, often temporary and often surprising.</p>
+    { h: 'Be + adjective: character or behaviour?', body: `<p><em>He is rude</em> and <em>He is being rude</em> are different. The first says that is the kind of man he is. The second says he is behaving that way now, perhaps unlike himself. Simple <em>be</em> gives a lasting characteristic; <em>be being</em> gives behaviour for a short period.</p>
       <ul><li><em>He is careless.</em> (He is that kind of person.) vs <em>He is being careless today.</em> (He is acting that way now, unlike himself.)</li>
       <li><em>She is polite.</em> vs <em>She is being polite</em> (maybe just to be nice).</li>
       <li><em>You are silly</em> vs <em>You are being silly.</em></li></ul>
@@ -185,8 +191,8 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
 },
 {
   id: 'gradable', category: 'Words and patterns', title: 'Gradable and ungradable adjectives and intensifiers', level: 'B2-C1', tagline: 'Very tired but absolutely exhausted: the adverb must match the kind of adjective.',
-  idea: `<p>A <strong>gradable</strong> adjective can be more or less: <em>cold, tired, good, important</em> (you can say <em>a bit cold, very cold</em>). An <strong>ungradable</strong> adjective already contains the extreme or a limit: <em>freezing, exhausted, excellent, perfect, impossible, unique</em>. You cannot be <s>very freezing</s>: the adjective is already at the top of the scale.</p>
-  <p>That is why English has two families of intensifiers. Use the right one and your English sounds natural; mix them and it sounds foreign, even when every word is correct.</p>`,
+  idea: `<p>Picture a scale from <em>warm</em> to <em>cold</em>. <em>Very</em> moves you up it: <em>a bit cold, quite cold, very cold</em>. But <em>freezing</em> is at the very top, so there is nowhere left to go. You say <em>absolutely freezing</em> (completely, with no more room), not <s>very freezing</s>.</p>
+  <p>Adjectives with a scale (<em>cold, tired, good, important</em>) are <strong>gradable</strong>. Adjectives that are already extreme or are a limit (<em>freezing, exhausted, excellent, perfect, impossible, unique</em>) are <strong>ungradable</strong>. English therefore has two families of intensifier. Use the right one and you sound natural; mix them and you sound foreign, even when every word is correct.</p>`,
   parts: [
     { h: 'Gradable with gradable, extreme with ungradable', body: `<div class="tablewrap"><table><tr><th>Gradable (scale)</th><th>Extreme / ungradable</th></tr>
       <tr><td>cold, hot, tired, good, bad, big, interesting, funny, surprised</td><td>freezing, boiling, exhausted, excellent / brilliant, awful / terrible, huge, fascinating, hilarious, astonished</td></tr>
@@ -194,13 +200,14 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
       <ul><li><em>very cold, extremely tired, really interesting</em></li>
       <li><em>absolutely freezing, utterly exhausted, totally fascinating, completely impossible</em></li></ul>
       <p><em>Really</em> works with both (<em>really tired, really exhausted</em>), so it is the safe choice when unsure. Ungradable adjectives also include classifying ones with no scale: <em>dead, unique, perfect, daily, main, wooden, nuclear</em>. Here <em>completely, totally, almost, nearly</em> are possible (<em>completely different, nearly perfect</em>).</p>` },
-    { h: 'Quite, fairly, rather and pretty: how strong?', body: `<ul><li><strong>fairly</strong>: moderate, usually positive or neutral; weaker than <em>quite</em>. <em>The film was fairly good.</em></li>
+    { h: 'Quite, fairly, rather and pretty: how strong?', body: `<p><em>The film was fairly good</em> and <em>The film was rather good</em> are not the same. The first is a mild, pleasant verdict; the second often hints at surprise or a stronger verdict. Words of moderate strength differ in tone:</p>
+      <ul><li><strong>fairly</strong>: moderate, usually positive or neutral; weaker than <em>quite</em>. <em>The film was fairly good.</em></li>
       <li><strong>quite</strong> (British): a moderate degree with gradable adjectives (<em>quite good</em> may mean "better than I expected"). With extreme or ungradable adjectives, <em>quite</em> means <em>completely</em>: <em>quite amazing, quite impossible, quite certain</em>.</li>
       <li><strong>rather</strong>: often unexpected or negative; with a positive adjective it adds surprise. <em>It's rather expensive. She is rather good, actually.</em></li>
       <li><strong>pretty</strong>: informal, similar to <em>quite</em>: <em>pretty good, pretty tired</em>.</li>
       <li><strong>a bit / slightly / somewhat</strong>: small degree, often a mild criticism: <em>a bit late, somewhat disappointing</em>.</li></ul>
       <p>Order with <em>a / an</em>: <em>quite a nice day</em>, <em>rather an odd idea</em>, but <em>a fairly nice day</em>, <em>a very nice day</em>.</p>` },
-    { h: 'Comparing: much, far, by far', body: `<p>Comparative adjectives are gradable too, and need their own intensifiers: <em>much, far, a lot, a great deal, rather, slightly, a bit, no</em>. <em>She is <strong>much</strong> taller than her sister. The new model is <strong>far</strong> more efficient. This one is <strong>slightly</strong> cheaper.</em> Do not use <em>very</em>: <s>very taller</s>.</p>
+    { h: 'Comparing: much, far, by far', body: `<p>A comparison (<em>taller, more efficient</em>) can also be big or small, and it uses its own words for that: <em>much, far, a lot, a great deal, rather, slightly, a bit, no</em>. <em>She is <strong>much</strong> taller than her sister. The new model is <strong>far</strong> more efficient. This one is <strong>slightly</strong> cheaper.</em> Do not use <em>very</em>: <s>very taller</s>.</p>
       <p>Superlatives take <strong>by far</strong> or <strong>easily</strong>, <strong>quite</strong>, <strong>much</strong> (placed before the article or the superlative): <em>He is by far the best player. It was easily the worst meal of my life.</em> Compare the emphasiser <em>very</em> with a superlative: <em>the very best, the very first</em> (= exactly the best).</p>` }
   ],
   traps: `<ul><li><s>very delicious, very fantastic, very exhausted</s> → <em>absolutely delicious, really fantastic, utterly exhausted</em>. Ungradable adjectives need a maximizer.</li>
@@ -221,8 +228,8 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
 },
 {
   id: 'likelihood', category: 'Verbs and time', title: 'Likelihood, probability and certainty', level: 'B2-C1', tagline: 'From "no way" to "bound to": a scale of chances and the patterns that go with each point.',
-  idea: `<p>When you predict, you place the event somewhere on a scale between <strong>impossible</strong> and <strong>certain</strong>. English has far more than <em>will</em> and <em>maybe</em> for this, and each phrase has its own grammar. Using them correctly is a clear mark of C1 control, and exam tasks (especially transformations) test them often.</p>
-  <p>Think of the scale in three zones: <strong>certain / very probable</strong>, <strong>possible / uncertain</strong>, and <strong>unlikely / impossible</strong>. Choose the phrase for your zone, then check the structure that follows it (<em>to</em> + infinitive, <em>that</em> clause, <em>of</em> + -ing, or a bare verb).</p>`,
+  idea: `<p><em>Prices are bound to rise</em>. <em>Prices might rise.</em> <em>Prices are unlikely to rise.</em> Three sentences, three different bets on the future. Whenever you predict, you place the event on a scale between <strong>impossible</strong> and <strong>certain</strong>, and English has many ways to mark the exact spot. Using them well shows C1 control, and transformations test them often.</p>
+  <p>Think of three zones: <strong>certain or very likely</strong>, <strong>possible</strong>, and <strong>unlikely or impossible</strong>. Pick the phrase for your zone, then check what must follow it: <em>to</em> + verb, a <em>that</em> clause, <em>of</em> + <em>-ing</em>, or a bare verb. Each phrase has its own pattern.</p>`,
   parts: [
     { h: 'Very likely or certain', body: `<ul><li><strong>be bound to / be certain to / be sure to + infinitive</strong>: you are very confident. <em>Prices are bound to rise. She is certain to win.</em> (<em>Bound to</em> is slightly informal, a strong expectation.)</li>
       <li><strong>be likely to + infinitive</strong> / <strong>It is likely that</strong>: <em>The meeting is likely to overrun. It is likely that they will agree.</em></li>
@@ -240,7 +247,7 @@ window.C1 = window.C1 || {}; C1.grammar = C1.grammar || []; C1.grammar.push(
       <li><strong>It is improbable / doubtful</strong>; <strong>I doubt (that) / I doubt whether</strong>: <em>I doubt that she'll come.</em></li>
       <li><strong>No way / there is no chance / out of the question</strong>: very strong, often spoken. <em>There is no way they will agree. The idea is out of the question.</em></li>
       <li><strong>I wouldn't be surprised if + past simple</strong>: <em>I wouldn't be surprised if it rained.</em> It says you think it quite probable.</li></ul>` },
-    { h: 'Transform the structure, keep the meaning', body: `<p>Transformations ask you to change one structure to another while keeping the same degree of probability:</p>
+    { h: 'Transform the structure, keep the meaning', body: `<p>In a transformation, find the zone of the original, then choose another phrase from the same zone. The degree of certainty must stay the same:</p>
       <div class="tablewrap"><table><tr><th>Original</th><th>Transformation</th></tr>
       <tr><td>I am sure the train will be late.</td><td>The train <em>is bound to be</em> late. / <em>is certain to be</em> late.</td></tr>
       <tr><td>It is quite likely that she will refuse.</td><td>She <em>is likely to refuse</em>. / She <em>may well refuse</em>.</td></tr>

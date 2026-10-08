@@ -272,7 +272,7 @@ window.App = { routes: {}, cleanup: [] };
       today: ['Today', 'What to do now, how this week is going and your daily goal.', [doNow, numbers, App.weekCard ? App.weekCard() : null, goal]],
       progress: ['Results', 'How you are doing: activity, achievements, full tests, skills and accuracy by topic.', [
         cardBlock('Last 12 weeks', heat, h('p', { class: 'muted' }, 'Darker = more answers that day. Answer at least one question to keep your streak.')),
-        App.rewards ? App.rewards.shelf() : null, App.historyCard ? App.historyCard() : null, App.skillsCard ? App.skillsCard() : null, App.recsCard ? App.recsCard() : null,
+        App.rewards ? App.rewards.shelf() : null, App.historyCard ? App.historyCard() : null, App.skillsCard ? App.skillsCard() : null, App.skillTrendCard ? App.skillTrendCard() : null, App.recsCard ? App.recsCard() : null,
         ...tbl, !entries.length ? h('p', { class: 'muted' }, 'Nothing here yet. Do a lesson or a practice set and your results will appear.') : null]],
     };
     const tab = PAGES[which] ? which : 'today';
@@ -867,7 +867,7 @@ window.App = { routes: {}, cleanup: [] };
     document.querySelectorAll('#nav a').forEach((el) => el.classList.toggle('active', el.dataset.r === navKey));
     /* a timed paper hides the menu, the notes and the footer so nothing pulls attention away; the page keeps its own back link */
     document.body.classList.toggle('exam-focus', a === 'mock' && ['reading', 'listening', 'writing', 'speaking'].includes(b));
-    if (!a && !Store.state.welcomed && !Store.totalAnswered()) { location.replace('#/welcome'); return; }
+    if (!a && !Store.state.welcomed && !Store.totalAnswered() && !(window.Cloud && Cloud.user && Cloud.user())) { App.autoWelcome = true; location.replace('#/welcome'); return; }
     if (a === 'welcome') return welcome(b);
     if (!a) return home();
     if (a === 'course') return b === 'mix' ? dailyMix() : c === 'review' ? unitReview(b) : b ? unitPage(b) : courseList();

@@ -2,13 +2,14 @@ window.C1 = window.C1 || {};
 C1.grammar = [
 {
   id: 'inversion', category: 'Sentence structure', title: 'Inversion', level: 'C1', tagline: 'Why "Never have I seen…" is not just fancy word order.',
-  idea: `<p>English statements normally run <em>subject → verb</em>. When you move a negative or restrictive adverb to the front (<em>Never, Rarely, Only when…</em>), the sentence switches to <strong>question order</strong>: auxiliary, then subject. The fronted word is a strong signal: the speaker wants the listener to stop and pay attention. The inversion is the grammatical "seat belt" that tells the reader the normal order was deliberately broken.</p>
+  idea: `<p>Compare: <em>I have never seen such courage.</em> and <em>Never have I seen such courage.</em> Same facts, but the second one makes the listener stop and listen. It sounds formal and dramatic, like a speech, not like chat at the bus stop.</p>
+  <p>How? Put a negative or limiting word at the very front (<em>Never, Rarely, Only when…</em>) and the rest of the sentence switches to <strong>question order</strong>: auxiliary (helping verb) first, then the subject. The odd word order is the signal that you are deliberately stressing the idea.</p>
   <p>So inversion = <strong>emphasis + formality</strong>. If you don't need either, don't use it.</p>`,
   parts: [
     { h: 'How it works', body: `<p>Take a normal sentence, move the trigger phrase to the front, then treat the rest like a question.</p>
       <div class="eg">I have never seen such courage. → <em>Never have I</em> seen such courage.</div>
       <div class="eg">She rarely complains. → <em>Rarely does she</em> complain. <span class="muted">(no auxiliary in the original, so <em>do</em> appears, exactly as in a question: <em>Does she complain?</em>)</span></div>` },
-    { h: 'What triggers it', body: `<div class="tablewrap"><table><tr><th>Trigger</th><th>Pattern</th></tr>
+    { h: 'What triggers it', body: `<p>The opener is usually <strong>negative or limiting</strong> ("not", "only", "hardly"), because those are the words a speaker wants to stress; <em>so/such ... that</em> is the one dramatic exception. <em>Always, often, sometimes</em> do not trigger it.</p><div class="tablewrap"><table><tr><th>Trigger</th><th>Pattern</th></tr>
       <tr><td>Never, rarely, seldom, little, at no time</td><td><em>Rarely do we get such good weather.</em></td></tr>
       <tr><td>Hardly / scarcely … when; No sooner … than</td><td><em>No sooner had we sat down than the music stopped.</em></td></tr>
       <tr><td>Not only … (but also)</td><td><em>Not only did he lie, he also blamed me.</em></td></tr>
@@ -16,9 +17,9 @@ C1.grammar = [
       <tr><td>Only + time/condition (only when, only after, only then)</td><td><em>Only after the storm did we realise the damage.</em></td></tr>
       <tr><td>Not until</td><td><em>Not until she left did I understand her.</em></td></tr>
       <tr><td>So + adjective … that; Such … that</td><td><em>So loud was the noise that nobody slept.</em></td></tr></table></div>` },
-    { h: 'The logic behind the patterns', body: `<p><strong>Why "Only after… <em>did</em> we realise", but not inversion in the first half?</strong> Inversion happens in the clause that <em>follows</em> the fronted expression: the main clause. The "only after the storm" part is just the fronted adverbial, so it stays in normal order.</p>
+    { h: 'The logic behind the patterns', body: `<p><strong>Why "Only after… <em>did</em> we realise", but not inversion in the first half?</strong> The question order happens in the part that <em>follows</em> the fronted phrase, the main clause. "Only after the storm" is just the opener, so it stays in normal order.</p>
       <p><strong>Why <em>Not only</em> inverts but <em>but also</em> doesn't?</strong> Only the negative element is fronted. <em>But also</em> arrives later in an ordinary position.</p>
-      <p><strong>Inverted conditionals</strong> follow the same idea: drop <em>if</em> and front the auxiliary. <em>Had I known</em> = <em>If I had known</em>; <em>Should you need help</em> = <em>If you should need help</em>; <em>Were she here</em> = <em>If she were here</em>. See the Conditionals lesson.</p>` }
+      <p><strong>Inverted conditionals</strong> follow the same idea: drop <em>if</em> and put the auxiliary first. <em>Had I known</em> = <em>If I had known</em>; <em>Should you need help</em> = <em>If you should need help</em>; <em>Were she here</em> = <em>If she were here</em>. See the Conditionals lesson.</p>` }
   ],
   traps: `<ul><li><em>No sooner … <strong>than</strong></em>, but <em>Hardly … <strong>when</strong></em>. Mixing them up is a classic error.</li>
     <li>Don't invert after <em>not only</em> when it doesn't start the sentence: <em>He not only sang, but also danced.</em></li>
@@ -36,8 +37,8 @@ C1.grammar = [
 },
 {
   id: 'conditionals', category: 'Verbs and time', title: 'Conditionals: mixed and inverted', level: 'C1', tagline: 'Past tenses that are not about the past.',
-  idea: `<p>Conditionals use tense to signal <strong>distance from reality</strong>, not distance in time. A past tense here means "this is not real". One more step back (past perfect) means "not real, and too late to change".</p>
-  <p>Once you see that, mixed conditionals are logical: you simply choose the distance for the <em>if</em> part and the <em>result</em> part separately, because each can refer to a different time.</p>`,
+  idea: `<p>Compare: <em>If I win, I'll buy a house.</em> (I might win.) and <em>If I won, I'd buy a house.</em> (I probably won't.) Both are about the future, yet the second uses a <em>past</em> tense. So here the past tense is not about time: it signals <strong>distance from reality</strong>. One more step back (<em>If I had won…</em>) means "it didn't happen, and it's too late to change".</p>
+  <p>Once you see that, mixed conditionals are logical. Choose the distance for the <em>if</em> part and for the result part separately, because each can point to a different time.</p>`,
   parts: [
     { h: 'The distance scale', body: `<div class="tablewrap"><table><tr><th>Situation</th><th>If-part</th><th>Result</th></tr>
       <tr><td>Real / possible</td><td>present simple</td><td>will / can / imperative</td></tr>
@@ -45,8 +46,8 @@ C1.grammar = [
       <tr><td>Unreal past</td><td>past perfect</td><td>would have + participle</td></tr></table></div>` },
     { h: 'Mixed conditionals', body: `<p><strong>Past cause → present result:</strong> <em>If I had taken that job, I would be living in Paris now.</em> (the choice was in the past; the result is now)</p>
       <p><strong>Present state → past result:</strong> <em>If she weren't so shy, she would have introduced herself at the party.</em> (shyness is a general trait; the result was one past event)</p>
-      <p>Test: ask "when is the <em>condition</em>?" and "when is the <em>result</em>?" and pick the form for each.</p>` },
-    { h: 'Inverted conditionals (formal)', body: `<div class="eg"><em>Had</em> I known, I would have called. = If I had known…</div>
+      <p>Test: ask "when is the <em>condition</em>?" and "when is the <em>result</em>?" and pick the form for each. (Past perfect in the if-part = not real, and over; <em>would be</em> = the result still holds now.)</p>` },
+    { h: 'Inverted conditionals (formal)', body: `<p>In formal writing and speeches you can drop <em>if</em> and flip the order, as in a question. It sounds more serious.</p><div class="eg"><em>Had</em> I known, I would have called. = If I had known…</div>
       <div class="eg"><em>Were</em> he to apply, he would probably get the job. = If he were to apply…</div>
       <div class="eg"><em>Should</em> you need anything, ring reception. = If you should need…</div>
       <p>Only <em>had</em>, <em>were</em> and <em>should</em> can lead. Negatives use <em>not</em> after the subject: <em>Had I not known…</em></p>` },
@@ -70,21 +71,21 @@ C1.grammar = [
 },
 {
   id: 'cleft', category: 'Sentence structure', title: 'Cleft sentences', level: 'C1', tagline: 'Split a sentence in two to put the important part where it will be heard.',
-  idea: `<p>In English the <strong>end</strong> of a clause is the natural place for the most important information (end-focus). A cleft sentence ("cleft" = split) splits one clause into two so that the piece you want to stress gets its own spotlight, usually right after <em>is/was</em>.</p>
-  <p><em>Someone broke the window</em> → <em>It was Tom who broke the window.</em> The first part sets the stage; the focus follows the verb <em>be</em>.</p>`,
+  idea: `<p>Your flatmate says <em>You broke my mug!</em> and you reply <em>It wasn't me who broke it, it was Tom.</em> You didn't just say "Tom broke it": you split the sentence so that the name <em>Tom</em> lands where it will be heard.</p>
+  <p>That is the point of a cleft sentence ("cleft" means split). Normally the most important news comes at the end of a sentence. A cleft splits one sentence in two, so that the piece you want to stress gets its own spotlight right after <em>is/was</em>: <em>Someone broke the window</em> → <em>It was Tom who broke the window.</em></p>`,
   parts: [
-    { h: 'It-clefts', body: `<p><em>It is/was</em> + focus + <em>that/who</em> + rest.</p>
+    { h: 'It-clefts', body: `<p>Use these to say "this one, not another". Pattern: <em>It is/was</em> + focus + <em>that/who</em> + rest.</p>
       <div class="eg">It was <em>in Lisbon</em> that we first met.</div>
       <div class="eg">It wasn't <em>until midnight</em> that the storm died down.</div>
       <div class="eg">It is <em>her honesty</em> that I admire.</div>
       <p>Use it to correct or contrast: <em>It was Tuesday, not Monday, that he called.</em></p>` },
-    { h: 'Wh-clefts (pseudo-clefts)', body: `<p><em>What / All / The thing / The reason / The place</em> + clause + <em>be</em> + focus.</p>
+    { h: 'Wh-clefts (pseudo-clefts)', body: `<p>Here you announce a "headline" first and give the answer last, like a small drum roll: <em>What / All / The thing / The reason / The place</em> + clause + <em>be</em> + focus.</p>
       <div class="eg"><em>What</em> I need <em>is</em> a long holiday.</div>
       <div class="eg"><em>All</em> she wanted <em>was</em> some peace.</div>
       <div class="eg"><em>What</em> happened <em>was</em> that the printer jammed.</div>
       <div class="eg"><em>What</em> he did <em>was</em> (to) call the police.</div>
       <p>The logic: the wh-clause is a headline ("the thing I need"), <em>be</em> is an equals sign, and the focus completes it.</p>` },
-    { h: 'Reversed wh-clefts', body: `<div class="eg">A long holiday <em>is what</em> I need.</div><div class="eg">His attitude <em>is what</em> annoys me.</div>` }
+    { h: 'Reversed wh-clefts', body: `<p>Same meaning, turned round: the focus comes first, for an even stronger start.</p><div class="eg">A long holiday <em>is what</em> I need.</div><div class="eg">His attitude <em>is what</em> annoys me.</div>` }
   ],
   traps: `<ul><li><em>The reason … is <strong>that</strong> …</em>, not <s>because</s>: <em>The reason I left is that I was bored.</em></li>
     <li>Match the verb after <em>What</em>: <em>What annoys me is…</em> The verb <em>be</em> agrees with what follows: <em>What I need are more hours.</em> (plural) is acceptable, though <em>is</em> is very common.</li>
@@ -101,17 +102,18 @@ C1.grammar = [
 },
 {
   id: 'passive', category: 'Reporting and voice', title: 'Passives, causatives and reporting structures', level: 'B2–C1', tagline: 'Choose your subject on purpose.',
-  idea: `<p>Active or passive is a choice about <strong>what you want to talk about</strong>. English likes to start with old or known information and end with new. The passive lets you start with the thing you are discussing and drop the doer when it is unknown, obvious or unimportant: <em>The bridge was completed in 1998.</em></p>`,
+  idea: `<p>Compare <em>A company completed the bridge in 1998.</em> and <em>The bridge was completed in 1998.</em> In the second, who did it doesn't matter: the story is about the bridge. That is the passive: you choose <strong>what you want to talk about</strong>, and you can leave out the doer when it is unknown, obvious or unimportant.</p>
+  <p>English likes to start with what the listener already knows and end with the news, so the passive helps you put the thing you are discussing first.</p>`,
   parts: [
-    { h: 'Form and time', body: `<p>be (in the right tense) + past participle. Modals: <em>must be done</em>, <em>should have been done</em>. Continuous: <em>is being built</em>.</p>` },
-    { h: 'Causative: have / get something done', body: `<p>Used when someone else does a service for you, or when something happens to you.</p>
+    { h: 'Form and time', body: `<p>The form is <em>be</em> (in the tense you need) + the past participle (<em>done, built, stolen</em>). The tense lives in <em>be</em>: <em>is built, was built, will be built</em>. With modals: <em>must be done</em>, <em>should have been done</em>. In progress: <em>is being built</em>.</p>` },
+    { h: 'Causative: have / get something done', body: `<p>You don't service your own car: a garage does it, and you arrange it. <em>Have</em> (or the more informal <em>get</em>) + thing + past participle says that without naming the garage. It also covers things that happen <em>to</em> you (usually with <em>get</em>, or <em>have</em> for bad luck).</p>
       <div class="eg">I <em>had my car serviced</em> last week.</div>
       <div class="eg">She <em>got her bag stolen</em>. <span class="muted">(unlucky experience)</span></div>
       <p>Compare <em>I cut my hair</em> (I did it) and <em>I had my hair cut</em> (someone did it for me).</p>` },
-    { h: 'Reporting passives', body: `<p>To report what people say or believe without naming them, put the news in the subject:</p>
+    { h: 'Reporting passives', body: `<p>Newspapers and reports say what people believe without saying <em>who</em>: "everyone says…", "experts think…". Put the news itself in the subject:</p>
       <div class="eg"><em>It is said that</em> the company is in trouble. = The company <em>is said to be</em> in trouble.</div>
-      <div class="eg">The company <em>is believed to have lost</em> millions. <span class="muted">(earlier than the believing → perfect infinitive)</span></div>
-      <p>The logic of the infinitive: <em>to be</em> = same time as the reporting verb, <em>to have + participle</em> = earlier, <em>to be + -ing</em> = in progress.</p>` }
+      <div class="eg">The company <em>is believed to have lost</em> millions. <span class="muted">(the losing came before the saying/believing, so <em>to have lost</em>)</span></div>
+      <p>The logic of the infinitive after <em>said / believed / thought</em>: <em>to be</em> = same time as the saying/believing, <em>to have</em> + past participle = earlier, <em>to be -ing</em> = in progress.</p>` }
   ],
   traps: `<ul><li>Intransitive verbs have no passive: <s>was happened</s>, <s>was arrived</s>.</li>
     <li>Don't use the passive just because it sounds academic: <em>Mistakes were made</em> hides the doer, so use it only when that is your intention.</li>
@@ -128,7 +130,7 @@ C1.grammar = [
 },
 {
   id: 'modals', category: 'Verbs and time', title: 'Modals of deduction and criticism', level: 'B2–C1', tagline: 'Modals measure how sure you are. The form after them tells you the time.',
-  idea: `<p>A modal verb shows the speaker's <strong>attitude</strong>: how certain, how obliged, how critical. What follows shows <strong>time</strong>:</p>
+  idea: `<p>You see the lights are on. <em>She must be at home</em> (I'm nearly sure) and <em>She might be at home</em> (it's possible) say different things about the <em>same</em> facts: the modal shows the speaker's <strong>attitude</strong>: here, how certain you are (elsewhere: how obliged, how critical). What follows the modal shows <strong>time</strong>:</p>
   <ul><li>modal + infinitive → present or future (<em>She must be tired</em>)</li>
   <li>modal + <em>be -ing</em> → happening now (<em>She must be working</em>)</li>
   <li>modal + <em>have</em> + participle → past (<em>She must have left</em>)</li></ul>
@@ -159,7 +161,7 @@ C1.grammar = [
 },
 {
   id: 'wish', category: 'Verbs and time', title: 'Wishes, regrets and preferences', level: 'B2–C1', tagline: 'The same "distance" logic as conditionals.',
-  idea: `<p><em>Wish</em>, <em>if only</em>, <em>would rather</em> and <em>it's time</em> all describe things that are <strong>not real</strong>. So they borrow the tense of unreality: the past tense marks "not true now", the past perfect marks "not true then".</p>`,
+  idea: `<p><em>I have more time</em> is a fact. <em>I wish I had more time</em> says the opposite is true: I don't. <em>Wish</em>, <em>if only</em>, <em>would rather</em> and <em>it's time</em> all talk about things that are <strong>not real</strong>, so they borrow the "distance" tense you met in conditionals: past simple = "not true now", past perfect = "not true then".</p>`,
   parts: [
     { h: 'The patterns', body: `<div class="tablewrap"><table><tr><th>You want to say</th><th>Pattern</th><th>Example</th></tr>
       <tr><td>Regret about now</td><td>wish / if only + past simple</td><td><em>I wish I had more time.</em></td></tr>
@@ -184,8 +186,9 @@ C1.grammar = [
 },
 {
   id: 'participle', category: 'Sentence structure', title: 'Participle clauses', level: 'C1', tagline: 'Shorten a clause without losing meaning.',
-  idea: `<p>A participle clause is a full clause with the subject and conjunction removed. It works only if <strong>its subject is the same as the main clause subject</strong>, because the subject has been deleted and the listener must recover it from the main clause.</p>
-  <p>The form shows the relationship: <em>-ing</em> = active, <em>-ed</em> = passive, <em>having + participle</em> = earlier.</p>`,
+  idea: `<p>Compare <em>While I was walking home, I saw an accident.</em> and <em>Walking home, I saw an accident.</em> Same meaning, but the second is shorter and smoother: the words <em>while I was</em> have simply gone. This is how written English packs two actions into one sentence.</p>
+  <p>It works only if <strong>the short clause has the same subject as the main clause</strong>: whoever is walking is the person who saw. The subject has been deleted, so the listener must pick it up from the main clause. (We call the short form a participle clause.)</p>
+  <p>The form tells you how the two actions relate: <em>-ing</em> = the subject does it, <em>-ed</em> = it is done to the subject, <em>having + -ed</em> = it happened first.</p>`,
   parts: [
     { h: 'The three forms', body: `<div class="eg"><em>Walking</em> home, I saw an accident. <span class="muted">(while I was walking)</span></div>
       <div class="eg"><em>Built</em> in 1880, the bridge is still in use. <span class="muted">(which was built)</span></div>
@@ -209,7 +212,7 @@ C1.grammar = [
 },
 {
   id: 'aspect', category: 'Verbs and time', title: 'Tense and aspect: choosing your viewpoint', level: 'B2–C1', tagline: 'Tenses show how you look at time, not only when.',
-  idea: `<p>Every verb form combines <strong>time</strong> (past, present, future) with <strong>aspect</strong>, which is the speaker's viewpoint:</p>
+  idea: `<p><em>I live here</em>, <em>I'm living here</em> and <em>I've lived here</em> are all about now, but they say different things: a fact, a temporary situation, a story that began earlier. Every verb form combines <strong>time</strong> (past, present, future) with your <strong>viewpoint</strong> on the event (grammar books call this aspect):</p>
   <ul><li><strong>Simple</strong>: the event as a whole, a fact, a habit.</li>
   <li><strong>Continuous</strong>: in progress at a moment; temporary; unfinished.</li>
   <li><strong>Perfect</strong>: looking back from a point in time; the earlier event matters to that point.</li></ul>
@@ -224,7 +227,7 @@ C1.grammar = [
     { h: 'Future continuous', body: `<div class="eg">This time tomorrow we <em>will be lying</em> on a beach. <span class="muted">(in progress at that future moment)</span></div>
       <div class="eg">Will you <em>be using</em> the car tonight? <span class="muted">(polite: asks about a plan, not a request)</span></div>` }
   ],
-  traps: `<ul><li><strong>State verbs</strong> (know, believe, belong, want, understand, prefer) usually avoid the continuous: <em>I have known her for years</em>, not <s>I have been knowing</s>.</li>
+  traps: `<ul><li><strong>State verbs</strong> (know, believe, belong, want, understand, prefer: they describe a state, not an action) usually avoid the continuous: <em>I have known her for years</em>, not <s>I have been knowing</s>.</li>
     <li><em>Since</em> + point in time, <em>for</em> + duration.</li>
     <li>After <em>by the time</em>, <em>when</em>, <em>as soon as</em> use a present tense for the future: <em>By the time you arrive, I will have left.</em></li></ul>`,
   exam: `<p>Multiple-choice cloze and open cloze test auxiliary choice all the time (<em>had, been, have, will</em>). Writing rewards precise tenses: careful use of perfect forms marks a C1 text.</p>`,
