@@ -108,6 +108,19 @@
     : it.q.replace('___', '<span class="blank"></span>');
   const correctText = (it) => (it.type === 'mcq' ? it.options[it.answer] : it.answers.slice(0, 2).join(' / '));
 
+  /* mistakes that one trick would settle, grouped: "3 slips on wish and if only", with a link to the trick and its practice */
+  function repeated() {
+    const by = {};
+    Store.mistakes().forEach((m) => {
+      const it = m.item, r = C1.trickFor(it.q || (it.first + ' ' + it.key + ' ' + it.second), m.given, it.options ? [it.options[it.answer]] : it.answers);
+      if (r) (by[r.key] = by[r.key] || { title: r.title, n: 0 }).n++;
+    });
+    const rows = Object.entries(by).sort((a, b) => b[1].n - a[1].n).slice(0, 4);
+    return rows.length ? cardBlock('Slips a trick would fix', h('p', { class: 'muted' }, 'You keep getting these wrong. One short trick settles each doubt.'),
+      ...rows.map(([k, v]) => h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, v.title), h('div', { class: 'muted' }, v.n + ' mistake' + (v.n === 1 ? '' : 's') + ' saved')),
+        h('div', { class: 'row' }, link('#/tricks/' + k, 'Read', 'btn small ghost'), A.trickPool && A.trickPool(k).length >= 3 ? link('#/tricks/practice/' + k, 'Practise', 'btn small') : null)))) : null;
+  }
+
   function mistakes() {
     let cur = 'All', sort = 'recent';
     const list = h('div');
@@ -152,7 +165,7 @@
         n ? link('#/mistakes/practice', (nDue ? `Practise ${Math.min(nDue, 10)} due today` : `Practise ${Math.min(n, 10)} early`), 'btn') : null,
         h('label', { class: 'muted' }, 'Sort ', h('select', { onchange: (e) => { sort = e.target.value; draw(); } }, h('option', { value: 'recent' }, 'Newest first'), h('option', { value: 'repeated' }, 'Most repeated'))),
         n ? h('button', { class: 'btn small ghost', onclick: () => { if (confirm('Remove all saved mistakes?')) { Store.clearMistakes(); draw(); } } }, 'Clear all') : null),
-      chips, list);
+      repeated(), chips, list);
     draw();
   }
 

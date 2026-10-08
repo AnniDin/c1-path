@@ -36,6 +36,12 @@ sandbox.C1.trickMap.forEach(([key, pat]) => {
   if (!s || !s.items[+i]) issues.push('trickmap: no trick ' + key);
   try { pat.split('&').forEach((p) => new RegExp(p, 'i')); } catch (e) { issues.push('trickmap: bad pattern for ' + key); }
 });
+/* trick drills: real trick, well-formed multiple-choice items */
+Object.entries(sandbox.C1.trickDrills || {}).forEach(([key, list]) => {
+  const [sec, i] = key.split('-'), s = sandbox.C1.tricks.find((x) => x.id === sec);
+  if (!s || !s.items[+i]) issues.push('trickdrills: no trick ' + key);
+  list.forEach((it, n) => { if (it.type !== 'mcq' || !/___/.test(it.q) || !it.options || it.options.length < 3 || new Set(it.options).size !== it.options.length || !(it.answer >= 0 && it.answer < it.options.length) || !it.why) issues.push('trickdrills: ' + key + ' #' + n + ' is malformed'); });
+});
 const swSrc = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
 scripts.concat(['css/style.css', 'manifest.webmanifest', 'icons/icon.svg']).forEach((f) => { if (!swSrc.includes('"' + f + '"')) issues.push('sw.js PRECACHE is missing ' + f); });
 if (issues.length) { console.error(issues.length + ' content problem(s):\n- ' + issues.join('\n- ')); process.exit(1); }

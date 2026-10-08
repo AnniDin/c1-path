@@ -20,9 +20,12 @@
         }
         Object.keys(o).forEach((k) => { if (o[k] && typeof o[k] === 'object') walk(o[k], d + 1); });
       })({ p: C1.practice, g: C1.grammar }, 0);
+      /* data/trickdrills.js: exercises written for one trick each ({ 'words-0': [items] }) */
+      Object.entries(C1.trickDrills || {}).forEach(([k, list]) => { trickPool[k] = (trickPool[k] || []).concat(list); });
     }
     return trickPool[key] || [];
   };
+  A.trickPool = poolFor;
   function trickPractice(key) {
     const items = A.sample(poolFor(key), 8), s = C1.tricks.find((x) => x.id === key.split('-')[0]), t = s && s.items[+key.split('-')[1]];
     if (!t || !items.length) { location.hash = '#/tricks'; return; }
