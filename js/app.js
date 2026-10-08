@@ -838,7 +838,7 @@ window.App = { routes: {}, cleanup: [] };
       h('div', { class: 'callout warn', html: E.caution }),
       ...E.exams.map((ex) => h('div', {},
         h('h2', {}, ex.name), h('p', { html: ex.summary }),
-        h('div', { class: 'tablewrap' }, h('table', {}, h('thead', {}, h('tr', {}, ex.cols.map((c) => h('th', {}, c)))),
+        h('div', { class: 'tablewrap', tabindex: '0', role: 'region', 'aria-label': 'Table, scrolls sideways on small screens' }, h('table', {}, h('thead', {}, h('tr', {}, ex.cols.map((c) => h('th', {}, c)))),
           h('tbody', {}, ex.rows.map((r) => h('tr', {}, r.map((c) => h('td', { html: c }))))))),
         ex.notes ? h('div', { class: 'callout', html: ex.notes }) : null)),
       h('h2', {}, 'Which one should you take?'), h('div', { html: E.choose }),

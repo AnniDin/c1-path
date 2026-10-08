@@ -73,7 +73,7 @@
     if (d._prev) box.append(h('p', { class: 'muted' }, 'Compared with your previous AI check on this task (' + fmtDate(d._prev.ts) + (d._prev.level ? ', ' + d._prev.level : '') + '). Rewrite using the corrections and check again: that is how the scores move.'));
     if (d.summary) box.append(h('p', {}, String(d.summary)));
     if ((d.strengths || []).length) box.append(h('h3', {}, 'Strengths'), li(d.strengths));
-    if ((d.corrections || []).length) box.append(h('h3', {}, 'Corrections'), h('div', { class: 'tablewrap' }, h('table', {}, h('thead', {}, h('tr', {}, ['You wrote', 'Better', 'Why'].map((t) => h('th', {}, t)))),
+    if ((d.corrections || []).length) box.append(h('h3', {}, 'Corrections'), h('div', { class: 'tablewrap', tabindex: '0', role: 'region', 'aria-label': 'Table, scrolls sideways on small screens' }, h('table', {}, h('thead', {}, h('tr', {}, ['You wrote', 'Better', 'Why'].map((t) => h('th', {}, t)))),
       h('tbody', {}, d.corrections.map((c) => h('tr', {}, h('td', {}, String(c.original || '')), h('td', {}, String(c.better || '')), h('td', {}, String(c.why || ''))))))));
     if ((d.improvements || []).length) box.append(h('h3', {}, 'Next steps'), li(d.improvements));
     if (d.upgrade) box.append(h('h3', {}, 'A stronger version'), h('p', { class: 'notetext' }, String(d.upgrade)));
@@ -477,7 +477,7 @@
       const r = analyseSpeech(text, seconds, segments, partNo);
       out.replaceChildren(cardBlock('Analysis of your answer',
         h('p', { class: 'muted' }, 'Based on an automatic transcript without punctuation, so treat it as a rough guide. It cannot judge pronunciation.'),
-        h('div', { class: 'tablewrap' }, h('table', {}, h('tbody', {}, r.rows.map((x) => h('tr', {}, h('th', {}, x.label), h('td', {}, x.value), h('td', { class: x.status === 'warn' ? 'a-warn' : x.status === 'ok' ? 'a-ok' : '' }, x.note)))))),
+        h('div', { class: 'tablewrap', tabindex: '0', role: 'region', 'aria-label': 'Table, scrolls sideways on small screens' }, h('table', {}, h('tbody', {}, r.rows.map((x) => h('tr', {}, h('th', {}, x.label), h('td', {}, x.value), h('td', { class: x.status === 'warn' ? 'a-warn' : x.status === 'ok' ? 'a-ok' : '' }, x.note)))))),
         h('h3', {}, 'Linking words'), r.linkRows.length ? h('ul', {}, r.linkRows.map(([c, u]) => h('li', {}, h('strong', {}, c + ': '), u.join(', ')))) : h('p', { class: 'a-warn' }, 'No linking words found: connect your ideas (however, as a result, on top of that…).'),
         r.struct.length ? h('p', {}, h('strong', {}, 'Structures spotted: '), r.struct.join(', ')) : null,
         r.weak.length ? h('div', {}, h('h3', {}, 'Parts the recogniser was least sure about'), h('p', { class: 'muted' }, 'This can point to unclear pronunciation, or to background noise. Listen to these bits again.'), h('ul', {}, r.weak.map((x) => h('li', {}, `"${x.text}" (${Math.round(x.conf * 100)}% confidence)`)))) : null));
@@ -682,7 +682,7 @@
       const found = r.struct.filter((s) => s[1]), missing = r.struct.filter((s) => !s[1]);
       analysis.replaceChildren(cardBlock('Analysis',
         h('p', { class: 'muted' }, 'A rough, automatic read of your text. It cannot judge content or accuracy, so use it to spot patterns, not to decide your level.'),
-        h('div', { class: 'tablewrap' }, h('table', {}, h('tbody', {}, r.rows.map((x) => h('tr', {}, h('th', {}, x.label), h('td', {}, x.value), h('td', { class: x.status === 'warn' || x.status === 'bad' ? 'a-warn' : x.status === 'ok' ? 'a-ok' : '' }, x.note)))))),
+        h('div', { class: 'tablewrap', tabindex: '0', role: 'region', 'aria-label': 'Table, scrolls sideways on small screens' }, h('table', {}, h('tbody', {}, r.rows.map((x) => h('tr', {}, h('th', {}, x.label), h('td', {}, x.value), h('td', { class: x.status === 'warn' || x.status === 'bad' ? 'a-warn' : x.status === 'ok' ? 'a-ok' : '' }, x.note)))))),
         h('h3', {}, 'Linking words'),
         h('ul', {}, r.linkRows.map(([cat, used]) => h('li', {}, h('strong', {}, cat + ': '), used.length ? used.join(', ') : h('span', { class: 'a-warn' }, 'none used')))),
         h('h3', {}, 'Advanced structures spotted'),
