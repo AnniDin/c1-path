@@ -75,6 +75,7 @@
     document.body.append(box); setTimeout(() => box.remove(), 3200);
   }
   A.confetti = confetti;
+  const QUIPS = ['A shiny find!', 'Into the nest it goes.', 'Nicely done.', 'Another one for the collection.', 'Look at you go.', 'I knew you had it in you.'];
   let busy = false;
   function check() {
     if (busy) return; busy = true;
@@ -87,7 +88,7 @@
       if (Store.todayCount() >= Store.goal() && Store.earn('goal:' + Store.today())) fresh.push('Daily goal reached');
       if (quests().every((q) => q.done) && Store.earn('quest:' + Store.today())) fresh.push('All daily quests done (+50 XP)');
       if (fresh.length && !first) { confetti(); if (window.Sound) Sound.play('win'); }
-      if (fresh.length && !first) toast('🏅 ' + (fresh.length > 2 ? fresh.length + ' new achievements' : fresh.join(' · ')));
+      if (fresh.length && !first) toast('Pica: ' + QUIPS[Math.floor(Math.random() * QUIPS.length)] + ' ' + (fresh.length > 2 ? fresh.length + ' new achievements' : fresh.join(' · ')));
     } finally { busy = false; }
   }
   Store.onChange(() => { if (!busy) check(); });

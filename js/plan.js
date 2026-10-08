@@ -97,7 +97,8 @@
   /* ---------- offline audio and install (Review) ---------- */
   let installEvent = null;
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvent = e; });
-  const audioFiles = () => Object.values(((window.C1 || {}).audio || {}).listening || {}).map((a) => new URL(a.src, location.href).href);
+  const audioFiles = () => Object.values(((window.C1 || {}).audio || {}).listening || {}).map((a) => new URL(a.src, location.href).href)
+    .concat(((window.C1 || {}).vocabAudio || []).map((s) => new URL('audio/vocab/' + s + '.mp3', location.href).href));
   A.offlineCard = () => {
     const files = audioFiles(), status = h('p', { class: 'muted', role: 'status' }), canCache = 'caches' in window && files.length;
     const btn = h('button', { class: 'btn small', onclick: async () => {
@@ -107,7 +108,7 @@
         for (const u of files) { if (!(await c.match(u))) { const r = await fetch(u); if (r.ok) await c.put(u, r); } status.textContent = `Downloading… ${++n}/${files.length}`; }
         status.textContent = 'Done: the recordings now play without a connection.';
       } catch (e) { status.textContent = 'The download stopped. Check your connection and try again.'; btn.disabled = false; }
-    } }, `Download the ${files.length} recordings`);
+    } }, `Download the ${files.length} recordings (about 22 MB)`);
     if (canCache) caches.open('c1path-audio').then((c) => Promise.all(files.map((u) => c.match(u)))).then((r) => { if (r.every(Boolean)) { status.textContent = 'All recordings are saved on this device.'; btn.textContent = 'Saved'; btn.disabled = true; } });
     const install = installEvent ? h('button', { class: 'btn small ghost', onclick: () => { installEvent.prompt(); installEvent = null; } }, 'Add to home screen') : null;
     return cardBlock('Use it offline', h('p', { class: 'muted' }, 'This page keeps its lessons and exercises in your browser, so they work offline after your first visit. The recorded listenings are large (about 6.5 MB), so they are saved only if you ask.'),

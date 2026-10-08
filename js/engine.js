@@ -23,9 +23,15 @@
   }
   const matches = (given, answers) => { const g = norm(given); return g !== '' && answers.some((a) => norm(a) === g); };
 
-  function feedback(ok, expected, why) {
+  const plain = (t) => String(t == null ? '' : t).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  /* ask = { q, given }: when the answer is wrong and the tutor panel exists, offer to ask Pica why */
+  function feedback(ok, expected, why, ask) {
     const exp = ok ? '' : `<b>Answer:</b> ${expected.join(' / ')}. `;
-    return h('div', { class: 'fb' + (ok ? ' good' : ''), html: (ok ? '<b>Correct.</b> ' : exp) + (why || '') });
+    const box = h('div', { class: 'fb' + (ok ? ' good' : ''), html: (ok ? '<b>Correct.</b> ' : exp) + (why || '') });
+    if (!ok && ask && window.Tutor && window.AI && AI.configured()) {
+      box.append(' ', h('button', { class: 'btn small ghost askpica', type: 'button', onclick: () => Tutor.explain({ q: plain(ask.q), given: plain(ask.given), correct: expected.map(plain).join(' / '), why: plain(why) }) }, 'Ask Pica why'));
+    }
+    return box;
   }
 
   /* ---------- text-to-speech (browser voices; no audio files needed) ---------- */
@@ -139,7 +145,7 @@
             o.classList.toggle('wrong', !!sel && +sel.value === perm[pos] && perm[pos] !== item.answer);
           });
           el.querySelector('.fb')?.remove();
-          el.append(feedback(ok, [item.options[item.answer]], item.why));
+          el.append(feedback(ok, [item.options[item.answer]], item.why, { q: item.q, given: sel ? item.options[+sel.value] : '' }));
           return [{ ok, given: sel ? item.options[+sel.value] : '', item }];
         }
       };
@@ -154,7 +160,7 @@
           const ok = matches(input.value, item.answers);
           input.classList.toggle('right', ok); input.classList.toggle('wrong', !ok);
           el.querySelector('.fb')?.remove();
-          el.append(feedback(ok, item.answers.slice(0, 2), item.why));
+          el.append(feedback(ok, item.answers.slice(0, 2), item.why, { q: item.q || (item.first + ' [' + item.key + '] ' + item.second), given: input.value }));
           return [{ ok, given: input.value.trim(), item }];
         }
       };
@@ -172,7 +178,7 @@
           const ok = matches(input.value, item.answers);
           input.classList.toggle('right', ok); input.classList.toggle('wrong', !ok);
           el.querySelector('.fb')?.remove();
-          el.append(feedback(ok, item.answers.slice(0, 2), item.why));
+          el.append(feedback(ok, item.answers.slice(0, 2), item.why, { q: item.q || (item.first + ' [' + item.key + '] ' + item.second), given: input.value }));
           return [{ ok, given: input.value.trim(), item }];
         }
       };
@@ -278,7 +284,7 @@
             const ok = mode === 'mcq' ? v !== '' && +v === g.answer : matches(v, g.answers);
             ctrls[i].node.classList.toggle('right', ok); ctrls[i].node.classList.toggle('wrong', !ok);
             const shown = mode === 'mcq' ? [g.options[g.answer]] : g.answers.slice(0, 2);
-            const fb = feedback(ok, shown, g.why);
+            const fb = feedback(ok, shown, g.why, { q: item.title + '. Gap ' + (i + 1) + ': ' + plain(item.text || ''), given: ctrls[i].text() });
             fb.prepend(h('b', {}, (i + 1) + '. '));
             list.append(fb);
             return { ok, given: ctrls[i].text(), item: gapItem(item, i) };

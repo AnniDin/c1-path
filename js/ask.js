@@ -28,12 +28,13 @@
   const portrait = h('span', { class: 'picahead' }, pica('idle'));
   const box = h('textarea', { rows: 2, maxlength: 600, placeholder: 'Ask about English or the exam…', 'aria-label': 'Your question' });
   const send = h('button', { class: 'btn small', type: 'button' }, 'Ask');
+  const withPage = h('input', { type: 'checkbox', id: 'tutor-page' });
   const reset = h('button', { class: 'btn small ghost', type: 'button', title: 'Clear the conversation' }, 'Clear');
   const close = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close the tutor' }, '✕');
   const panel = h('section', { id: 'tutor', role: 'dialog', 'aria-label': 'Tutor', hidden: true },
     h('header', {}, portrait, h('div', { class: 'picatitle' }, h('strong', {}, 'Pica'), h('span', { class: 'muted' }, 'your C1 tutor')), close),
     h('p', { class: 'muted chatnote' }, 'English and the C1 exams only. Pica is an AI and can be wrong: check important points.'),
-    log, msg, h('div', { class: 'chatbox' }, box, h('div', { class: 'chatbtns' }, send, reset)));
+    log, msg, h('div', { class: 'chatbox' }, box, h('label', { class: 'chatpage', for: 'tutor-page' }, withPage, ' Show Pica what is on my screen'), h('div', { class: 'chatbtns' }, send, reset)));
   const fab = h('button', { id: 'tutor-btn', type: 'button', 'aria-expanded': 'false', 'aria-controls': 'tutor', title: 'Ask Pica, the tutor, a question about English' }, pica('idle', 'fabpica'), h('span', {}, 'Ask Pica'));
 
   function draw() {
@@ -45,13 +46,14 @@
         h('div', { class: 'chatex' }, EXAMPLES.map((q) => h('button', { class: 'btn small ghost', type: 'button', onclick: () => ask(q) }, q)))].filter(Boolean)));
     log.scrollTop = history.length ? log.scrollHeight : 0;
   }
-  async function ask(text) {
+  const onScreen = () => { const m = document.getElementById('app'); return m ? m.innerText.replace(/\s+/g, ' ').trim() : ''; };
+  async function ask(text, screen) {
     text = String(text || box.value).trim();
     if (!text || send.disabled) return;
     if (Date.now() - last < 2000) { msg.textContent = 'One moment, then ask again.'; return; }
     last = Date.now();
     history.push({ role: 'user', text }); box.value = ''; msg.textContent = 'Pica is thinking…'; portrait.replaceChildren(pica('think')); send.disabled = true; draw();
-    try { history.push({ role: 'tutor', text: await AI.chat(history) }); msg.textContent = ''; }
+    try { history.push({ role: 'tutor', text: await AI.chat(history, screen || (withPage.checked ? onScreen() : '')) }); msg.textContent = ''; }
     catch (e) { msg.textContent = e.message; }
     send.disabled = false; portrait.replaceChildren(pica(history.length && history[history.length - 1].role === 'tutor' ? 'happy' : 'idle')); draw();
   }
@@ -68,7 +70,12 @@
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && opened && !document.querySelector('dialog[open]')) toggle(false); });
   document.body.append(panel, fab);
 
-  window.Tutor = { open: () => toggle(true), toggle };
+  /* a wrong answer taken to Pica: the question, the learner's answer and the right one go with the question */
+  function explain(x) {
+    toggle(true);
+    ask('Why is my answer wrong? Please explain.', 'Exercise question: ' + x.q + '\nMy answer: ' + (x.given || '(blank)') + '\nCorrect answer: ' + x.correct + (x.why ? '\nThe given explanation: ' + x.why : ''));
+  }
+  window.Tutor = { open: () => toggle(true), toggle, explain };
   /* #/ask keeps old links working: it opens the panel over the Study page */
   A.routes.ask = () => { location.replace('#/toolkit'); setTimeout(() => toggle(true), 50); };
 })();

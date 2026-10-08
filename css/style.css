@@ -512,3 +512,6 @@ h3 { font-weight: 700; }
 @keyframes picabob { from { transform: rotate(-3deg); } to { transform: rotate(5deg); } }
 @media (prefers-reduced-motion: reduce) { .pica.think .wing { animation: none; } }
 .turn.tutor strong { color: var(--ink); }
+
+#tutor .chatpage { font-size: .85rem; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.askpica { margin-left: 6px; vertical-align: baseline; }
