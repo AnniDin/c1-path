@@ -340,7 +340,23 @@
       counter.textContent = all.length > 1 ? `${all.filter(Boolean).length} of ${all.length} answered` : '';
     };
     wrap.addEventListener('input', tally); wrap.addEventListener('change', tally); tally();
-    if (hasQuestions) wrap.append(h('div', { class: 'row', style: 'margin-top:14px' }, btn, counter), result);
+    /* keyboard: 1 to 9 picks an option for the first unanswered multiple-choice question, Enter checks the answers */
+    const groups = () => [...wrap.querySelectorAll('.opts[role=radiogroup]')];
+    const keys = (e) => {
+      if (!wrap.isConnected) { document.removeEventListener('keydown', keys); return; }
+      if (e.ctrlKey || e.metaKey || e.altKey || document.querySelector('dialog[open]')) return;
+      const t = e.target, tag = t && t.tagName;
+      if (e.key === 'Enter') {
+        if (tag === 'TEXTAREA' || tag === 'A' || tag === 'BUTTON' || tag === 'SUMMARY' || tag === 'SELECT') return;
+        e.preventDefault(); check(); return;
+      }
+      if (/^[1-9]$/.test(e.key) && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT' || (tag === 'INPUT' && t.type === 'radio' && /^[1-9]$/.test(e.key))) {
+        const g = groups().find((x) => !x.querySelector('input:checked')), opt = g && g.querySelectorAll('input')[+e.key - 1];
+        if (opt) { e.preventDefault(); opt.click(); opt.focus({ preventScroll: true }); g.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+      }
+    };
+    if (groups().length) document.addEventListener('keydown', keys);
+    if (hasQuestions) wrap.append(...[h('div', { class: 'row', style: 'margin-top:14px' }, btn, counter), groups().length ? h('p', { class: 'muted keyhint' }, 'Keys: 1 to 4 choose an option, Enter checks your answers.') : null, result].filter(Boolean));
     return wrap;
   }
 

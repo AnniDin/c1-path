@@ -464,3 +464,34 @@ h3 { font-weight: 700; }
 .opt:hover { border-color: var(--ink); }
 .hl, .eg em { color: var(--accent); }
 .avatar { border-radius: 50%; }
+
+/* timed papers: nothing but the paper */
+.exam-focus .topbar, .exam-focus .foot, .exam-focus #notes { display: none; }
+.exam-focus main { padding-top: 20px; }
+.notes-docked:has(.exam-focus) { padding-right: 0; }
+
+/* long lists (grammar, vocabulary, practice) use two columns on wide screens */
+@media (min-width: 1000px) {
+  main:has(.grid) { max-width: 1040px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 40px; }
+}
+
+/* the tutor: a small floating panel on every page */
+#tutor-btn { position: fixed; right: 16px; bottom: 16px; z-index: 40; background: var(--accent); color: var(--accent-ink); border: 0; padding: 12px 20px; font: 700 1rem var(--serif); cursor: pointer; box-shadow: 0 2px 10px rgba(0, 0, 0, .3); }
+#tutor-btn:hover, #tutor-btn.on { background: var(--ink); color: var(--bg); }
+#tutor { position: fixed; right: 16px; bottom: 68px; z-index: 40; width: min(380px, calc(100vw - 32px)); height: min(540px, calc(100vh - 100px)); display: flex; flex-direction: column; background: var(--bg); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 8px 30px rgba(0, 0, 0, .35); }
+#tutor[hidden] { display: none; }
+#tutor header { display: flex; justify-content: space-between; align-items: center; padding: 8px 8px 8px 14px; border-bottom: 1px solid var(--line); }
+#tutor .chatnote { margin: 6px 14px 0; font-size: .85rem; }
+#tutor .chatlog { flex: 1; overflow-y: auto; margin: 6px 0 0; padding: 0 14px; border: 0; }
+#tutor .chatmsg { margin: 4px 14px; min-height: 1.2em; font-size: .9rem; }
+#tutor .chatbox { padding: 8px 14px 14px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+#tutor textarea { min-height: 0; resize: none; }
+#tutor .chatbtns { display: flex; gap: 8px; }
+#tutor .chatex { display: grid; gap: 6px; }
+#tutor .chatex .btn { text-align: left; }
+.turn { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.turn.user strong { color: var(--accent); }
+.turn p { margin: .3em 0; }
+.exam-focus #tutor, .exam-focus #tutor-btn { display: none; }
+@media (max-width: 560px) { #tutor { right: 8px; bottom: 64px; width: calc(100vw - 16px); height: min(70vh, calc(100vh - 90px)); } #tutor-btn { right: 8px; bottom: 8px; } }

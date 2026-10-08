@@ -217,7 +217,7 @@ pending.push((async () => {
     check('a good code is cleaned up', c(' 7d379a ', 'AAAAAA', []).code === '7D379A');
   }
 /* ---- every route renders ---- */
-const C1 = sb.C1, routes = ['', 'welcome', 'course', 'course/mix', 'toolkit', 'progress', 'review', 'progress/progress', 'progress/settings', 'account', 'mistakes', 'mistakes/practice', 'placement', 'exams', 'privacy', 'mock', 'tricks', 'generate', 'certacles', 'plan', 'weak',
+const C1 = sb.C1, routes = ['', 'welcome', 'ask', 'course', 'course/mix', 'toolkit', 'progress', 'review', 'progress/progress', 'progress/settings', 'account', 'mistakes', 'mistakes/practice', 'placement', 'exams', 'privacy', 'mock', 'tricks', 'generate', 'certacles', 'plan', 'weak',
   'grammar', 'vocab', 'practice', 'skills', 'skills/listening', 'skills/writing', 'skills/writing/guide', 'skills/speaking', 'skills/pronunciation', 'vquiz/all'];
 C1.course.forEach((u) => routes.push('course/' + u.id, 'course/' + u.id + '/review'));
 C1.grammar.forEach((g) => routes.push('grammar/' + g.id));

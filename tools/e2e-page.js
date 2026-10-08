@@ -91,7 +91,7 @@
   ok('the skip link exists and points to the main content', !!skip && skip.getAttribute('href') === '#app');
 
   /* ---------- 8. phone width and both themes: no sideways scroll, no axe violations ---------- */
-  const ROUTES = ['#/', '#/course', '#/course/work', '#/toolkit', '#/mock', '#/certacles', '#/exams', '#/plan', '#/progress', '#/progress/progress', '#/progress/settings', '#/account', '#/practice', '#/practice/mcq', '#/practice/mcq/0', '#/grammar', '#/grammar/inversion',
+  const ROUTES = ['#/', '#/course', '#/course/work', '#/toolkit', '#/mock', '#/certacles', '#/exams', '#/plan', '#/progress', '#/progress/progress', '#/progress/settings', '#/ask', '#/account', '#/practice', '#/practice/mcq', '#/practice/mcq/0', '#/grammar', '#/grammar/inversion',
     '#/vocab', '#/skills/listening', '#/skills/listening/work', '#/skills/writing', '#/skills/writing/essay-work', '#/skills/speaking', '#/skills/pronunciation', '#/tricks', '#/generate', '#/weak', '#/mistakes', '#/privacy', '#/placement', '#/review'];
   const seen = new Map();
   let axeRuns = 0;

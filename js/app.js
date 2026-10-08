@@ -360,9 +360,17 @@ window.App = { routes: {}, cleanup: [] };
   /* ---------- vocabulary ---------- */
   /* hear a phrase and read its phonetic transcription (British IPA, machine-generated: data/ipa.js) */
   const spoken = (t) => t.replace(/\([^)]*\)/g, ' ').replace(/sb/g, 'somebody').replace(/sth/g, 'something').replace(/\//g, ' ').replace(/\s+/g, ' ').trim();
-  const sayBtn = (text, label, slow) => h('button', { class: 'icon-btn say', type: 'button', title: label, 'aria-label': label, onclick: () => Engine.Speech.say(text, slow ? 0.7 : 1) }, icon('listening'));
-  const phraseLine = (c) => h('span', { class: 'phrase' }, sayBtn(spoken(c.phrase), 'Listen to "' + c.phrase + '"'),
-    C1.ipa && C1.ipa[c.phrase] ? h('span', { class: 'ipa', lang: 'en-fonipa', title: 'British English, machine-generated' }, C1.ipa[c.phrase]) : null);
+  const slug = (p) => p.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  let vclip = null;
+  /* a recorded neural clip when there is one (audio/vocab, made by tools/make_vocab_audio.py), otherwise the browser voice */
+  const sayPhrase = (c) => {
+    const s = slug(c.phrase), browser = () => Engine.Speech.say(spoken(c.phrase), 1);
+    if (!(C1.vocabAudio && C1.vocabAudio.includes(s))) return browser();
+    try { if (vclip) vclip.pause(); vclip = new Audio('audio/vocab/' + s + '.mp3'); vclip.play().catch(browser); } catch (e) { browser(); }
+  };
+  const sayBtn = (go, label) => h('button', { class: 'icon-btn say', type: 'button', title: label, 'aria-label': label, onclick: go }, icon('listening'));
+  const phraseLine = (c) => h('span', { class: 'phrase' }, sayBtn(() => sayPhrase(c), 'Listen to "' + c.phrase + '"'),
+    C1.ipa && C1.ipa[c.phrase] ? h('span', { class: 'ipa', lang: 'en-fonipa', title: 'British English, from a pronunciation lexicon' }, C1.ipa[c.phrase]) : null);
   function cardView(c, showGroup) {
     return h('div', { class: 'vcard' },
       h('div', {}, h('span', { class: 'hl' }, c.phrase), ' ', phraseLine(c), ' ', h('span', { class: 'tag' }, c.kind), showGroup ? h('span', { class: 'muted' }, ' ' + c.groupTitle) : null),
@@ -466,7 +474,7 @@ window.App = { routes: {}, cleanup: [] };
       function reveal() {
         front.replaceChildren(
           h('div', { class: 'big hl' }, c.phrase, ' ', phraseLine(c)), h('div', {}, c.meaning),
-          h('div', { class: 'eg', html: c.ex.replace(/\[\[(.+?)\]\]/g, '<em>$1</em>') }), h('div', {}, sayBtn(spoken(c.ex.replace(/\[\[|\]\]/g, '')), 'Listen to the example sentence'), h('span', { class: 'muted' }, ' Hear the example')),
+          h('div', { class: 'eg', html: c.ex.replace(/\[\[(.+?)\]\]/g, '<em>$1</em>') }), h('div', {}, sayBtn(() => Engine.Speech.say(spoken(c.ex.replace(/\[\[|\]\]/g, '')), 1), 'Listen to the example sentence'), h('span', { class: 'muted' }, ' Hear the example')),
           c.logic ? h('div', { class: 'callout' }, '' + c.logic) : '',
           h('div', { class: 'rate' }, [['Again', 0], ['Hard', 1], ['Good', 2], ['Easy', 3]].map(([label, r]) =>
             h('button', { class: 'btn', 'data-rate': r, onclick: () => rateIt(r) }, label, h('small', {}, Store.intervalLabel(id, r))))));
@@ -628,6 +636,7 @@ window.App = { routes: {}, cleanup: [] };
       h('div', { class: 'grid' },
         tile('#/review', 'Flashcards', 'Review the vocabulary cards that are due today.', `${dueIds().length} due`),
         tile('#/vquiz', 'Vocabulary quiz', 'A quick quiz on the words you have started.', 'quiz'),
+        tile('#/ask', 'Ask the tutor', 'A small chat for your doubts, always one tap away at the bottom right. It only talks about English.', 'AI, needs your key'),
         tile('#/tricks', 'Tricks', 'Short strategies for the tasks students find hardest.', 'tips'),
         tile('#/generate', 'Generate with AI', 'Make extra practice on any topic with your own AI key.', 'optional'),
         tile('#/placement', 'Placement test', 'Twenty-four questions, B1 to C1, to find where to start.', Store.state.placement ? 'taken' : 'not taken'),
@@ -815,7 +824,7 @@ window.App = { routes: {}, cleanup: [] };
         h('p', {}, 'Optional difficulty calibration: only if you switch it on (My account) and are signed in, the server stores, for each practice or listening set, your score on your FIRST attempt, linked to your account so one learner counts once. Nobody else can read these rows. The site only shows averages for sets with at least ten learners, and uses them to adjust the difficulty rating of each set. "Stop sharing" deletes your rows, and deleting your account deletes them too. Optional friends leaderboard: only if you join it, the server also stores a display name you choose, your questions answered this week, your streak, your level, a friend code and, if you choose one, a small profile picture. They are visible only to you and to people who add your code, or whose code you add: a friendship is mutual, so both see each other. "Leave" in Review deletes them. Deleting your account removes them too.'),
         h('p', {}, 'Supabase and, if you choose Google sign-in, Google act as service providers under their own privacy policies.')) : null,
       h('h2', {}, 'Optional AI feedback'),
-      h('p', {}, 'If you add your own API key (Google Gemini, Groq or Anthropic) and ask for feedback, the text you choose to submit is sent to that provider to produce the feedback. The key stays in your browser. Free plans of some providers may use submitted text to improve their models, so do not include personal details. Without a key, nothing is sent.'),
+      h('p', {}, 'If you add your own API key (Google Gemini, Groq or Anthropic) and ask for feedback or use the tutor, the text you choose to submit (or the question you type) is sent to that provider to produce the answer. The key stays in your browser. Free plans of some providers may use submitted text to improve their models, so do not include personal details. Without a key, nothing is sent.'),
       h('h2', {}, 'Speech and recording'),
       h('p', {}, 'If you turn on neural voices, your browser downloads a code library from jsDelivr and a voice model from Hugging Face (about 90 MB, once); those services see a normal download request. The text you listen to is spoken on your own device and is not sent anywhere. Voice recordings in Speaking practice stay in your browser. Automatic transcription uses your browser\'s own speech recognition, which in some browsers sends audio to the browser vendor\'s service; check your browser\'s privacy settings if that matters to you.'),
       h('h2', {}, 'Questions or requests'),
@@ -851,11 +860,13 @@ window.App = { routes: {}, cleanup: [] };
     if (unitCtx && !unitById(unitCtx)) unitCtx = null;
     const parts = pathPart.split('/').filter(Boolean).map(decodeURIComponent);
     const [a, b, c] = parts;
-    const inLibrary = ['tricks', 'generate', 'grammar', 'vocab', 'practice', 'vquiz', 'skills', 'toolkit'].includes(a);
+    const inLibrary = ['tricks', 'ask', 'generate', 'grammar', 'vocab', 'practice', 'vquiz', 'skills', 'toolkit'].includes(a);
     const inExams = ['mock', 'certacles', 'exams', 'plan'].includes(a);
     const inReview = ['review', 'mistakes', 'progress', 'placement'].includes(a);
     const navKey = !a ? 'home' : unitCtx && a !== 'course' ? 'course' : inExams ? 'mock' : inLibrary ? 'toolkit' : inReview ? 'progress' : a;
     document.querySelectorAll('#nav a').forEach((el) => el.classList.toggle('active', el.dataset.r === navKey));
+    /* a timed paper hides the menu, the notes and the footer so nothing pulls attention away; the page keeps its own back link */
+    document.body.classList.toggle('exam-focus', a === 'mock' && ['reading', 'listening', 'writing', 'speaking'].includes(b));
     if (!a && !Store.state.welcomed && !Store.totalAnswered()) { location.replace('#/welcome'); return; }
     if (a === 'welcome') return welcome(b);
     if (!a) return home();
