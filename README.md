@@ -88,3 +88,5 @@ Grammar quiz items, vocabulary cards and Use of English sets follow the shapes a
 - `data/writing7.js`, `data/speaking5.js` (6 tasks / 6 sets each), with ratings in `levels8.js`/`levels9.js` and course steps in `course12.js`/`course13.js`. Authored, then reviewed and fixed by an independent reviewer; a native-speaker review is still advisable.
 - `data/trickdrills.js`: 162 multiple-choice items for 27 tricks (`C1.trickDrills['words-26']`...), used by the trick "Practise" button next to the exercises found by `data/trickmap.js`. The validator checks structure; a reviewer checked that each item has one defensible answer. Weakest: `grammar-28`, `natural-9`, `spanish-2`.
 - "My mistakes" shows a "Slips a trick would fix" card that groups saved mistakes by trick.
+
+- Batch 2: `writing8.js`, `speaking6.js` (+ `levels10/11.js`, `course14/15.js`), reviewed and fixed. `trickdrills.js` now has 43 tricks × 6 items; weak ones rewritten. Trick patterns in `trickmap.js` cover about 100 of the ~1,100 main exercises. All scripts load with `defer`.
