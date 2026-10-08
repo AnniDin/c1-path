@@ -76,3 +76,9 @@ Grammar quiz items, vocabulary cards and Use of English sets follow the shapes a
 - **Newest content:** 12 more Reading sets (Parts 5 to 8: `practice11.js`, `practice12.js`) and four more demanding listenings (`listening9.js`, with audio), placed in course units by `course11.js`; ratings for them live in `levels7.js`, which must load after `levels6.js` because `levels3.js` replaces the listening ratings object. All of it was written, then answered blind and checked by independent reviewers, and fixed.
 - **Understand first, again:** the grammar lessons, the exam tips and the vocabulary group introductions were reviewed against the site's principle (why before rules, jargon only after meaning) and rewritten where they were theoretical; each rewrite was checked by a second reviewer for accuracy and lost content.
 - **Progress over time** (Progress, Results): weekly and daily accuracy lines for the skills practised most (`own.wk` and `own.dk` buckets in `js/store.js`, drawing in `js/diag.js`). 61 achievements in 8 folding categories (`js/rewards.js`).
+
+## Spaced mistakes, trick practice
+
+- Mistakes carry a `due` date (1 day after the slip, 3 days after the first right answer); the badge, Home and 'Practise' use the due ones first (`Store.dueMistakes`).
+- `#/tricks/practice/<key>` quizzes the short exercises whose trick is that one (pool built from `data/trickmap.js`); the button shows when 3 or more exist.
+- Pica ends grammar and vocabulary explanations with one check question.

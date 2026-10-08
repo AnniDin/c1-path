@@ -331,7 +331,7 @@
       if (window.Sound && !result.dataset.heard) { result.dataset.heard = '1'; Sound.play(pct >= 80 ? 'right' : pct >= 50 ? 'ok' : 'wrong'); }
       result.style.display = '';
       result.innerHTML = '';
-      result.append(...[h('div', { class: 'score' }, `${correct} / ${res.length}  (${pct}%)`),
+      result.append(...[pct >= 80 && window.Doodle ? Doodle('trophy', 'inline') : null, h('div', { class: 'score' }, `${correct} / ${res.length}  (${pct}%)`),
         h('p', { class: 'muted' }, pct >= 80 ? 'Strong. Read any explanation you missed, then move on.' :
           pct >= 50 ? 'Good progress. Read the explanations: they tell you why, not just what.' :
             'This topic needs another look. Re-read the lesson idea, then try again.'),

@@ -536,3 +536,4 @@ h1:has(.doodle){position:relative;min-height:86px;display:flex;align-items:flex-
 
 /* the trick offered after a wrong answer */
 .fb .trickhint{display:inline-block;margin-left:.3em;font-weight:600}
+.doodle.inline{position:static;display:block;width:80px;height:60px;margin:0 0 .4rem}

@@ -141,15 +141,15 @@
         href: '#', class: cur === name ? 'on' : '', onclick: (e) => { e.preventDefault(); cur = name; draw(); }
       }, `${name} (${all.filter(f).length})`)));
       const items = filtered();
-      list.replaceChildren(...(items.length ? items.map(card) : [h('div', { class: 'card' }, h('p', {}, all.length ? 'No mistakes in this category.' : 'No mistakes saved. Every wrong answer from lessons, practice and quizzes appears here with its explanation, so you can revise exactly what you got wrong.'),
+      list.replaceChildren(...(items.length ? items.map(card) : [h('div', { class: 'card' }, all.length ? null : Doodle('empty', 'inline'), h('p', {}, all.length ? 'No mistakes in this category.' : 'No mistakes saved. Every wrong answer from lessons, practice and quizzes appears here with its explanation, so you can revise exactly what you got wrong.'),
         link('#/course', 'Go to the course', 'btn'))]));
       A.updateBadge();
     }
-    const n = Store.mistakes().length;
+    const n = Store.mistakes().length, nDue = Store.dueMistakes().length;
     view(back('#/progress', 'Review'), h('h1', {}, 'My mistakes'),
-      h('p', { class: 'lead' }, 'Every question you answered wrongly is saved here with the correct answer and the reason. A mistake disappears after you answer it correctly twice in a row, so this list shows what you still need to learn.'),
+      h('p', { class: 'lead' }, 'Every question you answered wrongly is saved here with the correct answer and the reason. A mistake comes back a day after the slip and again three days after your first right answer; after two right answers it disappears, so this list shows what you still need to learn.'),
       h('div', { class: 'row' },
-        n ? link('#/mistakes/practice', `Practise ${Math.min(n, 10)} of them`, 'btn') : null,
+        n ? link('#/mistakes/practice', (nDue ? `Practise ${Math.min(nDue, 10)} due today` : `Practise ${Math.min(n, 10)} early`), 'btn') : null,
         h('label', { class: 'muted' }, 'Sort ', h('select', { onchange: (e) => { sort = e.target.value; draw(); } }, h('option', { value: 'recent' }, 'Newest first'), h('option', { value: 'repeated' }, 'Most repeated'))),
         n ? h('button', { class: 'btn small ghost', onclick: () => { if (confirm('Remove all saved mistakes?')) { Store.clearMistakes(); draw(); } } }, 'Clear all') : null),
       chips, list);
@@ -157,7 +157,9 @@
   }
 
   function mistakePractice() {
-    const items = sample(Store.mistakes(), 10).map((m) => m.item);
+    /* the ones that are due come first; if fewer than ten are due, the rest are the next in line */
+    const due = Store.dueMistakes(), rest = Store.mistakes().filter((m) => !due.includes(m)).sort((a, b) => (a.due || 0) - (b.due || 0));
+    const items = sample(due, 10).concat(rest).slice(0, 10).map((m) => m.item);
     if (!items.length) { location.hash = '#/mistakes'; return; }
     view(back('#/mistakes', 'My mistakes'), h('h1', {}, 'Practise your mistakes'),
       h('p', { class: 'muted' }, 'Answer correctly twice (in two sessions) and a mistake leaves your list.'),

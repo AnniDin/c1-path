@@ -67,7 +67,7 @@
       return p.sets.flatMap((s) => s.items.flatMap((it) => (it.type === 'passage' ? it.gaps.map((_, i) => gapItem(it, i)) : [it]))).filter((q) => ['mcq', 'gap', 'kwt'].includes(q.type));
     };
     const topics = weakTopics().filter(([k]) => pool(k).length);
-    if (!topics.length) return view(back('#/progress', 'Review'), h('h1', {}, 'Weak spots'), h('p', { class: 'lead' }, 'Nothing is below 75% yet. Weak spots appear here once you have answered at least five questions on a topic and scored under 75%.'), link('#/course/mix', 'Do a mixed review', 'btn'));
+    if (!topics.length) return view(back('#/progress', 'Review'), h('h1', {}, 'Weak spots'), Doodle('empty', 'inline'), h('p', { class: 'lead' }, 'Nothing is below 75% yet. Weak spots appear here once you have answered at least five questions on a topic and scored under 75%.'), link('#/course/mix', 'Do a mixed review', 'btn'));
     const items = topics.flatMap(([k]) => A.shuffle(pool(k)).slice(0, 4).map((q) => Object.assign({}, q, { _topic: k })));
     view(back('#/progress', 'Review'), h('h1', {}, 'Weak spots'),
       h('p', { class: 'lead' }, 'Questions only from the topics you get wrong most: ' + topics.map(([k, a]) => `${A.topicLabels[k] || k} (${Math.round(a * 100)}%)`).join(', ') + '.'),

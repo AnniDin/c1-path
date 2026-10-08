@@ -1,6 +1,7 @@
 /* Progress storage (localStorage with in-memory fallback), streaks and spaced repetition. */
 (function () {
   const KEY = 'c1path.v1';
+  const DAY = 864e5;
   const fresh = () => ({ stats: {}, days: {}, cards: {}, newToday: {}, lessons: {}, scores: {}, placement: null, theme: null, mistakes: {}, notes: [], drafts: {}, skills: {}, goal: 20, voices: { a: '', b: '' }, welcomed: false, badges: {}, acts: {}, exam: null, mocks: [], dev: '', own: { stats: {}, days: {}, newToday: {} }, peers: {}, tomb: {} });
   let mem = null;
 
@@ -131,7 +132,7 @@
       each(r.cards, (k, v) => { const c = s.cards[k]; if (!c || (v.ts && c.ts ? v.ts > c.ts : v.box > c.box || (v.box === c.box && v.due > c.due))) s.cards[k] = v; }); // newest rating wins, so Again on one device sticks; copies without a time keep the old rule
       each(r.lessons, (k, v) => { if (v) s.lessons[k] = v; });
       each(r.scores, (k, v) => { const o = s.scores[k], best = !o || v.p > o.p ? Object.assign({}, v) : Object.assign({}, o), la = [o && o.last, v.last].filter(Boolean).sort((a, b) => b.ts - a.ts)[0]; if (la) best.last = la; best.n = Math.max((o && o.n) || (o ? 1 : 0), v.n || 1); s.scores[k] = best; });
-      each(r.mistakes, (k, v) => { const m = s.mistakes[k]; if (!m || v.ts > m.ts) s.mistakes[k] = v; else if (v.ts === m.ts) m.right = Math.max(m.right || 0, v.right || 0); });
+      each(r.mistakes, (k, v) => { const m = s.mistakes[k]; if (!m || v.ts > m.ts) s.mistakes[k] = v; else if (v.ts === m.ts) { m.right = Math.max(m.right || 0, v.right || 0); m.due = Math.max(m.due || 0, v.due || 0); } });
       each(s.mistakes, (k, v) => { if ((s.tomb['m:' + k] || 0) >= v.ts) delete s.mistakes[k]; });
       each(r.drafts, (k, v) => { if (!s.drafts[k] || v.ts > s.drafts[k].ts) s.drafts[k] = v; });
       /* a skill record holds several fields (done, self-ratings, AI checks): merge field by field so one device never erases what the other did */
@@ -170,17 +171,19 @@
         if (!r.ok) {
           state.mistakes[id] = {
             id, item: r.item, given: r.given || '', topic: m ? m.topic : source.topic, label: m ? m.label : source.label, href: m ? m.href : source.href,
-            count: (m ? m.count : 0) + 1, right: 0, ts: Date.now()
+            count: (m ? m.count : 0) + 1, right: 0, ts: Date.now(), due: Date.now() + DAY
           };
         } else if (m) {
           m.right = (m.right || 0) + 1;
-          if (m.right >= 2) { delete state.mistakes[id]; bury('m', id); }
+          if (m.right >= 2) { delete state.mistakes[id]; bury('m', id); } else m.due = Date.now() + 3 * DAY; // seen once: ask again in 3 days
         }
       });
       const ids = Object.keys(state.mistakes);
       if (ids.length > 400) ids.sort((a, b) => state.mistakes[a].ts - state.mistakes[b].ts).slice(0, ids.length - 400).forEach((k) => delete state.mistakes[k]);
       save();
     },
+    /* mistakes come back on a schedule: a day after the slip, then 3 days after the first right answer. Older records have no date and count as due. */
+    dueMistakes() { return Store.mistakes().filter((m) => (m.due || 0) <= Date.now()); },
     mistakes() { return Object.values(state.mistakes).sort((a, b) => b.ts - a.ts); },
     removeMistake(id) { delete state.mistakes[id]; bury('m', id); save(); },
     clearMistakes() { Object.keys(state.mistakes).forEach((id) => bury('m', id)); state.mistakes = {}; save(); },

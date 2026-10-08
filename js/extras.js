@@ -6,7 +6,32 @@
   A.topicLabels.ai = 'AI-generated practice';
 
   /* ---------- tricks ---------- */
-  A.routes.tricks = (want) => {
+  /* the exercises a trick settles: every short exercise whose trick (see data/trickmap.js) is this one */
+  let trickPool = null;
+  const poolFor = (key) => {
+    if (!trickPool) {
+      trickPool = {}; const seen = new Set();
+      (function walk(o, d) {
+        if (!o || typeof o !== 'object' || d > 9 || seen.has(o)) return; seen.add(o);
+        if (typeof o.why === 'string' && (o.type === 'mcq' || o.type === 'kwt' || o.type === 'gap') && (o.q || o.first)) {
+          const exp = o.answers || [o.options && o.options[o.answer]], other = o.options ? o.options.find((x, i) => i !== o.answer) : '';
+          const r = C1.trickFor(o.q || (o.first + ' ' + o.key + ' ' + o.second), other, exp);
+          if (r) (trickPool[r.key] = trickPool[r.key] || []).push(o);
+        }
+        Object.keys(o).forEach((k) => { if (o[k] && typeof o[k] === 'object') walk(o[k], d + 1); });
+      })({ p: C1.practice, g: C1.grammar }, 0);
+    }
+    return trickPool[key] || [];
+  };
+  function trickPractice(key) {
+    const items = A.sample(poolFor(key), 8), s = C1.tricks.find((x) => x.id === key.split('-')[0]), t = s && s.items[+key.split('-')[1]];
+    if (!t || !items.length) { location.hash = '#/tricks'; return; }
+    view(back('#/tricks/' + key, 'Tricks'), h('h1', {}, 'Practise: ' + t.t),
+      h('p', { class: 'muted' }, 'Short exercises where this trick settles the doubt. Read the trick first if you need it.'),
+      quiz(items, { source: { topic: 'trick', label: 'Trick practice', href: '#/tricks/' + key }, onRetry: () => trickPractice(key), onScore: (c, n) => Store.record('trick', c, n) }));
+  }
+  A.routes.tricks = (want, c) => {
+    if (want === 'practice' && c) return trickPractice(c);
     const sections = C1.tricks;
     const find = h('input', { type: 'search', class: 'wide', placeholder: 'Search the tricks (e.g. make, since, wish)…', 'aria-label': 'Search the tricks' });
     find.addEventListener('input', () => {
@@ -23,7 +48,8 @@
         h('h2', {}, s.title), h('p', { class: 'muted' }, s.blurb),
         s.items.map((x, i) => h('details', { class: 'trick', id: 'trick-' + s.id + '-' + i, open: want === s.id + '-' + i }, h('summary', {}, x.t),
           h('p', { html: x.tip }), x.why ? h('p', { class: 'muted' }, x.why) : null,
-          x.ex ? h('p', { class: 'trickex', html: x.ex }) : null)))),
+          x.ex ? h('p', { class: 'trickex', html: x.ex }) : null,
+          poolFor(s.id + '-' + i).length >= 3 ? link('#/tricks/practice/' + s.id + '-' + i, 'Practise this (' + Math.min(8, poolFor(s.id + '-' + i).length) + ' questions)', 'btn small ghost') : null)))),
       h('div', { class: 'callout' }, 'No trick replaces knowing the language. Use these to avoid losing marks you already deserve, and keep practising in the ', link('#/practice', 'exam tasks'), '.'));
     if (want) setTimeout(() => { const d = document.getElementById('trick-' + want); if (d) { d.open = true; d.scrollIntoView({ block: 'center' }); } }, 0);
   };

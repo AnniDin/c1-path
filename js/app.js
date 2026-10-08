@@ -31,7 +31,7 @@ window.App = { routes: {}, cleanup: [] };
   const setKey = (typeId, i) => typeId + '/' + i;
   let unitCtx = null; // unit id when a page was opened from inside a course unit (?u=)
 
-  const topicLabels = { 'v-cards': 'Vocabulary cards', 'v-quiz': 'Vocabulary quizzes', placement: 'Placement test', mix: 'Mixed review', 'unit-review': 'Unit reviews' };
+  const topicLabels = { 'v-cards': 'Vocabulary cards', 'v-quiz': 'Vocabulary quizzes', placement: 'Placement test', mix: 'Mixed review', trick: 'Trick practice', 'unit-review': 'Unit reviews' };
   C1.grammar.forEach((g) => (topicLabels['g-' + g.id] = g.title));
   C1.practice.forEach((p) => (topicLabels['u-' + p.id] = p.title));
   const topicHref = (k) => k.startsWith('g-') ? '#/grammar/' + k.slice(2) : k.startsWith('u-') ? '#/practice/' + k.slice(2) : k.startsWith('v-') ? (k === 'v-quiz' ? '#/vquiz' : '#/vocab') : ({ listen: '#/skills/listening', mix: '#/course/mix', placement: '#/placement', dictation: '#/skills/dictation', pron: '#/skills/pronunciation', retry: '#/mistakes', 'unit-review': '#/course', ai: '#/generate', weak: '#/weak' })[k] || '#/progress';
@@ -253,11 +253,11 @@ window.App = { routes: {}, cleanup: [] };
       const list = byGroup(pre);
       return list.length ? cardBlock(name, list.map(([k, s]) => { const a = s.c / s.t; return h('div', { class: 'trow' }, link(topicHref(k), topicLabels[k] || k), bar(a, barCls(a)), h('span', {}, pct(a) + '%')); })) : null;
     });
-    const dueN = dueIds().length, freshN = Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length)), mistN = Store.mistakes().length;
+    const dueN = dueIds().length, freshN = Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length)), mistN = Store.mistakes().length, mistDue = Store.dueMistakes().length;
     const act = (t, d, href, cta) => h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), link(href, cta, 'btn small' + ' ghost'));
     const doNow = h('section', {}, h('h2', {}, 'Do now'),
       act('Flashcards', `${dueN} due · ${freshN} new today`, '#/review', 'Review'),
-      act('My mistakes', mistN ? `${mistN} to learn, each with its explanation` : 'Nothing saved. Wrong answers will appear here.', '#/mistakes', 'Open'),
+      act('My mistakes', mistN ? `${mistN} to learn${mistDue ? `, ${mistDue} due today` : ', none due yet'}, each with its explanation` : 'Nothing saved. Wrong answers will appear here.', '#/mistakes', 'Open'),
       act('Mixed review', 'A few questions from grammar, vocabulary and rewriting', '#/course/mix', 'Start'),
       act('Placement test', Store.state.placement ? `Last result: ${Store.state.placement.summary}` : '24 questions, B1 to C1', '#/placement', Store.state.placement ? 'Retake' : 'Start'));
     const numbers = h('div', { class: 'stats' },
@@ -848,7 +848,7 @@ window.App = { routes: {}, cleanup: [] };
   function notFound() { view(h('h1', {}, 'Not found'), link('#/', 'Back to home', 'btn')); }
 
   /* the number on Review: saved mistakes plus cards due. One helper, so every page agrees */
-  function updateBadge() { const todo = Store.mistakes().length + dueIds().length, badge = document.getElementById('mbadge'); if (badge) badge.textContent = todo ? String(todo) : ''; }
+  function updateBadge() { const todo = Store.dueMistakes().length + dueIds().length, badge = document.getElementById('mbadge'); if (badge) badge.textContent = todo ? String(todo) : ''; }
 
   /* ---------- router ---------- */
   function route() {

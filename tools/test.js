@@ -196,5 +196,16 @@ const sync = (a, b) => { b.Store.mergeData(a.Store.exportData()); a.Store.mergeD
   eq('long comprehension answers get none', T('What does the writer conclude?', 'He used to think so', ['He used to think that the experiment was flawed and said so']), null);
 }
 
+/* --- mistakes come back on a schedule --- */
+{
+  const D = device(), item = { type: 'mcq', q: 'Test ___', options: ['a', 'b'], answer: 0, why: 'x' };
+  D.Store.logResults([{ ok: false, given: 'b', item }], { topic: 't', label: 'T', href: '#/' });
+  eq('a new mistake is not due for a day', D.Store.dueMistakes().length, 0);
+  const m = D.Store.mistakes()[0]; m.due = Date.now() - 1;
+  eq('and is due once the day has passed', D.Store.dueMistakes().length, 1);
+  D.Store.logResults([{ ok: true, item }], { topic: 't', label: 'T', href: '#/' });
+  eq('one right answer pushes it three days out', [D.Store.dueMistakes().length, D.Store.mistakes().length, m.due > Date.now() + 2 * 864e5], [0, 1, true]);
+}
+
 console.log(`${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

@@ -222,8 +222,8 @@
     if (rd) push('Retry ' + rd.title, `You scored ${Math.round(rd.p * 100)}% ${rd.days} day${rd.days === 1 ? '' : 's'} ago. Spaced retries make it stick.`, `#/practice/${rd.type}/${rd.i}`, 'Retry');
     const ws = A.weakestSkill ? A.weakestSkill() : null;
     if (ws) push('Your weakest skill: ' + ws.label, `${Math.round(ws.acc * 100)}% over ${ws.n} questions. Study it, then test it again.`, ws.href, 'Study');
-    const nMist = Store.mistakes().length;
-    if (nMist) push(`Review ${nMist} mistake${nMist === 1 ? '' : 's'}`, 'Questions you got wrong, with the reason for each', '#/mistakes', 'Review');
+    const nMist = Store.dueMistakes().length;
+    if (nMist) push(`Review ${nMist} mistake${nMist === 1 ? '' : 's'}`, 'Due today: a day after the slip, then again after three days, so they stick', '#/mistakes', 'Review');
     const nc = A.nextCourseStep && A.nextCourseStep();
     if (nc) push(`Course · ${nc.u.title}`, `Step ${nc.i + 1} of ${nc.total}: ${nc.info.kind.toLowerCase()} · ${nc.info.label}`, nc.info.href, 'Continue');
     const ex = st.exam && st.exam.date;
