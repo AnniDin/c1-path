@@ -82,7 +82,7 @@
   }
   /* A button that runs `job()` (returns feedback data) and shows the result in `target`. */
   function aiButton(label, target, job, title) {
-    if (!AI.configured()) return h('span', { class: 'muted' }, 'AI feedback: ', link('#/progress', 'add a free API key'), ' (optional)');
+    if (!AI.configured()) return h('span', { class: 'muted' }, 'AI feedback: ', link('#/progress/settings', 'add a free API key'), ' (optional)');
     const b = h('button', { class: 'btn ghost', onclick: async () => {
       b.disabled = true; target.replaceChildren(h('p', { class: 'muted' }, 'Reading your work… this takes a few seconds.'));
       try { target.replaceChildren(feedbackPanel(await job(), title)); }

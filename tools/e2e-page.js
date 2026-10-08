@@ -71,7 +71,11 @@
 
   /* ---------- 6. the Review page and the Exams tab ---------- */
   await go(w, '#/progress', 500);
-  ok('Review shows the weekly and calibration cards', /last 7 days|Help calibrate the difficulty/i.test(text(w)));
+  ok('Review has three sections', $$(w, 'nav.tabs a').map((a) => a.textContent.trim()).join('|') === 'Today|Progress|Settings' && $(w, 'nav.tabs a.on').textContent === 'Today');
+  ok('Review (Today) opens with the to-do list', /do now/i.test(text(w)) && /Daily goal/.test(text(w)) && !/Help calibrate|Better voices|Achievements|Your data|Friends/.test(text(w)));
+  await go(w, '#/progress/settings', 400); ok('Settings section has AI, voices, offline and a link to the account', ['AI feedback', 'Better voices', 'Use it offline', 'Open my account'].every((t) => text(w).includes(t)) && !/Your data|Sync between devices/.test(text(w)));
+  await go(w, '#/account', 500); ok('the account page has friends, calibration, sync and data', ['My account', 'Friends', 'Help calibrate the difficulty', 'Sync between devices', 'Your data'].every((t) => text(w).includes(t)), text(w).slice(0, 120));
+  await go(w, '#/progress/progress', 400); ok('Progress section has activity and achievements', /Last 12 weeks/.test(text(w)) && /Achievements/.test(text(w)));
   await go(w, '#/mock', 400);
   ok('Exams offers the four papers and the CertAcles paper', ['Reading and Use of English', 'Listening', 'Writing', 'Speaking', 'CertAcles'].every((t) => text(w).includes(t)));
 
@@ -87,7 +91,7 @@
   ok('the skip link exists and points to the main content', !!skip && skip.getAttribute('href') === '#app');
 
   /* ---------- 8. phone width and both themes: no sideways scroll, no axe violations ---------- */
-  const ROUTES = ['#/', '#/course', '#/course/work', '#/toolkit', '#/mock', '#/certacles', '#/exams', '#/plan', '#/progress', '#/practice', '#/practice/mcq', '#/practice/mcq/0', '#/grammar', '#/grammar/inversion',
+  const ROUTES = ['#/', '#/course', '#/course/work', '#/toolkit', '#/mock', '#/certacles', '#/exams', '#/plan', '#/progress', '#/progress/progress', '#/progress/settings', '#/account', '#/practice', '#/practice/mcq', '#/practice/mcq/0', '#/grammar', '#/grammar/inversion',
     '#/vocab', '#/skills/listening', '#/skills/listening/work', '#/skills/writing', '#/skills/writing/essay-work', '#/skills/speaking', '#/skills/pronunciation', '#/tricks', '#/generate', '#/weak', '#/mistakes', '#/privacy', '#/placement', '#/review'];
   const seen = new Map();
   let axeRuns = 0;
@@ -118,7 +122,7 @@
     w.Store.state.stats['u-cloze'] = { c: 3, t: 12 };
     for (const theme of ['light', 'dark']) {
       w.document.documentElement.dataset.theme = theme;
-      for (const hash of ['#/progress', '#/', '#/mock', '#/plan']) {
+      for (const hash of ['#/progress', '#/progress/progress', '#/progress/settings', '#/account', '#/', '#/mock', '#/plan']) {
         await go(w, hash, 400);
         ok(`no sideways scroll on ${hash} with data (${width}px, ${theme})`, w.document.documentElement.scrollWidth - w.innerWidth <= 1);
         if (!w.axe) continue; axeRuns++;

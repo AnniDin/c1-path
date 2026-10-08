@@ -190,7 +190,7 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
   st.stats = keep;
 }
 /* ---- every route renders ---- */
-const C1 = sb.C1, routes = ['', 'welcome', 'course', 'course/mix', 'toolkit', 'progress', 'review', 'mistakes', 'mistakes/practice', 'placement', 'exams', 'privacy', 'mock', 'tricks', 'generate', 'certacles', 'plan', 'weak',
+const C1 = sb.C1, routes = ['', 'welcome', 'course', 'course/mix', 'toolkit', 'progress', 'review', 'progress/progress', 'progress/settings', 'account', 'mistakes', 'mistakes/practice', 'placement', 'exams', 'privacy', 'mock', 'tricks', 'generate', 'certacles', 'plan', 'weak',
   'grammar', 'vocab', 'practice', 'skills', 'skills/listening', 'skills/writing', 'skills/writing/guide', 'skills/speaking', 'skills/pronunciation', 'vquiz/all'];
 C1.course.forEach((u) => routes.push('course/' + u.id, 'course/' + u.id + '/review'));
 C1.grammar.forEach((g) => routes.push('grammar/' + g.id));

@@ -58,7 +58,7 @@
     } }, 'Generate');
     view(back('#/toolkit', 'Library'), h('h1', {}, 'Generate with AI'),
       h('p', { class: 'lead' }, 'Ask for a new set of exam-style tasks on any topic. It uses your own free API key, so nothing is stored on a server.'),
-      AI.configured() ? null : h('div', { class: 'callout' }, 'You need a free key first: ', link('#/progress', 'add one in Review, under AI feedback'), ' (Google Gemini or Groq, a couple of minutes).'),
+      AI.configured() ? null : h('div', { class: 'callout' }, 'You need a free key first: ', link('#/progress/settings', 'add one in Review, under Settings and data'), ' (Google Gemini or Groq, a couple of minutes).'),
       h('h2', {}, '1 · Choose the task'), picks,
       h('h2', {}, '2 · Choose a topic'), topic,
       h('div', { class: 'row', style: 'margin:14px 0' }, go), status, out);

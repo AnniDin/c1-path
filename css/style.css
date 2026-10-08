@@ -361,3 +361,11 @@ main:focus, main:focus-visible { outline: none; }
 .chip.lv1, .chip.lv2 { color: var(--ok, #2e7d32); }
 .chip.lv4 { color: var(--warn, #b26a00); }
 .chip.lv5 { color: var(--bad, #b3261e); }
+
+/* Review sections */
+.tabs { display: flex; gap: 6px; margin: 4px 0 14px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line, rgba(128,128,128,.25)); }
+.tabs a { padding: 10px 14px; white-space: nowrap; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs a:hover { color: var(--ink); }
+.tabs a.on { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
+
+#app .danger { color: var(--bad); }

@@ -224,7 +224,24 @@ window.App = { routes: {}, cleanup: [] };
   }
 
   /* ---------- progress ---------- */
-  function progress() {
+  /* backup, restore and reset: lives on the account page */
+  function dataCard(refresh) {
+    const file = h('input', { type: 'file', accept: 'application/json', style: 'display:none', 'aria-label': 'Choose a backup file' });
+    file.addEventListener('change', async () => {
+      try { Store.mergeData(await file.files[0].text()); alert('Backup merged into your progress.'); refresh(); }
+      catch (e) { alert('Could not read that file: ' + e.message); }
+    });
+    return cardBlock('Your data', h('p', { class: 'muted' }, 'Everything is stored in this browser only, unless you sign in or sync. Export a backup before clearing browser data or switching device.'),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn small', onclick: () => {
+          const a = h('a', { href: URL.createObjectURL(new Blob([Store.exportData()], { type: 'application/json' })), download: `c1-path-backup-${Store.today()}.json` });
+          document.body.append(a); a.click(); a.remove();
+        } }, 'Export backup'),
+        h('button', { class: 'btn small ghost', onclick: () => file.click() }, 'Import and merge backup'), file,
+        h('button', { class: 'btn small ghost', onclick: () => { if (confirm('Erase all progress in this browser?')) { Store.reset(); refresh(); } } }, 'Reset progress')));
+  }
+
+  function progress(which) {
     const st = Store.state;
     const heat = h('div', { class: 'heat' }, Store.lastDays(84).map((d) =>
       h('i', { class: d.n >= 20 ? 'l3' : d.n >= 8 ? 'l2' : d.n > 0 ? 'l1' : '', title: `${d.day}: ${d.n} answers` })));
@@ -235,49 +252,37 @@ window.App = { routes: {}, cleanup: [] };
       const list = byGroup(pre);
       return list.length ? cardBlock(name, list.map(([k, s]) => { const a = s.c / s.t; return h('div', { class: 'trow' }, link(topicHref(k), topicLabels[k] || k), bar(a, barCls(a)), h('span', {}, pct(a) + '%')); })) : null;
     });
-    const file = h('input', { type: 'file', accept: 'application/json', style: 'display:none', 'aria-label': 'Choose a backup file' });
-    file.addEventListener('change', async () => {
-      try { Store.mergeData(await file.files[0].text()); alert('Backup merged into your progress.'); progress(); }
-      catch (e) { alert('Could not read that file: ' + e.message); }
-    });
     const dueN = dueIds().length, freshN = Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length)), mistN = Store.mistakes().length;
     const act = (t, d, href, cta) => h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), link(href, cta, 'btn small' + ' ghost'));
+    const doNow = h('section', {}, h('h2', {}, 'Do now'),
+      act('Flashcards', `${dueN} due · ${freshN} new today`, '#/review', 'Review'),
+      act('My mistakes', mistN ? `${mistN} to learn, each with its explanation` : 'Nothing saved. Wrong answers will appear here.', '#/mistakes', 'Open'),
+      act('Mixed review', 'A few questions from grammar, vocabulary and rewriting', '#/course/mix', 'Start'),
+      act('Placement test', Store.state.placement ? `Last result: ${Store.state.placement.summary}` : '24 questions, B1 to C1', '#/placement', Store.state.placement ? 'Retake' : 'Start'));
+    const numbers = h('div', { class: 'stats' },
+      h('div', { class: 'stat' }, h('b', {}, Store.streak()), h('span', {}, 'day streak')),
+      h('div', { class: 'stat' }, h('b', {}, Store.totalAnswered()), h('span', {}, 'answers so far')),
+      h('div', { class: 'stat' }, h('b', {}, Object.keys(st.cards).length), h('span', {}, 'vocabulary items started')),
+      h('div', { class: 'stat' }, h('b', {}, Object.keys(st.scores).filter((k) => /^[a-z]+\/\d+$/.test(k)).length), h('span', {}, 'practice sets completed')));
+    const goal = cardBlock('Daily goal', h('p', { class: 'muted' }, 'How many questions or cards do you want to answer each day? Reaching it fills the bar on the home page.'),
+      h('div', { class: 'row' }, [10, 20, 40, 60].map((n) => h('button', { class: 'btn small' + (Store.goal() === n ? '' : ' ghost'), onclick: () => { Store.setGoal(n); progress(which); } }, n + ' answers'))));
+    /* Review is four pages, so each one has a single job */
+    const PAGES = {
+      today: ['Today', 'What to do now, how this week is going and your daily goal.', [doNow, numbers, App.weekCard ? App.weekCard() : null, goal]],
+      progress: ['Progress', 'How you are doing: activity, achievements, full tests, skills and accuracy by topic.', [
+        cardBlock('Last 12 weeks', heat, h('p', { class: 'muted' }, 'Darker = more answers that day. Answer at least one question to keep your streak.')),
+        App.rewards ? App.rewards.shelf() : null, App.historyCard ? App.historyCard() : null, App.skillsCard ? App.skillsCard() : null, App.recsCard ? App.recsCard() : null,
+        ...tbl, !entries.length ? h('p', { class: 'muted' }, 'Nothing here yet. Do a lesson or a practice set and your results will appear.') : null]],
+      settings: ['Settings', 'AI feedback, better voices and offline use. Your account, friends, sync and backup are under the account button at the top right.', [
+        App.aiCard ? App.aiCard() : null, App.neuralCard ? App.neuralCard() : null, App.offlineCard ? App.offlineCard() : null,
+        cardBlock('Account, friends, sync and data', h('p', { class: 'muted' }, 'Sign in, the friends ranking, syncing between devices and your backup live on the account page.'), link('#/account', 'Open my account', 'btn small'))]]
+    };
+    const tab = PAGES[which] ? which : 'today';
     view(h('h1', {}, 'Review'),
-      h('p', { class: 'lead' }, 'Go back over what you have studied: cards that are due, questions you got wrong, and how you are doing overall.'),
-      h('section', {}, h('h2', {}, 'Do now'),
-        act('Flashcards', `${dueN} due · ${freshN} new today`, '#/review', 'Review'),
-        act('My mistakes', mistN ? `${mistN} to learn, each with its explanation` : 'Nothing saved. Wrong answers will appear here.', '#/mistakes', 'Open'),
-        act('Mixed review', 'A few questions from grammar, vocabulary and rewriting', '#/course/mix', 'Start'),
-        act('Placement test', Store.state.placement ? `Last result: ${Store.state.placement.summary}` : '24 questions, B1 to C1', '#/placement', Store.state.placement ? 'Retake' : 'Start')),
-      h('h2', {}, 'Progress'),
-      h('div', { class: 'stats' },
-        h('div', { class: 'stat' }, h('b', {}, Store.streak()), h('span', {}, 'day streak')),
-        h('div', { class: 'stat' }, h('b', {}, Store.totalAnswered()), h('span', {}, 'answers so far')),
-        h('div', { class: 'stat' }, h('b', {}, Object.keys(st.cards).length), h('span', {}, 'vocabulary items started')),
-        h('div', { class: 'stat' }, h('b', {}, Object.keys(st.scores).filter((k) => /^[a-z]+\/\d+$/.test(k)).length), h('span', {}, 'practice sets completed'))),
-      cardBlock('Daily goal', h('p', { class: 'muted' }, 'How many questions or cards do you want to answer each day? Reaching it fills the bar on the home page.'),
-        h('div', { class: 'row' }, [10, 20, 40, 60].map((n) => h('button', { class: 'btn small' + (Store.goal() === n ? '' : ' ghost'), onclick: () => { Store.setGoal(n); progress(); } }, n + ' answers')))),
-      App.rewards ? App.rewards.shelf() : null,
-      cardBlock('Last 12 weeks', heat, h('p', { class: 'muted' }, 'Darker = more answers that day. Answer at least one question to keep your streak.')),
-      ...tbl, !entries.length ? h('p', { class: 'muted' }, 'Nothing here yet. Do a lesson or a practice set and your results will appear.') : null,
-      App.aiCard ? App.aiCard() : null,
-      App.weekCard ? App.weekCard() : null,
-      App.skillsCard ? App.skillsCard() : null,
-      App.recsCard ? App.recsCard() : null,
-      App.calibCard ? App.calibCard() : null,
-      App.historyCard ? App.historyCard() : null,
-      App.friendsCard ? App.friendsCard() : null,
-      App.neuralCard ? App.neuralCard() : null,
-      App.offlineCard ? App.offlineCard() : null,
-      App.syncCard ? App.syncCard() : null,
-      cardBlock('Your data', h('p', { class: 'muted' }, 'Everything is stored in this browser only. Export a backup before clearing browser data or switching device.'),
-        h('div', { class: 'row' },
-          h('button', { class: 'btn small', onclick: () => {
-            const a = h('a', { href: URL.createObjectURL(new Blob([Store.exportData()], { type: 'application/json' })), download: `c1-path-backup-${Store.today()}.json` });
-            document.body.append(a); a.click(); a.remove();
-          } }, 'Export backup'),
-          h('button', { class: 'btn small ghost', onclick: () => file.click() }, 'Import and merge backup'), file,
-          h('button', { class: 'btn small ghost', onclick: () => { if (confirm('Erase all progress in this browser?')) { Store.reset(); progress(); } } }, 'Reset progress'))));
+      h('nav', { class: 'tabs', 'aria-label': 'Review sections' }, Object.entries(PAGES).map(([k, p]) =>
+        h('a', { href: '#/progress' + (k === 'today' ? '' : '/' + k), class: k === tab ? 'on' : '', 'aria-current': k === tab ? 'page' : false }, p[0]))),
+      h('p', { class: 'lead' }, PAGES[tab][1]),
+      ...PAGES[tab][2]);
   }
 
   /* ---------- placement ---------- */
@@ -744,7 +749,7 @@ window.App = { routes: {}, cleanup: [] };
             [['Home', 'Your next best step and a quick look at your progress.', '#/'],
               ['Course', `${C1.course.length} themed units in a fixed order, from B2 to C1. The easiest way to follow a plan.`, '#/course'],
               ['Library', 'All the material by area, to study anything in any order. Includes full practice tests.', '#/toolkit'],
-              ['Review', 'Flashcards due, your saved mistakes, progress and sync between devices.', '#/progress'],
+              ['Review', 'Today\'s to-do list, your progress and your settings.', '#/progress'],
               ['Notes', 'A notebook that opens from any page (button at the top, or Alt+N).', null]].map(([t, d, href], i) =>
               h('div', { class: 'step' }, h('span', { class: 'dot' }, i + 1), h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), href ? link(href, 'Look', 'btn small ghost') : h('span')))),
           h('p', { class: 'muted' }, 'Your progress is saved in this browser. Sign in at the top if you want it safe and synced across devices.')
@@ -841,7 +846,7 @@ window.App = { routes: {}, cleanup: [] };
     if (a === 'toolkit') return toolkit();
     if (App.routes[a]) return App.routes[a](b, c, query);
     if (a === 'placement') return placement();
-    if (a === 'progress') return progress();
+    if (a === 'progress') return progress(b);
     if (a === 'grammar') return b ? lesson(b) : grammarList();
     if (a === 'vocab') return b ? vocabGroup(b) : vocab();
     if (a === 'vquiz') return vocabQuiz(b);
@@ -870,7 +875,7 @@ window.App = { routes: {}, cleanup: [] };
     stepsLeft: () => { const all = C1.course.flatMap((u) => unitSteps(u)); return { done: all.filter((x) => x.done).length, total: all.length }; },
     unitsDone: () => C1.course.filter((u) => unitDone(u) === unitSteps(u).length).length, unitCount: () => C1.course.length,
     topicHref, icon, view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
-    unitBack, unitFooter, uq, partOf, setKey, scoreChip, nextInUnit, nextCourseStep, dueIds, updateBadge, freshCards: () => Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length)), start: route, route
+    unitBack, unitFooter, uq, partOf, setKey, scoreChip, nextInUnit, nextCourseStep, dueIds, updateBadge, dataCard, freshCards: () => Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length)), start: route, route
   });
   Object.defineProperty(window.App, 'unitCtx', { get: () => unitCtx });
 })();

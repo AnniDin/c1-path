@@ -115,7 +115,7 @@
       const list = BADGES.filter(([id]) => have[id]).sort((a, b) => have[b[0]] - have[a[0]]).slice(0, 3);
       if (!list.length) return null;
       return h('section', { class: 'recent' }, h('h2', {}, 'Latest achievements'),
-        ...list.map(([id, name, desc]) => h('a', { class: 'pathrow', href: '#/progress' }, h('div', {}, h('strong', {}, '🏅 ' + name), h('div', { class: 'muted' }, desc)), h('span', { class: 'muted' }, ago(have[id])))));
+        ...list.map(([id, name, desc]) => h('a', { class: 'pathrow', href: '#/progress/progress' }, h('div', {}, h('strong', {}, '🏅 ' + name), h('div', { class: 'muted' }, desc)), h('span', { class: 'muted' }, ago(have[id])))));
     },
     shelf() {
       const have = Store.state.badges || {}, n = BADGES.filter(([id]) => have[id]).length, day = (ts) => new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
