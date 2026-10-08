@@ -69,7 +69,7 @@
   /* A short burst of confetti (skipped when the user prefers reduced motion). */
   function confetti() {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const cols = ['#a63d15', '#d9962b', '#4d6a22', '#2f6f73', '#c4503a', '#7a4a7e'];
+    const cols = ['#0b3d91', '#111111', '#7f9bd4', '#d98e04', '#17692f', '#b3261e'];
     const box = h('div', { class: 'confetti', 'aria-hidden': 'true' });
     for (let i = 0; i < 40; i++) box.append(h('i', { style: `left:${Math.random() * 100}%;background:${cols[i % cols.length]};animation-delay:${Math.random() * .4}s;animation-duration:${1.6 + Math.random() * 1.2}s;transform:rotate(${Math.random() * 360}deg)` }));
     document.body.append(box); setTimeout(() => box.remove(), 3200);

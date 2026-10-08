@@ -6,7 +6,7 @@
 
   /* ---- profile picture: a photo cropped to a small square, or an initial on a colour. Kept on this device only. ---- */
   const AK = 'c1path.avatar', CK = 'c1path.avatarcolour';
-  const COLOURS = ['#a63d15', '#4d6a22', '#2f6f73', '#7a4a7e', '#b5801a', '#3d5a80'];
+  const COLOURS = ['#0b3d91', '#111111', '#17692f', '#b3261e', '#7a4b00', '#5b2a86'];
   const lget = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const lset = (k, v) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); return true; } catch (e) { return false; } };
   A.avatarOf = (name, photo, small) => h('span', { class: 'avatar' + (small ? ' small' : ''), 'aria-hidden': 'true' }, photo ? h('img', { src: photo, alt: '' }) : String(name || '?')[0].toUpperCase());
