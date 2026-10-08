@@ -527,3 +527,12 @@ h3 { font-weight: 700; }
 .achcat > summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 48px; font-weight: 700; cursor: pointer; }
 .achcat[open] > summary { color: var(--accent); }
 .achcat .badges { margin-top: 4px; }
+
+/* margin doodles beside the main page titles: they sit in the right margin, just above the title rule */
+h1:has(.doodle){position:relative;min-height:86px;display:flex;align-items:flex-end;padding-right:110px}
+.doodle{position:absolute;right:0;bottom:6px;width:96px;height:72px;color:var(--accent);pointer-events:none}
+.doodle svg{width:100%;height:100%;display:block}
+@media (max-width:520px){h1:has(.doodle){min-height:62px;padding-right:72px}.doodle{width:64px;height:48px}}
+
+/* the trick offered after a wrong answer */
+.fb .trickhint{display:inline-block;margin-left:.3em;font-weight:600}

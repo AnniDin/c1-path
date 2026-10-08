@@ -31,6 +31,9 @@
     if (!ok && ask && window.Tutor && window.AI && AI.configured()) {
       box.append(' ', h('button', { class: 'btn small ghost askpica', type: 'button', onclick: () => Tutor.explain({ q: plain(ask.q), given: plain(ask.given), correct: expected.map(plain).join(' / '), why: plain(why) }) }, 'Ask Pica why'));
     }
+    /* a wrong answer that a trick settles: link to it (new tab, so the exercise is not lost) */
+    const tr = !ok && window.C1 && C1.trickFor && C1.trickFor(ask && ask.q, ask && ask.given, expected);
+    if (tr) box.append(' ', h('a', { class: 'trickhint', href: '#/tricks/' + tr.key, target: '_blank', rel: 'noopener' }, 'Trick: ' + tr.title));
     return box;
   }
 

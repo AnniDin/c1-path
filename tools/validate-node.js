@@ -30,6 +30,12 @@ for (const f of needed.concat(['tools/validate.js'])) {
   catch (e) { console.error('Could not load ' + f + ': ' + e.message); process.exit(2); }
 }
 const issues = sandbox.validate();
+/* every trick key in data/trickmap.js must point at a real trick, and every pattern must compile */
+sandbox.C1.trickMap.forEach(([key, pat]) => {
+  const [sec, i] = key.split('-'), s = sandbox.C1.tricks.find((x) => x.id === sec);
+  if (!s || !s.items[+i]) issues.push('trickmap: no trick ' + key);
+  try { pat.split('&').forEach((p) => new RegExp(p, 'i')); } catch (e) { issues.push('trickmap: bad pattern for ' + key); }
+});
 const swSrc = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
 scripts.concat(['css/style.css', 'manifest.webmanifest', 'icons/icon.svg']).forEach((f) => { if (!swSrc.includes('"' + f + '"')) issues.push('sw.js PRECACHE is missing ' + f); });
 if (issues.length) { console.error(issues.length + ' content problem(s):\n- ' + issues.join('\n- ')); process.exit(1); }

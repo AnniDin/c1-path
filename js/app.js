@@ -183,7 +183,7 @@ window.App = { routes: {}, cleanup: [] };
     const [first, ...rest] = steps;
     const hero = h('section', { class: 'hero' },
       h('p', { class: 'eyebrow' }, 'What to do now'),
-      h('h1', {}, first[0]),
+      h('h1', {}, first[0], Doodle('home')),
       h('p', { class: 'lead' }, first[1]),
       link(first[2], first[3], 'btn'),
       rest.length ? h('div', { class: 'then' }, h('p', { class: 'eyebrow' }, 'Then'),
@@ -276,7 +276,7 @@ window.App = { routes: {}, cleanup: [] };
         ...tbl, !entries.length ? h('p', { class: 'muted' }, 'Nothing here yet. Do a lesson or a practice set and your results will appear.') : null]],
     };
     const tab = PAGES[which] ? which : 'today';
-    view(h('h1', {}, 'Progress'),
+    view(h('h1', {}, 'Progress', Doodle('progress')),
       h('nav', { class: 'tabs', 'aria-label': 'Progress sections' }, Object.entries(PAGES).map(([k, p]) =>
         h('a', { href: '#/progress' + (k === 'today' ? '' : '/' + k), class: k === tab ? 'on' : '', 'aria-current': k === tab ? 'page' : false }, p[0]))),
       h('p', { class: 'lead' }, PAGES[tab][1]),
@@ -532,7 +532,7 @@ window.App = { routes: {}, cleanup: [] };
   /* ---------- course: study by theme ---------- */
   function courseList() {
     const nc = nextCourseStep();
-    view(h('h1', {}, 'Course'),
+    view(h('h1', {}, 'Course', Doodle('course')),
       h('p', { class: 'lead' }, 'Study by theme. Each unit combines vocabulary, grammar and exam practice around one topic and ends with a mixed review, so you revise a little of everything as you go.'),
       nc ? cardBlock(null, h('div', { class: 'pathrow' },
         h('div', {}, h('strong', {}, 'Continue: ' + nc.u.title), h('div', { class: 'muted' }, `Step ${nc.i + 1} of ${nc.total} · ${nc.info.kind.toLowerCase()} · ${nc.info.label}`)),
@@ -619,7 +619,7 @@ window.App = { routes: {}, cleanup: [] };
         .concat(allCards.filter((c) => has(c.phrase, c.meaning)).slice(0, 15).map((c) => ['Vocabulary', c.phrase, c.meaning, '#/vocab/' + c.group]));
       results.append(h('div', { class: 'card' }, hits.length ? hits.slice(0, 25).map(([kind, t, d, href]) => h('div', { class: 'pathrow' }, h('div', {}, h('span', { class: 'tag' }, kind), h('strong', {}, t), h('div', { class: 'muted' }, d)), link(href, 'Open', 'btn small ghost'))) : h('p', { class: 'muted' }, 'No matches.')));
     });
-    view(h('h1', {}, 'Study'),
+    view(h('h1', {}, 'Study', Doodle('study')),
       search, results,
       h('p', { class: 'lead' }, 'Pick what you want to work on, in any order. The ', link('#/course', 'Course'), ' uses the same material in a fixed sequence.'),
       sectionHead('Language', 'Understand how English works.'),
@@ -686,7 +686,7 @@ window.App = { routes: {}, cleanup: [] };
   }
   function mockHub() {
     const card = (href, title, desc, tag, ic) => h('a', { class: 'card', href }, h('span', { class: 'tag' }, tag), h('h3', { style: 'margin:.4em 0 .2em' }, icon(ic), title), h('p', { class: 'muted', style: 'margin:0' }, desc));
-    view(h('h1', {}, 'Exams'),
+    view(h('h1', {}, 'Exams', Doodle('exams')),
       h('p', { class: 'lead' }, 'Practise a whole exam paper under time pressure instead of one task at a time. Each test picks material you have not done yet.'),
       h('div', { class: 'grid' },
         card('#/mock/reading', 'Reading and Use of English', 'All eight parts on one page, scored by part.', '90 min', 'practice'),

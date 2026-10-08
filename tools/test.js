@@ -188,5 +188,13 @@ const sync = (a, b) => { b.Store.mergeData(a.Store.exportData()); a.Store.mergeD
   eq('tricks and pronunciation entries are complete', bad, []);
 }
 
+/* --- a wrong answer finds its trick, and a comprehension question does not --- */
+{
+  const T = device(['data/tricks.js', 'data/tricks2.js', 'data/tricks3.js', 'data/trickmap.js']).C1.trickFor;
+  eq('wish gets the "wish" trick', T('I wish I ___ more free time.', 'have', ['had']).title, 'Wish and if only: go one step back in time');
+  eq('so/such gets its trick', (T('It was ___ film that we left halfway.', 'so a boring', ['such a boring']) || {}).key, 'grammar-6');
+  eq('long comprehension answers get none', T('What does the writer conclude?', 'He used to think so', ['He used to think that the experiment was flawed and said so']), null);
+}
+
 console.log(`${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

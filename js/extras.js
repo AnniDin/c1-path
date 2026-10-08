@@ -6,7 +6,7 @@
   A.topicLabels.ai = 'AI-generated practice';
 
   /* ---------- tricks ---------- */
-  A.routes.tricks = () => {
+  A.routes.tricks = (want) => {
     const sections = C1.tricks;
     const find = h('input', { type: 'search', class: 'wide', placeholder: 'Search the tricks (e.g. make, since, wish)…', 'aria-label': 'Search the tricks' });
     find.addEventListener('input', () => {
@@ -21,10 +21,11 @@
       find, nav,
       ...sections.map((s) => h('section', { id: 'tricks-' + s.id },
         h('h2', {}, s.title), h('p', { class: 'muted' }, s.blurb),
-        s.items.map((x) => h('details', { class: 'trick' }, h('summary', {}, x.t),
+        s.items.map((x, i) => h('details', { class: 'trick', id: 'trick-' + s.id + '-' + i, open: want === s.id + '-' + i }, h('summary', {}, x.t),
           h('p', { html: x.tip }), x.why ? h('p', { class: 'muted' }, x.why) : null,
           x.ex ? h('p', { class: 'trickex', html: x.ex }) : null)))),
       h('div', { class: 'callout' }, 'No trick replaces knowing the language. Use these to avoid losing marks you already deserve, and keep practising in the ', link('#/practice', 'exam tasks'), '.'));
+    if (want) setTimeout(() => { const d = document.getElementById('trick-' + want); if (d) { d.open = true; d.scrollIntoView({ block: 'center' }); } }, 0);
   };
 
   /* ---------- generate with AI ---------- */
