@@ -130,7 +130,7 @@ window.App = { routes: {}, cleanup: [] };
     return idx < 0 ? null : unitSteps(u)[idx + 1] || null;
   }
   const uq = () => (unitCtx ? '?u=' + unitCtx : '');
-  /* "Part of the course" crumb, shown when a page was opened from the Library instead of from a unit. */
+  /* "Part of the course" crumb, shown when a page was opened from Study instead of from a unit. */
   function partOf(kind, id, set) {
     if (unitCtx) return h('span');
     const hits = C1.course.filter((u) => u.steps.some((st) => st.t === kind && st.id === id && (set == null || st.set === set)));
@@ -320,7 +320,7 @@ window.App = { routes: {}, cleanup: [] };
 
   /* ---------- grammar ---------- */
   function grammarList() {
-    view(back('#/toolkit', 'Library'), h('h1', {}, 'Grammar'),
+    view(back('#/toolkit', 'Study'), h('h1', {}, 'Grammar'),
       h('p', { class: 'lead' }, 'Each lesson begins with the reason the structure exists. Once you see the reason, the rules stop being arbitrary. Lessons are grouped by theme; work top to bottom or jump to what you need.'),
       ...GRAMMAR_CATS.map((cat) => {
         const list = grammar.filter((g) => g.category === cat.name);
@@ -395,7 +395,7 @@ window.App = { routes: {}, cleanup: [] };
             h('span', { class: 'tag' + (cardsSeen(g.id) === g.cards.length ? ' ok' : '') }, `${cardsSeen(g.id)}/${g.cards.length} started`),
             h('h3', { style: 'margin:.5em 0 .2em' }, g.title), h('p', { class: 'muted', style: 'margin:0' }, g.short)))));
     });
-    view(back('#/toolkit', 'Library'), h('h1', {}, 'Vocabulary'),
+    view(back('#/toolkit', 'Study'), h('h1', {}, 'Vocabulary'),
       h('p', { class: 'lead' }, 'Phrasal verbs, collocations, idioms and topic language, grouped by the idea that connects them. Learn the idea and dozens of items become guessable.'),
       h('div', { class: 'card' }, h('h3', { style: 'margin-top:0' }, 'Daily practice'),
         h('p', {}, `${due} due · ${fresh} new available today · ${allCards.length} items in total`),
@@ -481,7 +481,7 @@ window.App = { routes: {}, cleanup: [] };
 
   /* ---------- practice (Use of English and Reading) ---------- */
   function practiceList() {
-    view(back('#/toolkit', 'Library'), h('h1', {}, 'Practice'),
+    view(back('#/toolkit', 'Study'), h('h1', {}, 'Practice'),
       h('p', { class: 'lead' }, 'Exam-style tasks with a strategy for each. Read the strategy first: every task tests one specific skill. Your best score on each set is remembered.'),
       ...PRACTICE_SECTIONS.map((sec) => {
         const list = sec.ids.map((id) => C1.practice.find((p) => p.id === id)).filter(Boolean);
@@ -595,7 +595,7 @@ window.App = { routes: {}, cleanup: [] };
     const sk = App.skillStats ? App.skillStats() : { l: [0, 0], s: [0, 0], w: [0, 0] };
     const tile = (href, title, desc, stat, ic) => h('a', { class: 'card', href }, h('h3', { style: 'margin:0 0 .2em' }, ic ? icon(ic) : null, title), h('p', { class: 'muted', style: 'margin:0 0 8px' }, desc), h('span', { class: 'tag' }, stat));
     const results = h('div');
-    const search = h('input', { type: 'search', class: 'wide', placeholder: 'Search lessons, vocabulary and course units…', 'aria-label': 'Search the Library' });
+    const search = h('input', { type: 'search', class: 'wide', placeholder: 'Search lessons, vocabulary and course units…', 'aria-label': 'Search Study' });
     search.addEventListener('input', () => {
       const q = search.value.trim().toLowerCase();
       results.replaceChildren();
@@ -608,9 +608,9 @@ window.App = { routes: {}, cleanup: [] };
         .concat(allCards.filter((c) => has(c.phrase, c.meaning)).slice(0, 15).map((c) => ['Vocabulary', c.phrase, c.meaning, '#/vocab/' + c.group]));
       results.append(h('div', { class: 'card' }, hits.length ? hits.slice(0, 25).map(([kind, t, d, href]) => h('div', { class: 'pathrow' }, h('div', {}, h('span', { class: 'tag' }, kind), h('strong', {}, t), h('div', { class: 'muted' }, d)), link(href, 'Open', 'btn small ghost'))) : h('p', { class: 'muted' }, 'No matches.')));
     });
-    view(h('h1', {}, 'Library'),
+    view(h('h1', {}, 'Study'),
       search, results,
-      h('p', { class: 'lead' }, 'Everything on the site, by area, to study in any order. The ', link('#/course', 'Course'), ' uses these same pieces in a fixed sequence; come here when you know what you need.'),
+      h('p', { class: 'lead' }, 'Pick what you want to work on, in any order. The ', link('#/course', 'Course'), ' uses the same material in a fixed sequence.'),
       sectionHead('Language', 'Understand how English works.'),
       h('div', { class: 'grid' },
         tile('#/grammar', 'Grammar', `${grammar.length} lessons in four themes, each explaining why the structure exists.`, `${gRead}/${grammar.length} read`, 'grammar'),
@@ -621,9 +621,15 @@ window.App = { routes: {}, cleanup: [] };
         tile('#/skills/listening', 'Listening', 'Recorded dialogues with exam-style questions, plus dictation.', `${sk.l[0]}/${sk.l[1]} done`, 'listening'),
         tile('#/skills/speaking', 'Speaking', 'Parts 1 to 4 with prompts, a timer, a recorder and a self-assessment.', `${sk.s[0]}/${sk.s[1]} sets done`, 'speaking'),
         tile('#/skills/writing', 'Writing', 'Exam-style tasks with a word count, text analysis and model answers.', `${sk.w[0]}/${sk.w[1]} tasks done`, 'writing')),
-      App.limitsNote ? App.limitsNote() : null,
-      sectionHead('Reference and tools'),
-      h('div', { class: 'row' }, link('#/mock', 'Exams and full tests', 'btn'), link('#/tricks', 'Tricks', 'btn ghost'), link('#/generate', 'Generate with AI', 'btn ghost'), link('#/exams', 'The exams explained', 'btn ghost'), link('#/placement', 'Placement test', 'btn ghost'), link('#/vquiz', 'Vocabulary quiz', 'btn ghost'), link('#/review', 'Flashcards', 'btn ghost')));
+      sectionHead('Tools', 'Quick ways to practise and get unstuck.'),
+      h('div', { class: 'grid' },
+        tile('#/review', 'Flashcards', 'Review the vocabulary cards that are due today.', `${dueIds().length} due`),
+        tile('#/vquiz', 'Vocabulary quiz', 'A quick quiz on the words you have started.', 'quiz'),
+        tile('#/tricks', 'Tricks', 'Short strategies for the tasks students find hardest.', 'tips'),
+        tile('#/generate', 'Generate with AI', 'Make extra practice on any topic with your own AI key.', 'optional'),
+        tile('#/placement', 'Placement test', 'Twenty-four questions, B1 to C1, to find where to start.', Store.state.placement ? 'taken' : 'not taken'),
+        tile('#/exams', 'The exams explained', 'What each paper tests and how it is marked.', 'guide')),
+      App.limitsNote ? App.limitsNote() : null);
   }
 
   /* ---------- full tests: hub and guided papers ---------- */
@@ -756,7 +762,7 @@ window.App = { routes: {}, cleanup: [] };
           h('div', { class: 'steps' },
             [['Home', 'Your next best step and a quick look at your progress.', '#/'],
               ['Course', `${C1.course.length} themed units in a fixed order, from B2 to C1. The easiest way to follow a plan.`, '#/course'],
-              ['Library', 'All the material by area, to study anything in any order. Includes full practice tests.', '#/toolkit'],
+              ['Study', 'All the material by area, to study anything in any order.', '#/toolkit'],
               ['Review', 'Today\'s to-do list, your progress and your settings.', '#/progress'],
               ['Notes', 'A notebook that opens from any page (button at the top, or Alt+N).', null]].map(([t, d, href], i) =>
               h('div', { class: 'step' }, h('span', { class: 'dot' }, i + 1), h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), href ? link(href, 'Look', 'btn small ghost') : h('span')))),
@@ -770,7 +776,7 @@ window.App = { routes: {}, cleanup: [] };
           h('div', { class: 'grid' },
             h('a', { class: 'card', href: '#/placement', onclick: () => Store.setWelcomed() }, h('span', { class: 'tag' }, 'Recommended'), h('h3', { style: 'margin:.4em 0 .2em' }, 'Take the placement test'), h('p', { class: 'muted', style: 'margin:0' }, '24 questions from B1 to C1, about 15 to 20 minutes, with an explanation for every answer.')),
             h('a', { class: 'card', href: '#/course/' + C1.course[0].id, onclick: () => Store.setWelcomed() }, h('span', { class: 'tag' }, 'Guided'), h('h3', { style: 'margin:.4em 0 .2em' }, 'Start the Course'), h('p', { class: 'muted', style: 'margin:0' }, 'Begin with the first unit and follow the steps in order.')),
-            h('a', { class: 'card', href: '#/toolkit', onclick: () => Store.setWelcomed() }, h('span', { class: 'tag' }, 'Free choice'), h('h3', { style: 'margin:.4em 0 .2em' }, 'Explore the Library'), h('p', { class: 'muted', style: 'margin:0' }, 'Look around and pick what you need.'))),
+            h('a', { class: 'card', href: '#/toolkit', onclick: () => Store.setWelcomed() }, h('span', { class: 'tag' }, 'Free choice'), h('h3', { style: 'margin:.4em 0 .2em' }, 'Study on your own'), h('p', { class: 'muted', style: 'margin:0' }, 'Look around and pick what you need.'))),
           h('h2', {}, 'A routine that works'),
           h('p', {}, 'Ten minutes of flashcards, one grammar lesson or practice set, and one skill (a listening, a speaking set or a writing task) a few times a week. Consistency matters more than long sessions.')
         ]

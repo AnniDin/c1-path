@@ -303,7 +303,7 @@
   }
   function listeningList() {
     const L = C1.listening || [];
-    view(back('#/toolkit', 'Library'), h('h1', {}, A.icon('listening'), 'Listening'),
+    view(back('#/toolkit', 'Study'), h('h1', {}, A.icon('listening'), 'Listening'),
       h('p', { class: 'lead' }, 'Each recording is a spoken dialogue made with an open-source neural voice. Listen first without the transcript, answer, then read the transcript to see what you missed.'),
       !Speech.supported ? h('div', { class: 'callout bad' }, 'This browser cannot read text aloud. You can still do the tasks from the transcripts, or try Chrome or Edge.') : null,
       window.C1 && C1.audio && C1.audio.listening ? null : voiceTip(),
@@ -499,7 +499,7 @@
      ===================================================================== */
   function speakingList() {
     const S = (C1.speaking || {}).sets || [];
-    view(back('#/toolkit', 'Library'), h('h1', {}, A.icon('speaking'), 'Speaking'),
+    view(back('#/toolkit', 'Study'), h('h1', {}, A.icon('speaking'), 'Speaking'),
       h('p', { class: 'lead' }, 'Speak aloud, out loud, every time. Each set follows the four parts of the exam with a timer and a recorder so you can listen back to yourself.'),
       h('div', { class: 'row' }, link('#/skills/speaking/guide', 'Guide: the 4 parts, criteria and useful phrases', 'btn ghost'), link('#/skills/pronunciation', 'Pronunciation lab', 'btn ghost')),
       sectionHead('Practice sets'),
@@ -632,7 +632,7 @@
 
   function writingList() {
     const W = (C1.writing || {}).tasks || [];
-    view(back('#/toolkit', 'Library'), h('h1', {}, A.icon('writing'), 'Writing'),
+    view(back('#/toolkit', 'Study'), h('h1', {}, A.icon('writing'), 'Writing'),
       h('p', { class: 'lead' }, 'Write a full text under exam conditions, check it with the analyser, then compare it with an annotated model. Your draft is saved in this browser as you type.'),
       h('div', { class: 'row' }, link('#/skills/writing/guide', 'Guide: criteria, text types and checklist', 'btn ghost')),
       sectionHead('Tasks'),

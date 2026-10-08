@@ -25,8 +25,8 @@
 
   /* ---------- 1. navigation ---------- */
   let w = await boot(1024);
-  ok('home shows the five tabs', $$(w, '#nav a').map((a) => a.textContent.trim().replace(/\s+\d+$/, '')).join('|') === 'Home|Course|Library|Exams|Review');
-  for (const [hash, tab] of [['#/mock', 'Exams'], ['#/certacles', 'Exams'], ['#/exams', 'Exams'], ['#/plan', 'Exams'], ['#/practice', 'Library'], ['#/progress', 'Review'], ['#/course', 'Course']]) {
+  ok('home shows the five tabs', $$(w, '#nav a').map((a) => a.textContent.trim().replace(/\s+\d+$/, '')).join('|') === 'Home|Course|Study|Exams|Review');
+  for (const [hash, tab] of [['#/mock', 'Exams'], ['#/certacles', 'Exams'], ['#/exams', 'Exams'], ['#/plan', 'Exams'], ['#/practice', 'Study'], ['#/progress', 'Review'], ['#/course', 'Course']]) {
     await go(w, hash); const active = $$(w, '#nav a.active').map((a) => a.textContent.trim().replace(/\s+\d+$/, ''));
     ok('tab for ' + hash + ' is highlighted', active.join() === tab, active.join());
   }

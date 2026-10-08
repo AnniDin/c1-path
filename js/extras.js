@@ -16,7 +16,7 @@
       document.querySelectorAll('.tricks-nav a').forEach((a) => { const s = document.getElementById(a.getAttribute('href').slice(1)); a.hidden = !!s && s.hidden; });
     });
     const nav = h('p', { class: 'row tricks-nav' }, sections.map((s) => h('a', { class: 'btn small ghost', href: '#tricks-' + s.id, onclick: (e) => { e.preventDefault(); document.getElementById('tricks-' + s.id).scrollIntoView({ behavior: 'smooth' }); } }, s.title)));
-    view(back('#/toolkit', 'Library'), h('h1', {}, 'Tricks'),
+    view(back('#/toolkit', 'Study'), h('h1', {}, 'Tricks'),
       h('p', { class: 'lead' }, 'Small tricks that settle the doubts everyone has: which word, which preposition, which form. Open one, read the example and move on.'),
       find, nav,
       ...sections.map((s) => h('section', { id: 'tricks-' + s.id },
@@ -56,7 +56,7 @@
       } catch (e) { status.textContent = e.message; }
       go.disabled = false;
     } }, 'Generate');
-    view(back('#/toolkit', 'Library'), h('h1', {}, 'Generate with AI'),
+    view(back('#/toolkit', 'Study'), h('h1', {}, 'Generate with AI'),
       h('p', { class: 'lead' }, 'Ask for a new set of exam-style tasks on any topic. It uses your own free API key, so nothing is stored on a server.'),
       AI.configured() ? null : h('div', { class: 'callout' }, 'You need a free key first: ', link('#/progress/settings', 'add one in Review, under Settings and data'), ' (Google Gemini or Groq, a couple of minutes).'),
       h('h2', {}, '1 · Choose the task'), picks,
