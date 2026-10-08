@@ -25,7 +25,12 @@ const server = http.createServer((req, res) => {
       const outText = m[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&');
       console.log(outText.trim());
       /* on GitHub Actions, show the failing checks as annotations on the run (the raw log needs a login to read) */
-      if (process.env.GITHUB_ACTIONS) outText.split(String.fromCharCode(10)).filter((l) => /^FAIL/.test(l)).slice(0, 9).forEach((l) => console.log('::error title=e2e::' + l.split('%').join(' ').slice(0, 400)));
+      if (process.env.GITHUB_ACTIONS) {
+        const lines = outText.split(String.fromCharCode(10)), bad = lines.filter((l) => /^FAIL/.test(l)), res = outText.match(/E2E-RESULT/);
+        const show = bad.length ? bad.slice(0, 8) : lines.filter((l) => l.trim()).slice(-6);
+        show.forEach((l) => console.log('::error title=e2e' + (res ? '' : ' (no result line)') + '::' + l.split('%').join(' ').slice(0, 400)));
+        if (err) console.log('::error title=e2e browser::' + String(err.message).split('%').join(' ').slice(0, 400));
+      }
       const r = outText.match(/E2E-RESULT passed=(\d+) failed=(\d+)/);
       process.exit(r && r[2] === '0' ? 0 : 1);
     });
