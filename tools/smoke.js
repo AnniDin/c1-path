@@ -204,9 +204,18 @@ pending.push((async () => {
   check('a friend code typed as the name is refused', !calls.some((c) => c.startsWith('join_board')) && /looks like a friend code/.test(card.textContent));
   inputs[0].value = 'Ana'; inputs[1].value = '7d379a';
   await join.ls.click[0]();
-  check('joining with a name and a friend code calls join_board and add_friend', calls.some((c) => c.startsWith('join_board:{"p_name":"Ana"')) && calls.some((c) => c.startsWith('add_friend:{"p_code":"7d379a"')), calls.join(' | '));
+  check('joining with a name and a friend code calls join_board and add_friend', calls.some((c) => c.startsWith('join_board:{"p_name":"Ana"')) && calls.some((c) => c.startsWith('add_friend:{"p_code":"7D379A"')), calls.join(' | '));
   sb.Cloud.user = keepUser; sb.Cloud.rpc = keepRpc; sb.Cloud.enabled = keepEnabled; sb.localStorage.removeItem('c1path.board');
 })());
+  /* every way of typing a friend code wrong gets an explanation */
+  {
+    const c = sb.App.checkFriendCode;
+    check('an empty friend code is explained', /first/.test(c('', 'AAAAAA', []).problem));
+    check('a name instead of a code is explained', /6 characters/.test(c('Linda', 'AAAAAA', []).problem));
+    check('your own code is recognised', /your own code/.test(c('aaaaaa', 'AAAAAA', []).problem));
+    check('a code you already added is recognised', /already friends/.test(c('7d379a', 'AAAAAA', ['7D379A']).problem));
+    check('a good code is cleaned up', c(' 7d379a ', 'AAAAAA', []).code === '7D379A');
+  }
 /* ---- every route renders ---- */
 const C1 = sb.C1, routes = ['', 'welcome', 'course', 'course/mix', 'toolkit', 'progress', 'review', 'progress/progress', 'progress/settings', 'account', 'mistakes', 'mistakes/practice', 'placement', 'exams', 'privacy', 'mock', 'tricks', 'generate', 'certacles', 'plan', 'weak',
   'grammar', 'vocab', 'practice', 'skills', 'skills/listening', 'skills/writing', 'skills/writing/guide', 'skills/speaking', 'skills/pronunciation', 'vquiz/all'];

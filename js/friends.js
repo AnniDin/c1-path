@@ -7,6 +7,17 @@
   const put = (v) => { try { if (v) localStorage.setItem(KEY, JSON.stringify(v)); else localStorage.removeItem(KEY); } catch (e) { /* ignore */ } };
   const monday = () => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.toLocaleDateString('sv'); };
   const weekAnswers = () => Object.entries(Store.state.days).filter(([k]) => k >= monday()).reduce((a, [, n]) => a + n, 0);
+  const CODE = /^[0-9A-F]{6}$/;
+  /* what a person typed into a friend-code box: returns { code } or { problem } with a plain explanation */
+  const checkCode = (raw, mine, known) => {
+    const c = String(raw || '').trim().toUpperCase();
+    if (!c) return { problem: 'Type your friend\'s code first.' };
+    if (!CODE.test(c)) return { problem: 'A friend code is 6 characters, digits and the letters A to F, like 7D379A. Names do not work here: ask your friend for the code under "Your friend code" in their account page.' };
+    if (mine && c === mine) return { problem: 'That is your own code. Send it to your friend, and ask them for theirs.' };
+    if ((known || []).includes(c)) return { problem: 'You are already friends with that person.' };
+    return { code: c };
+  };
+  A.checkFriendCode = checkCode;
   const friendly = (e) => (/function|schema cache|404/i.test(e.message || '') ? 'The friends feature is not set up on the server yet (supabase/friends.sql has not been run).' : e.message || 'Something went wrong.');
 
   async function publish() {
@@ -33,10 +44,12 @@
           h('div', { class: 'row' }, h('label', { for: 'fname' }, 'Your name, shown to your friends'), name),
           h('div', { class: 'row' }, h('label', { for: 'fcode0' }, 'A friend\'s code, if you have one'), code0),
           h('button', { class: 'btn small', onclick: async () => {
-            if (/^[0-9A-F]{6}$/i.test(name.value.trim())) { msg.textContent = 'That looks like a friend code, not a name. Put the code in the second box, and your name in the first.'; return; }
+            if (CODE.test(name.value.trim().toUpperCase())) { msg.textContent = 'That looks like a friend code, not a name. Put the code in the second box, and your name in the first.'; return; }
+            const first = code0.value.trim() ? checkCode(code0.value) : null;
+            if (first && first.problem) { msg.textContent = first.problem; return; }
             try {
               const code = await Cloud.rpc('join_board', { p_name: name.value.trim() || 'Learner' }); put({ code, uid: Cloud.user().id });
-              if (code0.value.trim()) { try { await Cloud.rpc('add_friend', { p_code: code0.value }); } catch (e) { /* the code can be added again later */ } }
+              if (first) { try { const added = await Cloud.rpc('add_friend', { p_code: first.code }); if (!added) A.toast && A.toast('Joined, but no one has that friend code yet. Check it and add it again below.'); } catch (e) { /* the code can be added again later */ } }
               await publish(); draw();
             } catch (e) { msg.textContent = friendly(e); }
           } }, 'Join the ranking'), msg));
@@ -54,10 +67,11 @@
             h('span', { class: 'muted' }, `${r.answers} this week · 🔥${r.streak} · L${r.level}`),
             r.me ? h('span') : h('button', { class: 'icon-btn', 'aria-label': 'Remove ' + r.name, onclick: async () => { await Cloud.rpc('remove_friend', { p_code: r.code }); draw(); } }, '✕'))),
           h('div', { class: 'row' }, h('label', { for: 'fname2' }, 'Your name'), h('input', { type: 'text', id: 'fname2', maxlength: 24, value: ((rows.find((r) => r.me) || {}).name) || '' }),
-            h('button', { class: 'btn small ghost', onclick: async () => { const v = document.getElementById('fname2').value.trim(); if (!v) return; if (/^[0-9A-F]{6}$/i.test(v)) { msg.textContent = 'That looks like a friend code, not a name.'; return; } try { await Cloud.rpc('join_board', { p_name: v }); draw(); } catch (e) { msg.textContent = friendly(e); } } }, 'Change name')),
+            h('button', { class: 'btn small ghost', onclick: async () => { const v = document.getElementById('fname2').value.trim(); if (!v) return; if (CODE.test(v.toUpperCase())) { msg.textContent = 'That looks like a friend code, not a name.'; return; } try { await Cloud.rpc('join_board', { p_name: v }); draw(); } catch (e) { msg.textContent = friendly(e); } } }, 'Change name')),
           h('p', { class: 'muted', style: 'margin-bottom:4px' }, 'Add a friend: type their code.'),
           h('div', { class: 'row' }, friend, h('button', { class: 'btn small', onclick: async () => {
-            try { const ok = await Cloud.rpc('add_friend', { p_code: friend.value }); if (ok) draw(); else msg.textContent = 'No one has that code. Check it with your friend.'; } catch (e) { msg.textContent = friendly(e); }
+            const chk = checkCode(friend.value, me.code, rows.map((r) => r.code)); if (chk.problem) { msg.textContent = chk.problem; return; }
+            try { const ok = await Cloud.rpc('add_friend', { p_code: chk.code }); if (ok) { A.toast && A.toast('Friend added. You can see each other now.'); draw(); } else msg.textContent = 'No one has that code. Check it with your friend: it is the code under "Your friend code" on their account page, not their name.'; } catch (e) { msg.textContent = friendly(e); }
           } }, 'Add friend'), h('button', { class: 'btn small ghost', onclick: async () => { if (confirm('Leave the leaderboard? Your name and scores are deleted from it.')) { await Cloud.rpc('leave_board', {}); put(null); draw(); } } }, 'Leave')), msg));
       } catch (e) { box.replaceChildren(card(h('p', { class: 'muted' }, friendly(e)))); }
     };
