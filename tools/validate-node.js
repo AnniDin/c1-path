@@ -42,6 +42,16 @@ Object.entries(sandbox.C1.trickDrills || {}).forEach(([key, list]) => {
   if (!s || !s.items[+i]) issues.push('trickdrills: no trick ' + key);
   list.forEach((it, n) => { if (it.type !== 'mcq' || !/___/.test(it.q) || !it.options || it.options.length < 3 || new Set(it.options).size !== it.options.length || !(it.answer >= 0 && it.answer < it.options.length) || !it.why) issues.push('trickdrills: ' + key + ' #' + n + ' is malformed'); });
 });
+/* cards with several senses: one example per sense, each marking the phrase */
+const cardsByPhrase = {}; sandbox.C1.vocab.forEach((g) => g.cards.forEach((c) => { cardsByPhrase[c.phrase] = c; }));
+Object.entries(sandbox.C1.vocabMulti || {}).forEach(([ph, list]) => {
+  const c = cardsByPhrase[ph];
+  if (!c) { issues.push('vocabmulti: no card ' + ph); return; }
+  const n = c.meaning.split(';').map((x) => x.trim()).filter(Boolean).length;
+  if (list.length !== n) issues.push('vocabmulti: ' + ph + ' has ' + list.length + ' examples for ' + n + ' senses');
+  list.forEach((e, i) => { if ((e.match(/\[\[.+?\]\]/g) || []).length !== 1) issues.push('vocabmulti: ' + ph + ' example ' + (i + 1) + ' needs exactly one [[phrase]] marker'); });
+});
+Object.values(cardsByPhrase).forEach((c) => { if (c.meaning.includes(';') && !(sandbox.C1.vocabMulti || {})[c.phrase]) issues.push('vocabmulti: missing examples for ' + c.phrase); });
 const swSrc = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
 scripts.concat(['css/style.css', 'manifest.webmanifest', 'icons/icon.svg']).forEach((f) => { if (!swSrc.includes('"' + f + '"')) issues.push('sw.js PRECACHE is missing ' + f); });
 if (issues.length) { console.error(issues.length + ' content problem(s):\n- ' + issues.join('\n- ')); process.exit(1); }

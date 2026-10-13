@@ -537,3 +537,15 @@ h1:has(.doodle){position:relative;min-height:86px;display:flex;align-items:flex-
 /* the trick offered after a wrong answer */
 .fb .trickhint{display:inline-block;margin-left:.3em;font-weight:600}
 .doodle.inline{position:static;display:block;width:80px;height:60px;margin:0 0 .4rem}
+
+/* flashcard rating: say what each button means */
+.ratehead{margin:14px 0 0}
+.rate .btn .what{color:var(--ink);font-weight:500;margin-top:2px}
+@media (max-width:520px){.rate{grid-template-columns:repeat(2,1fr)}}
+
+/* one example per meaning on vocabulary cards */
+.senses{margin:6px 0;padding-left:1.3em}
+.senses li{margin:8px 0}
+.senses .sense{font-weight:600}
+.eg-row{display:flex;gap:6px;align-items:flex-start}
+.eg-row .eg{flex:1}

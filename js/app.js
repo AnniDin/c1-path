@@ -150,7 +150,7 @@ window.App = { routes: {}, cleanup: [] };
     const all = shuffle([c.phrase].concat(opts));
     return {
       type: 'mcq', uid: 'v:' + c.id, options: all, answer: all.indexOf(c.phrase),
-      q: `<span class="muted">${c.meaning}</span><br>` + c.ex.replace(/\[\[(.+?)\]\]/g, '<span class="blank"></span>'),
+      q: `<span class="muted">${c.meaning}</span><br>` + exOf(c)[0].replace(/\[\[(.+?)\]\]/g, '<span class="blank"></span>'),
       why: `<em>${c.phrase}</em>: ${c.meaning}. ${c.logic || ''}`
     };
   }
@@ -371,15 +371,35 @@ window.App = { routes: {}, cleanup: [] };
   const sayBtn = (go, label) => h('button', { class: 'icon-btn say', type: 'button', title: label, 'aria-label': label, onclick: go }, icon('listening'));
   const phraseLine = (c) => h('span', { class: 'phrase' }, sayBtn(() => sayPhrase(c), 'Listen to "' + c.phrase + '"'),
     C1.ipa && C1.ipa[c.phrase] ? h('span', { class: 'ipa', lang: 'en-fonipa', title: 'British English, from a pronunciation lexicon' }, C1.ipa[c.phrase]) : null);
+  /* a card with several senses ("to mention a topic; to raise a child") shows one example per sense (data/vocabmulti.js) */
+  /* optional: a learner who finds the extra examples distracting can switch them off (here, or in the account settings) */
+  const MULTI = 'c1path.multiex';
+  const multiOn = () => { try { return localStorage.getItem(MULTI) !== '0'; } catch (e) { return true; } };
+  const exOf = (c) => ((multiOn() && (C1.vocabMulti || {})[c.phrase]) || [c.ex]);
+  const multiToggle = (after) => {
+    const box = h('input', { type: 'checkbox', checked: multiOn() });
+    box.addEventListener('change', () => { try { localStorage.setItem(MULTI, box.checked ? '1' : '0'); } catch (e) { /* optional */ } if (after) after(); });
+    return h('label', { class: 'multitoggle' }, box, ' Show an example for each meaning');
+  };
+  const sensesOf = (c) => c.meaning.split(';').map((s) => s.trim()).filter(Boolean);
+  const plainEx = (e) => e.replace(/\[\[|\]\]/g, '');
+  /* blank: the phrase is hidden (a question); listen: each example gets a speaker button */
+  function meaningBlock(c, blank, listen) {
+    const ex = exOf(c), ss = sensesOf(c);
+    const fmt = (e) => e.replace(/\[\[(.+?)\]\]/g, blank ? '<span class="blank"></span>' : '<em>$1</em>');
+    const line = (e, label) => h('div', { class: 'eg', html: fmt(e) }, listen ? ' ' : null);
+    const hear = (e, n) => (listen ? sayBtn(() => Engine.Speech.say(spoken(plainEx(e)), 1), 'Listen to example' + (n ? ' ' + n : '')) : null);
+    if (ss.length < 2 || ex.length !== ss.length) return h('div', {}, h('div', {}, c.meaning), h('div', { class: 'eg-row' }, line(ex[0]), hear(ex[0], 0)));
+    return h('ol', { class: 'senses' }, ss.map((s, i) => h('li', {}, h('div', { class: 'sense' }, s), h('div', { class: 'eg-row' }, line(ex[i]), hear(ex[i], i + 1)))));
+  }
   function cardView(c, showGroup) {
     return h('div', { class: 'vcard' },
       h('div', {}, h('span', { class: 'hl' }, c.phrase), ' ', phraseLine(c), ' ', h('span', { class: 'tag' }, c.kind), showGroup ? h('span', { class: 'muted' }, ' ' + c.groupTitle) : null),
-      h('div', {}, c.meaning),
-      h('div', { class: 'eg', html: c.ex.replace(/\[\[(.+?)\]\]/g, '<em>$1</em>') }),
+      meaningBlock(c, false, false),
       c.logic ? h('div', { class: 'muted' }, '' + c.logic) : null,
       h('button', {
         class: 'btn small ghost', style: 'margin-top:6px', onclick: (e) => {
-          Store.addNote({ title: c.phrase, text: `${c.meaning}\n${c.ex.replace(/\[\[|\]\]/g, '')}${c.logic ? '\n' + c.logic : ''}`, tag: 'Vocabulary', href: '#/vocab/' + (c.group || '') });
+          Store.addNote({ title: c.phrase, text: `${c.meaning}\n${exOf(c).map(plainEx).join('\n')}${c.logic ? '\n' + c.logic : ''}`, tag: 'Vocabulary', href: '#/vocab/' + (c.group || '') });
           e.target.textContent = 'Saved ✓'; e.target.disabled = true;
         }
       }, '＋ Note'));
@@ -393,7 +413,7 @@ window.App = { routes: {}, cleanup: [] };
       const q = search.value.trim().toLowerCase();
       results.replaceChildren();
       if (q.length < 2) return;
-      const hits = allCards.filter((c) => (c.phrase + ' ' + c.meaning + ' ' + c.ex).toLowerCase().includes(q)).slice(0, 30);
+      const hits = allCards.filter((c) => (c.phrase + ' ' + c.meaning + ' ' + exOf(c).join(' ')).toLowerCase().includes(q)).slice(0, 30);
       results.append(h('div', { class: 'card' }, hits.length ? hits.map((c) => cardView(c, true)) : h('p', { class: 'muted' }, 'No matches.')));
     });
     const sections = VOCAB_SECTIONS.map((sec) => {
@@ -422,6 +442,7 @@ window.App = { routes: {}, cleanup: [] };
     view(unitBack() || back('#/vocab', 'Vocabulary'), partOf('vocab', id), h('div', {}, h('span', { class: 'tag' }, g.section || 'Vocabulary')), h('h1', {}, g.title),
       h('div', { class: 'callout' }, h('strong', {}, 'The idea'), h('div', { html: g.idea })),
       h('div', { class: 'row' }, link('#/review/' + g.id + uq(), 'Study with flashcards', 'btn'), link('#/vquiz/' + g.id + uq(), 'Quick quiz', 'btn ghost')),
+      h('p', {}, multiToggle(() => route())),
       h('div', { class: 'card' }, g.cards.map((c) => cardView(Object.assign({ groupTitle: g.title }, c)))),
       uf || h('div', { class: 'pager' }, pv ? link('#/vocab/' + pv.id, '← ' + pv.title, 'btn ghost small') : h('span'), nx ? link('#/vocab/' + nx.id, nx.title + ' →', 'btn ghost small') : h('span')));
   }
@@ -465,19 +486,19 @@ window.App = { routes: {}, cleanup: [] };
       const id = queue[0], c = cardById[id];
       box.append(h('p', { class: 'muted' }, `${queue.length} left · ${c.groupTitle}`));
       const front = h('div', { class: 'card flash' },
-        h('div', { class: 'muted' }, 'Which expression fits?'),
+        h('div', { class: 'muted' }, 'Which expression fits? Try to remember it before you look.'),
         h('div', { class: 'big' }, c.meaning),
-        h('div', { class: 'eg', html: c.ex.replace(/\[\[(.+?)\]\]/g, '<span class="blank"></span>') }),
+        h('div', { class: 'eg', html: exOf(c)[0].replace(/\[\[(.+?)\]\]/g, '<span class="blank"></span>') }),
         h('div', {}, h('button', { class: 'btn', 'data-act': 'reveal', onclick: reveal }, 'Show answer'), h('span', { class: 'muted', style: 'margin-left:10px' }, 'Space reveals · 1–4 rates')));
       box.append(front);
 
       function reveal() {
         front.replaceChildren(
-          h('div', { class: 'big hl' }, c.phrase, ' ', phraseLine(c)), h('div', {}, c.meaning),
-          h('div', { class: 'eg', html: c.ex.replace(/\[\[(.+?)\]\]/g, '<em>$1</em>') }), h('div', {}, sayBtn(() => Engine.Speech.say(spoken(c.ex.replace(/\[\[|\]\]/g, '')), 1), 'Listen to the example sentence'), h('span', { class: 'muted' }, ' Hear the example')),
+          h('div', { class: 'big hl' }, c.phrase, ' ', phraseLine(c)), meaningBlock(c, false, true),
           c.logic ? h('div', { class: 'callout' }, '' + c.logic) : '',
-          h('div', { class: 'rate' }, [['Again', 0], ['Hard', 1], ['Good', 2], ['Easy', 3]].map(([label, r]) =>
-            h('button', { class: 'btn', 'data-rate': r, onclick: () => rateIt(r) }, label, h('small', {}, Store.intervalLabel(id, r))))));
+          h('p', { class: 'ratehead' }, h('strong', {}, 'How well did you remember it?'), ' Rate it honestly, without thinking about the schedule: the site uses your answer to decide when to show it again.'),
+          h('div', { class: 'rate' }, [['Again', 0, 'I forgot it'], ['Hard', 1, 'I got it, with effort'], ['Good', 2, 'I remembered it'], ['Easy', 3, 'No effort at all']].map(([label, r, what]) =>
+            h('button', { class: 'btn', 'data-rate': r, onclick: () => rateIt(r) }, label, h('small', { class: 'what' }, what)))));
       }
       function rateIt(r) {
         Store.rate(id, r);
@@ -903,7 +924,7 @@ window.App = { routes: {}, cleanup: [] };
   window.App = Object.assign(window.App, {
     stepsLeft: () => { const all = C1.course.flatMap((u) => unitSteps(u)); return { done: all.filter((x) => x.done).length, total: all.length }; },
     unitsDone: () => C1.course.filter((u) => unitDone(u) === unitSteps(u).length).length, unitCount: () => C1.course.length,
-    topicHref, icon, view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
+    multiToggle, topicHref, icon, view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
     unitBack, unitFooter, uq, partOf, setKey, scoreChip, nextInUnit, nextCourseStep, dueIds, updateBadge, dataCard, freshCards: () => Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length)), start: route, route
   });
   Object.defineProperty(window.App, 'unitCtx', { get: () => unitCtx });

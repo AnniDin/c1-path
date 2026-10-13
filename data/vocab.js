@@ -170,17 +170,17 @@ window.C1 = window.C1 || {};
       id: 'discourse', section: 'Idioms and expressions', title: 'Linking and stance expressions', short: 'Formal phrases for essays, reports and speaking.',
       idea: `<p>Compare <em>Tourism brings jobs. It damages the coast.</em> with <em>On the whole, tourism brings jobs; to a certain extent, however, it damages the coast.</em> The second tells the reader how to take each idea: as a general view, then as a limit. These phrases do that job, and fall into four groups: <strong>generalising</strong> (on the whole), <strong>limiting</strong> (to a certain extent), <strong>giving a reason</strong> (in view of), <strong>time frames</strong> (for the time being, in the long run). Using them naturally lifts a Writing or Speaking performance from B2 to C1.</p>`,
       cards: [
-        ex('by and large', 'mostly; in the great majority of cases', '[[By and large]], the project has been a success.', 'Fixed phrase: you cannot change any word. A safe generalising opener.'),
+        ex('by and large', 'mostly, in the great majority of cases', '[[By and large]], the project has been a success.', 'Fixed phrase: you cannot change any word. A safe generalising opener.'),
         ex('on the whole', 'in general, even if there are some exceptions', '[[On the whole]], I agree with the author.', 'Often opens the sentence, followed by a comma. Not the same as <em>as a whole</em>.'),
         ex('to a certain extent', 'partly, but not completely', 'I agree with you [[to a certain extent]].', 'Limits your agreement: safe, balanced opinion. Also <em>to some extent</em>.'),
         ex('with regard to', 'concerning (formal)', '[[With regard to]] your request, we are unable to help.', 'Formal replacement for <em>about</em>. Singular <em>regard</em> is the safe exam form (<em>with regards to</em> is a common mistake).'),
         ex('in view of', 'because of (formal)', '[[In view of]] the weather, the event is cancelled.', 'Followed by a noun or <em>the fact that</em>. Hook: you "view" the fact as the reason.'),
-        ex('for the time being', 'temporarily; for now', 'You can stay here [[for the time being]].', 'Suggests the situation will change later. Neutral register; synonym of <em>for now</em>.'),
-        ex('in the long run', 'over a long period; eventually', 'Cheap shoes cost more [[in the long run]].', 'Hook: judge it at the end of a long race, not at the start. Opposite: <em>in the short term</em>.'),
+        ex('for the time being', 'temporarily, for now', 'You can stay here [[for the time being]].', 'Suggests the situation will change later. Neutral register; synonym of <em>for now</em>.'),
+        ex('in the long run', 'over a long period, eventually', 'Cheap shoes cost more [[in the long run]].', 'Hook: judge it at the end of a long race, not at the start. Opposite: <em>in the short term</em>.'),
         ex('all things considered', 'after weighing up every factor, before a final judgement', '[[All things considered]], it was a good decision.', 'A summarising sentence opener, typical of conclusions.'),
         ex('on the grounds that', 'for the reason that (formal)', 'He was refused entry [[on the grounds that]] he had no visa.', '"Ground" = foundation for a claim.'),
         ex('in the event of', 'if something happens (formal)', '[[In the event of]] fire, use the stairs.', 'Noun phrase after it: <em>in the event of rain</em>.'),
-        ex('that said', 'however; despite that', 'It\'s expensive. [[That said]], it\'s worth it.', 'Adds a contrast to what was just said.'),
+        ex('that said', 'however, despite that', 'It\'s expensive. [[That said]], it\'s worth it.', 'Adds a contrast to what was just said.'),
         ex('by no means', 'not at all', 'The results are [[by no means]] conclusive.', 'Strong negative; triggers inversion if fronted: <em>By no means is it certain.</em>')
       ]
     }
