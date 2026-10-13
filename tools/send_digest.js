@@ -2,6 +2,7 @@
    Run weekly by .github/workflows/digest.yml. Needs Node 18+ and, only for real sending, `npm i nodemailer`.
    Secrets (environment): SUPABASE_URL, SUPABASE_SERVICE_KEY (service_role), GMAIL_USER, GMAIL_APP_PASSWORD.
    --dry-run   writes tools/digest-preview.html and sends nothing.
+   Scheduled runs (EVENT=schedule) send only on Thursday from 9:00 Madrid time.
    --to ADDR   sends this week's email to ADDR only (a test); the list and the "last sent" dates are not touched. */
 const fs = require('fs'), vm = require('vm'), path = require('path');
 const root = path.join(__dirname, '..');
@@ -52,7 +53,17 @@ async function rpc(name, body) {
   return t ? JSON.parse(t) : null;
 }
 
+/* scheduled runs only send on Thursday from 9:00 in Madrid (the workflow has two UTC times to cover summer and winter time) */
+function madridNow() {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', weekday: 'short', hour: 'numeric', hour12: false }).formatToParts(new Date()).map((x) => [x.type, x.value]));
+  return { day: p.weekday, hour: +p.hour % 24 };
+}
+
 (async () => {
+  if (process.env.EVENT === 'schedule') {
+    const m = madridNow();
+    if (m.day !== 'Thu' || m.hour < 9) { console.log(`Not the time yet (${m.day} ${m.hour}:00 in Madrid): nothing sent.`); return; }
+  }
   const trick = pickTrick(Date.now());
   console.log('Trick of the week:', trick.key, '-', plain(trick.t.t));
   if (dry) {

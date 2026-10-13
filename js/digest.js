@@ -11,13 +11,13 @@
     const box = h('input', { type: 'checkbox', id: 'digest-on', disabled: true });
     box.addEventListener('change', async () => {
       box.disabled = true; msg.textContent = 'Saving…';
-      try { await Cloud.rpc('set_digest', { p_on: box.checked }); msg.textContent = box.checked ? 'Done. The next trick arrives on Monday morning.' : 'Done. No more emails.'; }
+      try { await Cloud.rpc('set_digest', { p_on: box.checked }); msg.textContent = box.checked ? 'Done. The next trick arrives on Thursday at 9:00 (Spanish time).' : 'Done. No more emails.'; }
       catch (e) { box.checked = !box.checked; msg.textContent = 'Could not save this: ' + e.message; }
       box.disabled = false;
     });
     Cloud.rpc('get_digest').then((on) => { box.checked = !!on; box.disabled = false; }).catch(() => { msg.textContent = 'Weekly emails are not available on this copy of the site yet.'; });
     return A.cardBlock('A little trick by email',
-      h('p', { class: 'muted' }, 'Once a week, on Monday, one short trick that settles a common doubt, with a link to practise it. Off unless you switch it on. Every email has a link to stop them.'),
+      h('p', { class: 'muted' }, 'Once a week, on Thursday at 9:00 (Spanish time), one short trick that settles a common doubt, with a link to practise it. Off unless you switch it on. Every email has a link to stop them.'),
       h('label', { for: 'digest-on', class: 'row' }, box, ' Send me one trick a week at ', h('strong', {}, (Cloud.user() || {}).email || 'my email')), msg);
   };
 
