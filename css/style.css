@@ -548,4 +548,18 @@ h1:has(.doodle){position:relative;min-height:86px;display:flex;align-items:flex-
 .senses li{margin:8px 0}
 .senses .sense{font-weight:600}
 .eg-row{display:flex;gap:6px;align-items:flex-start}
-.eg-row .eg{flex:1}
+.eg-row .eg{flex:0 1 auto}
+
+.skiprow{margin:10px 0 0}
+
+/* flashcards and vocabulary cards look like index cards: a frame, a coloured top edge and a hard shadow */
+.card.flash {
+  background: var(--bg); border: 2px solid var(--ink); border-top: 10px solid var(--accent); border-radius: 3px;
+  box-shadow: 5px 5px 0 var(--line); padding: 26px 24px; margin: 16px 0 22px; min-height: 280px;
+}
+.vcard, .vcard:first-child {
+  background: var(--bg); border: 1.5px solid var(--ink); border-top: 6px solid var(--accent); border-radius: 3px;
+  box-shadow: 3px 3px 0 var(--line); padding: 12px 16px 14px; margin: 14px 0;
+}
+.card:has(> .vcard) { border-top: 0; padding: 0; }
+@media (max-width: 520px) { .card.flash { padding: 20px 16px; } }

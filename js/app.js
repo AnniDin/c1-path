@@ -468,6 +468,7 @@ window.App = { routes: {}, cleanup: [] };
       const rev = box.querySelector('[data-act=reveal]');
       if (rev && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); rev.click(); return; }
       if (/^[1-4]$/.test(e.key)) box.querySelector(`[data-rate="${+e.key - 1}"]`)?.click();
+      if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'n') box.querySelector('[data-skip]')?.click();
     };
     document.addEventListener('keydown', onKey);
     App.cleanup.push(() => document.removeEventListener('keydown', onKey));
@@ -489,7 +490,7 @@ window.App = { routes: {}, cleanup: [] };
         h('div', { class: 'muted' }, 'Which expression fits? Try to remember it before you look.'),
         h('div', { class: 'big' }, c.meaning),
         h('div', { class: 'eg', html: exOf(c)[0].replace(/\[\[(.+?)\]\]/g, '<span class="blank"></span>') }),
-        h('div', {}, h('button', { class: 'btn', 'data-act': 'reveal', onclick: reveal }, 'Show answer'), h('span', { class: 'muted', style: 'margin-left:10px' }, 'Space reveals · 1–4 rates')));
+        h('div', {}, h('button', { class: 'btn', 'data-act': 'reveal', onclick: reveal }, 'Show answer'), h('span', { class: 'muted', style: 'margin-left:10px' }, 'Space reveals · 1–4 rates (optional)')));
       box.append(front);
 
       function reveal() {
@@ -498,8 +499,11 @@ window.App = { routes: {}, cleanup: [] };
           c.logic ? h('div', { class: 'callout' }, '' + c.logic) : '',
           h('p', { class: 'ratehead' }, h('strong', {}, 'How well did you remember it?'), ' Rate it honestly, without thinking about the schedule: the site uses your answer to decide when to show it again.'),
           h('div', { class: 'rate' }, [['Again', 0, 'I forgot it'], ['Hard', 1, 'I got it, with effort'], ['Good', 2, 'I remembered it'], ['Easy', 3, 'No effort at all']].map(([label, r, what]) =>
-            h('button', { class: 'btn', 'data-rate': r, onclick: () => rateIt(r) }, label, h('small', { class: 'what' }, what)))));
+            h('button', { class: 'btn', 'data-rate': r, onclick: () => rateIt(r) }, label, h('small', { class: 'what' }, what)))),
+          h('p', { class: 'skiprow' }, h('button', { class: 'btn small ghost', type: 'button', 'data-skip': '1', onclick: skipIt }, 'Next card without rating'), h('span', { class: 'muted' }, ' Rating is optional: the card keeps its schedule and comes back later. Key: N or →')));
       }
+      /* rating is optional: move on and leave the card exactly as it was */
+      function skipIt() { queue.shift(); next(); }
       function rateIt(r) {
         Store.rate(id, r);
         Store.record('v-cards', r >= 2 ? 1 : 0, 1);
