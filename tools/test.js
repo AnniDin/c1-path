@@ -207,5 +207,27 @@ const sync = (a, b) => { b.Store.mergeData(a.Store.exportData()); a.Store.mergeD
   eq('one right answer pushes it three days out', [D.Store.dueMistakes().length, D.Store.mistakes().length, m.due > Date.now() + 2 * 864e5], [0, 1, true]);
 }
 
+/* --- the emails: the trick of the week and the monthly summary --- */
+{
+  const L = require('./digest_lib'), trickKeys = new Set(), NIL = '00000000-0000-0000-0000-000000000000';
+  for (let w = 0; w < 120; w++) {
+    const p = L.pickTrick(w * 7 * 864e5 + 1), m = L.renderWeekly(p, NIL);
+    trickKeys.add(p.key);
+    if (!p.t.t || !p.t.tip || !m.html.includes('#/unsubscribe/' + NIL) || !m.text.includes('Stop these emails')) { eq('weekly email ' + w + ' is complete', p.key, 'complete'); break; }
+  }
+  eq('the trick rotates through many tricks', trickKeys.size > 50, true);
+  eq('two people get the same trick in the same week', L.pickTrick(5e9).key, L.pickTrick(5e9 + 1000).key);
+  /* a person with progress on two devices */
+  const A = device(), B = device(), item = { type: 'mcq', q: 'S ___', options: ['a', 'b'], answer: 0, why: 'x' };
+  A.Store.record('g-wish', 2, 8); A.Store.bump && A.Store.bump(); B.Store.record('g-wish', 1, 4);
+  A.Store.logResults([{ ok: false, given: 'b', item }], { topic: 't', label: 'T', href: '#/' });
+  sync(A, B);
+  const s = L.summarise(JSON.parse(A.Store.exportData()));
+  eq('summary adds both devices and names the weak topic', [s.total, s.weak.length && s.weak[0].pct], [12, 25]);
+  const mail = L.renderMonthly(s, NIL);
+  eq('monthly email says it is not an exam score and can be stopped', [/not an exam score/.test(mail.html), mail.html.includes('#/unsubscribe/'), /Your month/.test(mail.subject)], [true, true, true]);
+  eq('an empty account still gets a sensible summary', /did not answer any questions/.test(L.renderMonthly(L.summarise({}), NIL).html), true);
+}
+
 console.log(`${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

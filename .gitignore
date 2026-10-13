@@ -1,3 +1,4 @@
 .claude/settings.local.json
 graphify-out/
 tools/digest-preview.html
+tools/digest-preview-monthly.html
