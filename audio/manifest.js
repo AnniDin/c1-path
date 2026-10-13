@@ -681,6 +681,79 @@ C1.audio = {
     93.91,
     100.88
    ]
+  },
+  "tutorial-library-essay": {
+   "src": "audio/listening/tutorial-library-essay.mp3",
+   "dur": 112.1,
+   "marks": [
+    0.0,
+    9.85,
+    22.09,
+    30.04,
+    39.11,
+    47.08,
+    53.75,
+    70.88,
+    76.98,
+    84.8,
+    91.32,
+    103.16,
+    107.83
+   ]
+  },
+  "council-evening-buses": {
+   "src": "audio/listening/council-evening-buses.mp3",
+   "dur": 108.5,
+   "marks": [
+    0.0,
+    10.0,
+    31.29,
+    39.13,
+    56.79,
+    58.9,
+    75.64,
+    93.34,
+    103.26
+   ]
+  },
+  "podcast-processed-food": {
+   "src": "audio/listening/podcast-processed-food.mp3",
+   "dur": 97.8,
+   "marks": [
+    0.0,
+    12.52,
+    24.5,
+    26.01,
+    37.29,
+    40.04,
+    60.39,
+    63.03,
+    74.71,
+    79.51,
+    92.22,
+    95.03
+   ]
+  },
+  "debate-recording-meetings": {
+   "src": "audio/listening/debate-recording-meetings.mp3",
+   "dur": 110.8,
+   "marks": [
+    0.0,
+    6.93,
+    19.28,
+    23.73,
+    27.69,
+    45.52,
+    53.6,
+    58.63,
+    61.27,
+    69.5,
+    81.25,
+    84.39,
+    87.79,
+    101.74,
+    104.62
+   ]
   }
  }
 };

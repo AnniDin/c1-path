@@ -90,3 +90,5 @@ Grammar quiz items, vocabulary cards and Use of English sets follow the shapes a
 - "My mistakes" shows a "Slips a trick would fix" card that groups saved mistakes by trick.
 
 - Batch 2: `writing8.js`, `speaking6.js` (+ `levels10/11.js`, `course14/15.js`), reviewed and fixed. `trickdrills.js` now has 43 tricks × 6 items; weak ones rewritten. Trick patterns in `trickmap.js` cover about 100 of the ~1,100 main exercises. All scripts load with `defer`.
+
+- Batch 3: four more demanding listenings (`listening10.js`, with audio) and eight more Reading sets (Parts 5 to 8, `practice13.js`), reviewed by an independent pass; ratings in `levels12/13.js`, placement in `course16/17.js`. The About page (`js/about.js`) has a "Report a mistake" link that opens a prefilled GitHub issue. Measured on the published site: first contentful paint about 0.4 s, DOM ready about 0.7 s, 706 KB transferred for the scripts, so no lazy loading of the data files was added.
