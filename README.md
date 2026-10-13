@@ -92,3 +92,10 @@ Grammar quiz items, vocabulary cards and Use of English sets follow the shapes a
 - Batch 2: `writing8.js`, `speaking6.js` (+ `levels10/11.js`, `course14/15.js`), reviewed and fixed. `trickdrills.js` now has 43 tricks × 6 items; weak ones rewritten. Trick patterns in `trickmap.js` cover about 100 of the ~1,100 main exercises. All scripts load with `defer`.
 
 - Batch 3: four more demanding listenings (`listening10.js`, with audio) and eight more Reading sets (Parts 5 to 8, `practice13.js`), reviewed by an independent pass; ratings in `levels12/13.js`, placement in `course16/17.js`. The About page (`js/about.js`) has a "Report a mistake" link that opens a prefilled GitHub issue. Measured on the published site: first contentful paint about 0.4 s, DOM ready about 0.7 s, 706 KB transferred for the scripts, so no lazy loading of the data files was added.
+
+## Weekly trick email (opt-in)
+
+- Account page → "A little trick by email" (`js/digest.js`, off by default). The list lives in Supabase (`supabase/digest.sql`: a table with row level security and no policies, reached only through functions; the unsubscribe link works without signing in using a secret token).
+- `.github/workflows/digest.yml` runs `tools/send_digest.js` every Monday at 07:00 UTC (and by hand, in dry-run mode by default). Everyone gets the same trick that week, rotating through all tricks. Sent from a Gmail account with an app password through nodemailer (installed at run time, not a dependency of the site); about 500 emails a day is the Gmail limit.
+- Setup, once: run `supabase/digest.sql` in the Supabase SQL editor; add four repository secrets (Settings → Secrets and variables → Actions): `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` (the service_role key: never put it in the site), `GMAIL_USER`, `GMAIL_APP_PASSWORD` (a Google app password: needs 2-step verification on the account). Test with `node tools/send_digest.js --dry-run` (writes `tools/digest-preview.html`) and `node tools/send_digest.js --to you@example.com`.
+- GitHub pauses scheduled workflows after 60 days with no repository activity.

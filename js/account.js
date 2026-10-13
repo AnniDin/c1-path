@@ -68,7 +68,7 @@
         try { await Cloud.deleteAccount(); A.toast && A.toast('Account deleted'); A.route(); } catch (e) { alert('Could not delete the account: ' + e.message); }
       } }, 'Delete my account')) : null;
     A.view(h('h1', {}, 'My account', Doodle('account')), h('p', { class: 'lead' }, 'Who you are, your friends, settings, syncing between devices and your data.'),
-      who, user ? pictureCard(user.email) : null, A.friendsCard ? A.friendsCard() : null, A.calibCard ? A.calibCard() : null, A.syncCard ? A.syncCard() : null,
+      who, user ? pictureCard(user.email) : null, user && A.digestCard ? A.digestCard() : null, A.friendsCard ? A.friendsCard() : null, A.calibCard ? A.calibCard() : null, A.syncCard ? A.syncCard() : null,
       h('h2', {}, 'Settings'), h('p', { class: 'muted' }, 'AI feedback, better voices, offline use and sounds.'),
       A.aiCard ? A.aiCard() : null, window.Sound ? window.Sound.card() : null, A.neuralCard ? A.neuralCard() : null, A.offlineCard ? A.offlineCard() : null,
       A.dataCard(() => A.routes.account()), del);
