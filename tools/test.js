@@ -267,6 +267,7 @@ let swDone = Promise.resolve();
   swDone = w.then(async () => {
     const adds = calls.splice(0), go = async (url, mode) => { let p; handlers.fetch({ request: new Req(url, { mode }), respondWith: (x) => { p = x; } }); if (p) await p; return calls.splice(0); };
     eq('install fetches every file past the HTTP cache', [adds.length > 100, adds.every((c) => c === 'add reload')], [true, true]);
+    eq('the worker takes over only after every file is cached', /addAll\([^;]*\)\)\.then\(\(\) => self\.skipWaiting/.test(read('sw.js')), true);
     eq('a script is served from the cache with no network', await go('js/app.js'), []);
     eq('the page is network-first', [await go('index.html', 'navigate'), await go('./', 'navigate')], [['net /c1-path/index.html no-cache'], ['net /c1-path/ no-cache']]);
     eq('a file that was not precached is fetched once, then cached', [(await go('icons/new.png')).length, (await go('icons/new.png')).length], [1, 0]);

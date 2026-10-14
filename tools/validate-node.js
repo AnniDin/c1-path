@@ -54,6 +54,7 @@ Object.entries(sandbox.C1.vocabMulti || {}).forEach(([ph, list]) => {
 Object.values(cardsByPhrase).forEach((c) => { if (c.meaning.includes(';') && !(sandbox.C1.vocabMulti || {})[c.phrase]) issues.push('vocabmulti: missing examples for ' + c.phrase); });
 const swSrc = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
 { const want = require('./stamp_sw').expected().name; if (!swSrc.includes("'" + want + "'")) issues.push('sw.js cache name is out of date: run node tools/stamp_sw.js'); }
+{ const list = JSON.parse(/const PRECACHE = (\[.*?\]);/s.exec(swSrc)[1]); list.filter((f) => f !== './' && !fs.existsSync(path.join(root, f))).forEach((f) => issues.push('sw.js PRECACHE lists a missing file (it would stop every update): ' + f)); }
 scripts.concat(['css/style.css', 'manifest.webmanifest', 'icons/icon.svg']).forEach((f) => { if (!swSrc.includes('"' + f + '"')) issues.push('sw.js PRECACHE is missing ' + f); });
 if (issues.length) { console.error(issues.length + ' content problem(s):\n- ' + issues.join('\n- ')); process.exit(1); }
 console.log('Content OK: ' + sandbox.C1.grammar.length + ' lessons, ' + sandbox.C1.vocab.length + ' vocabulary groups, ' + sandbox.C1.practice.reduce((a, p) => a + p.sets.length, 0) + ' practice sets, ' + sandbox.C1.course.length + ' course units.');
