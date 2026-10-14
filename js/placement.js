@@ -7,10 +7,21 @@
     short: { name: 'Short', per: 4, blurb: '12 questions, about 8 minutes. A quick first idea.' },
     adaptive: { name: 'Adaptive', blurb: 'About 12 questions, one at a time. It gets harder when you are right and easier when you are not.' }
   };
+  const MIX = { full: { reading: 2, listening: 1 }, short: { reading: 1, listening: 0 } };
   const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
-  /* `per` random questions from each level, easiest level first */
-  const pick = (bank, per) => LEVELS.flatMap((l) => shuffle(bank.filter((q) => q.level === l)).slice(0, per));
+  /* the placement bank: the grammar/vocabulary items, the reading items (data/placement2.js) and one item per short placement clip (C1.placementListening) */
+  const bank = () => (window.C1.placement || []).concat((window.C1.placementListening || []).filter((l) => l.questions && l.questions[0]).map((l) => {
+    const q = l.questions[0];
+    return { level: l.placementLevel, topic: 'listening', skill: 'listening', audioId: l.id, title: l.title, intro: l.intro, script: l.script, q: q.q, options: q.options, answer: q.answer, why: q.why };
+  }));
+
+  /* `per` random questions from each level, easiest level first, of which mix = { reading: n, listening: n } are reading and listening items (if there are enough);
+     the rest are grammar and vocabulary. Without a mix: grammar and vocabulary only. */
+  const pick = (items, per, mix) => LEVELS.flatMap((l) => {
+    const at = items.filter((q) => q.level === l), skills = ['reading', 'listening'].flatMap((k) => shuffle(at.filter((q) => q.skill === k)).slice(0, (mix || {})[k] || 0));
+    return shuffle(skills.concat(shuffle(at.filter((q) => !q.skill)).slice(0, per - skills.length)));
+  });
 
   /* the verdict from right/total per level: { B1: [right, total], B2: [...], C1: [...] } */
   function verdict(lv) {
@@ -39,7 +50,7 @@
     });
     return lv;
   }
-  window.Placement = { LEVELS, MODES, pick, verdict, next, adaptiveLevels };
+  window.Placement = { LEVELS, MODES, MIX, bank, pick, verdict, next, adaptiveLevels };
   if (!window.App || !window.Engine) return; /* the tests load only the logic above */
 
   const A = window.App, { h } = Engine;
@@ -58,7 +69,9 @@
         ? `${res.filter((r) => r.ok).length} of ${res.length} right. B1: ${lv.B1[0]}/${lv.B1[1]} · B2: ${lv.B2[0]}/${lv.B2[1]} · C1: ${lv.C1[0]}/${lv.C1[1]}`
         : `B1: ${lv.B1[0]}/${lv.B1[1]} · B2: ${lv.B2[0]}/${lv.B2[1]} · C1: ${lv.C1[0]}/${lv.C1[1]}`),
       h('p', {}, v.plan));
-    if (prev && prev.lv) out.append(h('p', { class: 'muted' }, `Last time (${prev.date}): ${sum(prev.lv)}/${total(prev.lv)}. Now: ${sum(shown)}/${total(shown)}. The questions come from a bank of ${C1.placement.length}, so they are not always the same.`));
+    const sk = (k) => { const x = items.map((q, i) => [q, res[i]]).filter(([q]) => q.skill === k); return x.length ? `${x.filter(([, r]) => r.ok).length}/${x.length}` : null; };
+    if (sk('reading') || sk('listening')) out.append(h('p', { class: 'muted' }, 'Reading: ' + (sk('reading') || 'not asked') + ' · Listening: ' + (sk('listening') || 'not asked') + '. A few questions only: a hint, not a measurement.'));
+    if (prev && prev.lv) out.append(h('p', { class: 'muted' }, `Last time (${prev.date}): ${sum(prev.lv)}/${total(prev.lv)}. Now: ${sum(shown)}/${total(shown)}. The questions come from a bank of ${bank().length}, so they are not always the same.`));
     const links = [...missed].map((id) => A.grammar.find((x) => x.id === id)).filter(Boolean);
     if (links.length) out.append(h('p', {}, 'Lessons to look at first:'), h('ul', {}, links.map((g) => h('li', {}, A.link('#/grammar/' + g.id, g.title)))));
     if (missed.has('vocab')) out.append(h('p', {}, 'You also slipped on set phrases and verb patterns: ', A.link('#/vocab', 'the vocabulary cards'), ' and ', A.link('#/vquiz', 'quizzes'), ' help.'));
@@ -70,10 +83,12 @@
 
   /* complete and short: all questions on one page, checked together */
   function fixed(mode) {
-    const prev = Store.state.placement, items = pick(C1.placement, MODES[mode].per).map((p) => Object.assign({ type: 'mcq' }, p));
+    const prev = Store.state.placement, items = pick(bank(), MODES[mode].per, MIX[mode]).map((p) => Object.assign({ type: 'mcq' }, p));
+    /* a listening question is preceded by its recording (not numbered, not scored) */
+    const shownItems = items.flatMap((p) => [Engine.recording(p), p].filter(Boolean));
     const box = h('div', {}, A.back('#/placement', 'Placement tests'), h('h1', {}, MODES[mode].name + ' placement test'),
       h('p', { class: 'lead' }, `${items.length} questions from B1 up to C1. Do not guess wildly: a wrong answer with an explanation teaches you more than a lucky one.`),
-      Engine.quiz(items, { source, onRetry: () => fixed(mode), onScore: (c, t, res) => result(box, items, res, mode, prev) }));
+      Engine.quiz(shownItems, { source, onRetry: () => fixed(mode), onScore: (c, t, res) => result(box, items, res, mode, prev) }));
     A.view(box);
   }
 
@@ -85,7 +100,7 @@
     box.append(stage);
     A.view(box);
     function ask() {
-      const pool = (lvl) => C1.placement.filter((q) => q.level === LEVELS[lvl] && !used.has(q));
+      const all = bank(), pool = (lvl) => all.filter((q) => q.level === LEVELS[lvl] && !used.has(q));
       let lvl = next(answers);
       /* if that level has run out, take the nearest one that has not */
       const order = [lvl, lvl - 1, lvl + 1, lvl - 2, lvl + 2].filter((i) => i >= 0 && i <= 2);
@@ -93,8 +108,9 @@
       const q = shuffle(pool(lvl))[0];
       used.add(q);
       const it = Object.assign({ type: 'mcq' }, q), r = Engine.item(it, answers.length + 1);
+      const rec = Engine.recording(q) ? Engine.item(Engine.recording(q)) : null;
       const go = h('button', { class: 'btn', onclick: check }, 'Check');
-      stage.replaceChildren(h('p', { class: 'muted' }, `Question ${answers.length + 1} of ${MAX}`), r.el, h('div', { class: 'row', style: 'margin-top:14px' }, go));
+      stage.replaceChildren(h('p', { class: 'muted' }, `Question ${answers.length + 1} of ${MAX}`), rec ? rec.el : null, r.el, h('div', { class: 'row', style: 'margin-top:14px' }, go));
       function check() {
         if (!r.el.querySelector('input:checked')) return;
         const [x] = r.check();

@@ -63,7 +63,7 @@
   }
 
   /* away for 3 days or more: Pica is sad, and gently says so. Once you have answered something today she cheers up. */
-  function missYou() {
+  function missYou(away) {
     const answered = (Store.state.days || {})[Store.today()] || 0;
     if (away < 3) return null;
     if (answered > 0) return { mood: 'happy', text: `You came back after ${away} days, and you are already practising. I am delighted.` };
@@ -73,9 +73,15 @@
     return { mood: 'sad', text };
   }
 
+  A.missYou = (days) => missYou(days);
+
+  /* the line for a day: the weekday remark on every third day, otherwise the next one in the list */
+  const greetLine = (d, weekday) => (WEEKDAY[weekday] && d % 3 === 0 ? WEEKDAY[weekday] : LINES[d % LINES.length]);
+  A.greetLine = greetLine;
+
   A.picaGreeting = () => {
     if (!on() || !window.PicaSVG) return null;
-    const sad = missYou();
+    const sad = missYou(away);
     if (sad) {
       const due = A.dueIds ? A.dueIds().length : 0;
       return h('div', { class: 'picasays greeting ' + sad.mood },
@@ -83,13 +89,39 @@
         h('div', { class: 'picasay' }, h('p', {}, h('strong', {}, hello() + '. '), sad.text),
           sad.mood === 'sad' ? h('p', {}, h('a', { class: 'btn small', href: due ? '#/review' : '#/course/mix' }, due ? 'Review a few cards' : 'Try a short mixed review')) : null));
     }
-    const d = dayNumber(), line = WEEKDAY[new Date().getDay()] && d % 3 === 0 ? WEEKDAY[new Date().getDay()] : LINES[d % LINES.length];
+    const line = greetLine(dayNumber(), new Date().getDay());
     const w = wordOfTheDay(), r = remark();
     return h('div', { class: 'picasays greeting' },
       h('span', { class: 'picaface', 'aria-hidden': 'true', html: window.PicaSVG('happy') }),
       h('div', { class: 'picasay' },
         h('p', {}, h('strong', {}, hello() + '! '), line, r ? ' ' + r : ''),
         w ? h('p', { class: 'muted' }, 'Shiny word of the day: ', h('a', { href: '#/vocab/' + w.g.id }, h('strong', {}, w.c.phrase)), ' — ' + w.c.meaning.split(';')[0].trim() + '.') : null));
+  };
+
+  /* the first time you open a kind of task, Pica says in two sentences what it asks and how to attack it, with a link to that task's tricks. Once per task; "Got it" hides it. */
+  const TIPS = {
+    mcq: 'Read the whole sentence first, then test each option inside it. One option sounds fine alone and fails with the words around it.',
+    cloze: 'One word per gap. Ask what job the gap does (article, preposition, auxiliary) before you think about meaning.',
+    wf: 'Decide which part of speech the gap needs, then build it from the word in capitals: a prefix, a suffix, maybe a plural.',
+    kwt: 'Rewrite the sentence with the key word unchanged, in two to five words. First spot the structure the key word forces.',
+    reading: 'Read the question, find the lines, then read those closely. An option can be wrong for just one detail.',
+    cross: 'Summarise each text in a few words, then compare what the writers think, not only what they write about.',
+    gapped: 'Read the paragraph before and after each gap. Pronouns, linkers and time order point back or forward.',
+    matching: 'Underline the idea in each statement, then look for it said in other words. The same words are often a trap.',
+    listening: 'Use the pause to predict what you will hear, and listen for the idea, not the word. Speakers often correct themselves.',
+    writing: 'Plan for a few minutes, answer every part of the question and match the register to the reader.',
+    speaking: 'Answer, then add a reason or an example. If a word is missing, say it another way and keep going.'
+  };
+  A.picaTip = (task) => {
+    const KEYT = 'c1path.tip.' + task;
+    try { if (!on() || !TIPS[task] || localStorage.getItem(KEYT) || !window.PicaSVG) return null; } catch (e) { return null; }
+    const sec = (window.C1.tricks || []).find((x) => x.id === 'tasks'), at = sec ? sec.items.findIndex((t) => t.task === task) : -1;
+    const box = h('div', { class: 'picasays greeting' },
+      h('span', { class: 'picaface', 'aria-hidden': 'true', html: window.PicaSVG('think') }),
+      h('div', { class: 'picasay' }, h('p', {}, h('strong', {}, 'First time here? '), TIPS[task]),
+        h('p', {}, at >= 0 ? h('a', { href: '#/tricks/tasks-' + at }, 'More tricks for this task') : null, at >= 0 ? ' · ' : '',
+          h('button', { class: 'btn small ghost', onclick: () => { try { localStorage.setItem(KEYT, '1'); } catch (e) { /* optional */ } box.remove(); } }, 'Got it'))));
+    return box;
   };
 
   /* the settings card: Pica's greeting and her friend alerts */

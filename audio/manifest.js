@@ -754,6 +754,135 @@ C1.audio = {
     101.74,
     104.62
    ]
+  },
+  "radio-translator-machines": {
+   "src": "audio/listening/radio-translator-machines.mp3",
+   "dur": 125.2,
+   "marks": [
+    0.0,
+    11.09,
+    25.8,
+    27.31,
+    43.82,
+    46.48,
+    61.16,
+    67.02,
+    89.43,
+    91.22,
+    100.22,
+    103.88
+   ]
+  },
+  "phone-deposit-dispute": {
+   "src": "audio/listening/phone-deposit-dispute.mp3",
+   "dur": 102.5,
+   "marks": [
+    0.0,
+    8.4,
+    18.66,
+    32.41,
+    41.75,
+    48.25,
+    55.95,
+    58.87,
+    65.24,
+    71.06,
+    80.42,
+    82.3,
+    92.89,
+    99.8
+   ]
+  },
+  "lecture-noise-health": {
+   "src": "audio/listening/lecture-noise-health.mp3",
+   "dur": 106.1,
+   "marks": [
+    0.0,
+    47.16,
+    55.73,
+    80.36,
+    83.9
+   ]
+  },
+  "discussion-village-shop": {
+   "src": "audio/listening/discussion-village-shop.mp3",
+   "dur": 105.4,
+   "marks": [
+    0.0,
+    9.08,
+    25.01,
+    33.03,
+    47.51,
+    52.95,
+    65.87,
+    73.46,
+    79.56,
+    85.85,
+    94.82,
+    101.0
+   ]
+  },
+  "talk-tide-mill": {
+   "src": "audio/listening/talk-tide-mill.mp3",
+   "dur": 98.1,
+   "marks": [
+    0.0,
+    44.45,
+    77.81
+   ]
+  },
+  "pl-b1-a": {
+   "src": "audio/listening/pl-b1-a.mp3",
+   "dur": 17.6,
+   "marks": [
+    0.0,
+    3.81,
+    11.17,
+    14.13
+   ]
+  },
+  "pl-b1-b": {
+   "src": "audio/listening/pl-b1-b.mp3",
+   "dur": 14.1,
+   "marks": [
+    0.0
+   ]
+  },
+  "pl-b2-a": {
+   "src": "audio/listening/pl-b2-a.mp3",
+   "dur": 22.5,
+   "marks": [
+    0.0,
+    2.85,
+    9.27,
+    14.71
+   ]
+  },
+  "pl-b2-b": {
+   "src": "audio/listening/pl-b2-b.mp3",
+   "dur": 17.7,
+   "marks": [
+    0.0,
+    3.49,
+    7.01
+   ]
+  },
+  "pl-c1-a": {
+   "src": "audio/listening/pl-c1-a.mp3",
+   "dur": 16.2,
+   "marks": [
+    0.0,
+    2.75,
+    9.95,
+    12.4
+   ]
+  },
+  "pl-c1-b": {
+   "src": "audio/listening/pl-c1-b.mp3",
+   "dur": 14.4,
+   "marks": [
+    0.0
+   ]
   }
  }
 };

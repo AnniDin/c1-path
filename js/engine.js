@@ -369,5 +369,7 @@
     return wrap;
   }
 
-  window.Engine = { h, quiz, item: (it, n) => R[it.type](it, n), norm, matches, Speech, shuffle, diffWords, gapItem };
+  /* a question about a recording carries a reference to it (audioId, title, intro, script): the player item to show before the question, or null */
+  const recording = (it) => (it && it.audioId ? { type: 'audio', audioId: it.audioId, title: it.title, intro: it.intro, script: it.script } : null);
+  window.Engine = { h, quiz, recording, item: (it, n) => R[it.type](it, n), norm, matches, Speech, shuffle, diffWords, gapItem };
 })();

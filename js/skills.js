@@ -143,6 +143,7 @@
               e.target.disabled = false;
             } }, 'Explain more') : null,
             h('button', { class: 'btn small ghost', onclick: () => { Store.removeMistake(m.id); draw(); } }, 'Got it'))),
+        Engine.recording(it) ? Engine.item(Engine.recording(it)).el : null,
         h('p', { class: 'q', html: promptHtml(it) }),
         h('div', { class: 'fb' }, h('b', {}, 'Your answer: '), m.given || '(blank)'),
         h('div', { class: 'fb good' }, h('b', {}, 'Correct: '), correctText(it)),
@@ -172,7 +173,7 @@
   function mistakePractice() {
     /* the ones that are due come first; if fewer than ten are due, the rest are the next in line */
     const due = Store.dueMistakes(), rest = Store.mistakes().filter((m) => !due.includes(m)).sort((a, b) => (a.due || 0) - (b.due || 0));
-    const items = sample(due, 10).concat(rest).slice(0, 10).map((m) => m.item);
+    const items = sample(due, 10).concat(rest).slice(0, 10).flatMap((m) => [Engine.recording(m.item), m.item].filter(Boolean));
     if (!items.length) { location.hash = '#/mistakes'; return; }
     view(back('#/mistakes', 'My mistakes'), h('h1', {}, 'Practise your mistakes'),
       h('p', { class: 'muted' }, 'Answer correctly twice (in two sessions) and a mistake leaves your list.'),
@@ -320,6 +321,7 @@
     const L = C1.listening || [];
     view(back('#/toolkit', 'Study'), h('h1', {}, A.icon('listening'), 'Listening'),
       h('p', { class: 'lead' }, 'Each recording is a spoken dialogue made with an open-source neural voice. Listen first without the transcript, answer, then read the transcript to see what you missed.'),
+      A.picaTip ? A.picaTip('listening') : null,
       A.taskTricks ? A.taskTricks('listening') : null,
       !Speech.supported ? h('div', { class: 'callout bad' }, 'This browser cannot read text aloud. You can still do the tasks from the transcripts, or try Chrome or Edge.') : null,
       window.C1 && C1.audio && C1.audio.listening ? null : voiceTip(),
@@ -517,6 +519,7 @@
     const S = (C1.speaking || {}).sets || [];
     view(back('#/toolkit', 'Study'), h('h1', {}, A.icon('speaking'), 'Speaking'),
       h('p', { class: 'lead' }, 'Speak aloud, out loud, every time. Each set follows the four parts of the exam with a timer and a recorder so you can listen back to yourself.'),
+      A.picaTip ? A.picaTip('speaking') : null,
       A.taskTricks ? A.taskTricks('speaking') : null,
       h('div', { class: 'row' }, link('#/skills/speaking/guide', 'Guide: the 4 parts, criteria and useful phrases', 'btn ghost'), link('#/skills/pronunciation', 'Pronunciation lab', 'btn ghost')),
       sectionHead('Practice sets'),
@@ -651,6 +654,7 @@
     const W = (C1.writing || {}).tasks || [];
     view(back('#/toolkit', 'Study'), h('h1', {}, A.icon('writing'), 'Writing'),
       h('p', { class: 'lead' }, 'Write a full text under exam conditions, check it with the analyser, then compare it with an annotated model. Your draft is saved in this browser as you type.'),
+      A.picaTip ? A.picaTip('writing') : null,
       A.taskTricks ? A.taskTricks('writing') : null,
       h('div', { class: 'row' }, link('#/skills/writing/guide', 'Guide: criteria, text types and checklist', 'btn ghost')),
       sectionHead('Tasks'),

@@ -4,4 +4,4 @@ const root = path.join(__dirname, '..');
 const ctx = { console }; ctx.window = ctx; vm.createContext(ctx);
 const files = [...fs.readFileSync(path.join(root, 'index.html'), 'utf8').matchAll(/<script src="(data\/listening\d*\.js)"/g)].map((m) => m[1]);
 files.forEach((f) => vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), ctx, { filename: f }));
-console.log(JSON.stringify(ctx.C1.listening.map((s) => ({ id: s.id, title: s.title, script: s.script }))));
+console.log(JSON.stringify(ctx.C1.listening.concat(ctx.C1.placementListening || []).map((s) => ({ id: s.id, title: s.title, script: s.script }))));

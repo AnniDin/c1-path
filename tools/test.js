@@ -231,14 +231,19 @@ const sync = (a, b) => { b.Store.mergeData(a.Store.exportData()); a.Store.mergeD
 
 /* --- the placement test: bank, three sizes, verdict and the adaptive step --- */
 {
-  const D = device(['data/grammar.js', 'data/grammar2.js', 'data/grammar3.js', 'data/grammar4.js', 'data/grammar5.js', 'data/placement.js', 'js/placement.js']), P = D.Placement, bank = D.C1.placement;
-  const topics = new Set(D.C1.grammar.map((g) => g.id)); topics.add('vocab');
-  const bad = bank.filter((q) => q.options.length !== 4 || !(q.answer >= 0 && q.answer < 4) || new Set(q.options).size !== 4 || !topics.has(q.topic) || !q.why || !/___/.test(q.q));
+  const D = device(['data/grammar.js', 'data/grammar2.js', 'data/grammar3.js', 'data/grammar4.js', 'data/grammar5.js', 'data/placement.js', 'data/placement2.js', 'data/listening11.js', 'js/placement.js']), P = D.Placement, bank = P.bank();
+  const topics = new Set(D.C1.grammar.map((g) => g.id)); topics.add('vocab'); topics.add('reading'); topics.add('listening');
+  const bad = bank.filter((q) => q.options.length !== 4 || !(q.answer >= 0 && q.answer < 4) || new Set(q.options).size !== 4 || !topics.has(q.topic) || !q.why || (!q.skill && !/___/.test(q.q)) || (q.skill === 'reading' && q.q.length < 200));
   eq('every placement question is well formed', bad.map((q) => q.q), []);
   eq('no placement question is repeated', new Set(bank.map((q) => q.q)).size, bank.length);
   eq('each level has enough for the complete test', ['B1', 'B2', 'C1'].map((l) => bank.filter((q) => q.level === l).length >= P.MODES.full.per), [true, true, true]);
   const lv = (items) => ['B1', 'B2', 'C1'].map((l) => items.filter((q) => q.level === l).length);
   eq('the complete test has 12 per level, easiest first', [lv(P.pick(bank, 12)), P.pick(bank, 12).map((q) => q.level).join('') === 'B1'.repeat(12) + 'B2'.repeat(12) + 'C1'.repeat(12)], [[12, 12, 12], true]);
+  const mixed = P.pick(bank, 12, P.MIX.full), sk = (items, k) => ['B1', 'B2', 'C1'].map((l) => items.filter((q) => q.level === l && q.skill === k).length);
+  eq('the complete test mixes in 2 reading items per level and keeps 12 per level', [lv(mixed), sk(mixed, 'reading')], [[12, 12, 12], [2, 2, 2]]);
+  eq('the short test has one reading item per level and the default has none', [sk(P.pick(bank, 4, P.MIX.short), 'reading'), P.pick(bank, 12).some((q) => q.skill)], [[1, 1, 1], false]);
+  eq('the complete test has one listening item per level, with its recording', [sk(mixed, 'listening'), mixed.filter((q) => q.skill === 'listening').every((q) => q.audioId && q.script.length && q.options.length === 4)], [[1, 1, 1], true]);
+  eq('the short test and the default have no listening items', [sk(P.pick(bank, 4, P.MIX.short), 'listening'), P.pick(bank, 12).some((q) => q.skill === 'listening')], [[0, 0, 0], false]);
   eq('the short test has 4 per level and no repeats', [lv(P.pick(bank, 4)), new Set(P.pick(bank, 4)).size], [[4, 4, 4], 12]);
   eq('verdict bands', [{ B1: [3, 8], B2: [0, 8], C1: [0, 8] }, { B1: [8, 8], B2: [3, 8], C1: [0, 8] }, { B1: [8, 8], B2: [7, 8], C1: [2, 8] }, { B1: [8, 8], B2: [7, 8], C1: [6, 8] }].map((x) => P.verdict(x).band), [0, 1, 2, 3]);
   eq('adaptive starts at B2, goes up after a right answer and down after a wrong one', [P.next([]), P.next([{ level: 'B2', ok: true }]), P.next([{ level: 'B2', ok: false }]), P.next([{ level: 'C1', ok: true }]), P.next([{ level: 'B1', ok: false }])], [1, 2, 0, 2, 0]);

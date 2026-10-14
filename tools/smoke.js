@@ -169,6 +169,35 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
     check('after passing a difficulty-3 set the next one is difficulty 3 or above', A.competence('cloze') >= 3 && recsAt(midSet, 95).filter((r) => /practice\/cloze\/\d+/.test(r.href)).every((r) => lvl('cloze', +r.href.split('/').pop()) >= 3));
     delete sb.Store.state.scores['cloze/' + midSet];
   }
+  /* Pica: the daily greeting, being sad after days away, the first-time tip per task, and the About page */
+  {
+    const A = sb.App, text = (el) => (el && el.textContent) || '';
+    const days = new Set(); for (let d = 20000; d < 20060; d++) days.add(A.greetLine(d, d % 7));
+    check('Pica has a different line on different days', days.size >= 15);
+    check('the same day always gets the same line', A.greetLine(20123, 3) === A.greetLine(20123, 3));
+    const sad3 = A.missYou(3), sad10 = A.missYou(10), sad40 = A.missYou(40), fine = A.missYou(2);
+    check('Pica is sad after 3 days away, sadder texts later, and not at 2 days', fine === null && sad3.mood === 'sad' && /3 days/.test(sad3.text) && /10 days/.test(sad10.text) && /gently|few flashcards/.test(sad40.text));
+    const st2 = sb.Store.state, daysKeep = JSON.stringify(st2.days);
+    st2.days[sb.Store.today()] = 4;
+    check('she cheers up once you have practised today', A.missYou(10).mood === 'happy');
+    st2.days = JSON.parse(daysKeep);
+    check('the greeting renders with a word of the day', /Shiny word of the day/.test(text(A.picaGreeting())));
+    sb.localStorage.removeItem('c1path.tip.kwt');
+    const tip = A.picaTip('kwt');
+    check('the first-time tip names the task and links to its tricks', tip && /key word|structure/i.test(text(tip)) && tip.all((n) => /^#\/tricks\/tasks-\d+$/.test((n.attrs || {}).href || '')).length === 1);
+    const btn = tip.all((n) => /^button$/i.test(n.tag || n.tagName || n.nodeName || ''))[0];
+    (btn.ls && btn.ls.click ? btn.ls.click : [btn.onclick]).forEach((f) => f && f());
+    check('"Got it" hides the tip for good', A.picaTip('kwt') === null);
+  }
+  /* a mistake on a recording keeps a reference to it, and both the list and the practice show the player again */
+  {
+    const S = sb.Store, item = { type: 'mcq', q: 'Where is the meeting?', options: ['a', 'b', 'c', 'd'], answer: 0, why: 'x', audioId: 'pl-b1-a', title: 'T', intro: 'I', script: [{ who: 'A', text: 'Hello.' }] };
+    S.logResults([{ ok: false, given: 'b', item }], { topic: 'placement', label: 'Placement test', href: '#/placement' });
+    const m = S.mistakes().find((x) => x.item.audioId === 'pl-b1-a');
+    check('a mistake on a recording is saved with its audio reference', !!m && m.item.script.length === 1 && sb.Engine.recording(m.item).audioId === 'pl-b1-a' && sb.Engine.recording({ q: 'x' }) === null);
+    check('the mistakes page and the practice render with a recording among the mistakes', (() => { try { sb.App.routes.mistakes(); sb.App.routes.mistakes('practice'); return true; } catch (e) { return false; } })());
+    S.removeMistake(m.id);
+  }
   /* home: placement first, then the weakest exam part */
   {
     const st = sb.Store.state, keep = [st.placement, st.stats['u-wf']];
@@ -258,7 +287,7 @@ for (const r of routes) {
     check('recording of "' + l.id + '" exists on disk', fs.existsSync(path.join(root, a.src)));
     check('recording of "' + l.id + '" has one mark per line', a.marks.length === l.script.length, a.marks.length + ' marks, ' + l.script.length + ' lines');
   });
-  Object.keys(A).forEach((id) => check('recording "' + id + '" belongs to a listening set', (C1.listening || []).some((l) => l.id === id)));
+  Object.keys(A).forEach((id) => check('recording "' + id + '" belongs to a listening set', (C1.listening || []).concat(C1.placementListening || []).some((l) => l.id === id)));
   const known = new Set(['', 'welcome', 'course', 'toolkit', 'progress', 'review', 'mistakes', 'placement', 'exams', 'privacy', 'mock', 'grammar', 'vocab', 'practice', 'vquiz', 'skills', 'notebook', 'pronunciation', ...Object.keys(sb.App.routes)]);
   const ids = { grammar: C1.grammar.map((g) => g.id), vocab: C1.vocab.map((v) => v.id), course: C1.course.map((u) => u.id).concat(['mix']), practice: C1.practice.map((p) => p.id) };
   const bad = new Set();
