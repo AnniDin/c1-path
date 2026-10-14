@@ -26,6 +26,14 @@
     return trickPool[key] || [];
   };
   A.trickPool = poolFor;
+  /* the tricks written for one kind of task (data/tricks4.js, section 'tasks'): a collapsed list for the task's own page */
+  A.taskTricks = (task) => {
+    const s = C1.tricks.find((x) => x.id === 'tasks');
+    const list = s ? s.items.map((t, i) => [t, i]).filter(([t]) => t.task === task) : [];
+    if (!list.length) return null;
+    return h('details', { class: 'callout tasktricks' }, h('summary', {}, h('strong', {}, `Tricks for this task (${list.length})`)),
+      h('ul', {}, list.map(([t, i]) => h('li', {}, link('#/tricks/tasks-' + i, t.t)))));
+  };
   function trickPractice(key) {
     const items = A.sample(poolFor(key), 8), s = C1.tricks.find((x) => x.id === key.split('-')[0]), t = s && s.items[+key.split('-')[1]];
     if (!t || !items.length) { location.hash = '#/tricks'; return; }

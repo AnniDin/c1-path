@@ -503,6 +503,7 @@ window.App = { routes: {}, cleanup: [] };
     if (setIdx == null) {
       view(back('#/practice', 'Practice'), h('h1', {}, p.title), h('p', { class: 'muted' }, p.exam),
         h('div', { class: 'callout' }, h('strong', {}, 'Strategy'), h('div', { html: p.strategy })),
+        App.taskTricks ? App.taskTricks(id) : null,
         sectionHead('Sets', `${setsDone(p)} of ${p.sets.length} completed`),
         h('p', { class: 'muted' }, 'Sets are listed from easier to harder, so work from the top. The difficulty is an expert estimate of how hard the questions are.'),
         h('div', { class: 'grid' }, (App.setOrder ? App.setOrder(id) : p.sets.map((_, i) => i)).map((i) => { const s = p.sets[i];
