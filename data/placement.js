@@ -9,6 +9,12 @@ C1.placement = [
   { level: 'B1', topic: 'vocab', q: 'He is much taller ___ his brother.', options: ['than', 'that', 'as', 'from'], answer: 0, why: 'Comparative + <em>than</em>.' },
   { level: 'B1', topic: 'vocab', q: 'We have run ___ of petrol.', options: ['away', 'out', 'off', 'up'], answer: 1, why: '<em>Run out of</em> = use all of.' },
   { level: 'B1', topic: 'conditionals', q: 'If I ___ you, I would take the job.', options: ['am', 'was being', 'were', 'will be'], answer: 2, why: 'Unreal present: past form, and <em>were</em> is standard after <em>If I</em>.' },
+  { level: 'B1', topic: 'relatives', q: 'The woman ___ lives next door is a doctor.', options: ['who', 'which', 'whose', 'what'], answer: 0, why: '<em>Who</em> refers to a person and is the subject of <em>lives</em>.' },
+  { level: 'B1', topic: 'comparison', q: 'This is the ___ film I have ever seen.', options: ['bad', 'worse', 'worst', 'most bad'], answer: 2, why: 'Superlative of <em>bad</em>: <em>the worst</em>.' },
+  { level: 'B1', topic: 'determiners', q: 'There isn\'t ___ milk left.', options: ['some', 'any', 'many', 'a few'], answer: 1, why: '<em>Any</em> is used in negatives, and <em>milk</em> is uncountable.' },
+  { level: 'B1', topic: 'reporting', q: 'He asked me what time ___.', options: ['the train left', 'did the train leave', 'the train does leave', 'left the train'], answer: 0, why: 'A reported question keeps statement word order, with the tense moved back.' },
+  { level: 'B1', topic: 'prepositions', q: 'She is good ___ playing the piano.', options: ['in', 'at', 'on', 'for'], answer: 1, why: 'The adjective <em>good</em> takes <em>at</em> before a skill.' },
+  { level: 'B1', topic: 'vocab', q: 'Could you ___ me a favour?', options: ['make', 'do', 'take', 'have'], answer: 1, why: 'The collocation is <em>do someone a favour</em>.' },
 
   { level: 'B2', topic: 'wish', q: 'I wish I ___ speak French.', options: ['can', 'could', 'would', 'will'], answer: 1, why: 'A wish about the present takes a past form: <em>could</em>.' },
   { level: 'B2', topic: 'aspect', q: 'By the time we arrived, the concert ___.', options: ['started', 'has started', 'had started', 'was starting'], answer: 2, why: 'The concert began before we arrived: past perfect.' },
@@ -18,6 +24,12 @@ C1.placement = [
   { level: 'B2', topic: 'vocab', q: 'He denied ___ the money.', options: ['to take', 'taking', 'take', 'to have take'], answer: 1, why: '<em>Deny</em> is followed by <em>-ing</em>.' },
   { level: 'B2', topic: 'vocab', q: 'The film, ___ I saw last week, was brilliant.', options: ['what', 'that', 'which', 'who'], answer: 2, why: 'A non-defining relative clause (between commas) cannot use <em>that</em>.' },
   { level: 'B2', topic: 'wish', q: 'I\'d rather you ___ tell anyone about this.', options: ['to not', 'didn\'t', 'won\'t', 'not'], answer: 1, why: '<em>Would rather</em> + another subject + past simple.' },
+  { level: 'B2', topic: 'patterns', q: 'I\'m used to ___ up early.', options: ['get', 'getting', 'got', 'be get'], answer: 1, why: 'In <em>be used to</em>, <em>to</em> is a preposition, so an <em>-ing</em> form follows.' },
+  { level: 'B2', topic: 'concession', q: '___ the rain, we enjoyed the trip.', options: ['Despite', 'Although', 'However', 'In spite'], answer: 0, why: '<em>Despite</em> is followed by a noun phrase; <em>although</em> needs a clause and <em>in spite</em> needs <em>of</em>.' },
+  { level: 'B2', topic: 'comparison', q: 'The more you practise, ___ you become.', options: ['the better', 'better', 'the best', 'more good'], answer: 0, why: 'The double comparative: <em>the more…, the better…</em>.' },
+  { level: 'B2', topic: 'relatives', q: 'That is the man ___ car was stolen.', options: ['who', 'whose', 'which', 'whom'], answer: 1, why: '<em>Whose</em> shows possession: the man\'s car.' },
+  { level: 'B2', topic: 'prepositions', q: 'He insisted ___ paying for dinner.', options: ['to', 'on', 'for', 'at'], answer: 1, why: '<em>Insist on</em> + <em>-ing</em>.' },
+  { level: 'B2', topic: 'vocab', q: 'The company decided to ___ the launch until next year.', options: ['put off', 'put out', 'put down', 'put away'], answer: 0, why: '<em>Put off</em> = postpone.' },
 
   { level: 'C1', topic: 'inversion', q: 'Not until the end of the film ___ who the murderer was.', options: ['we discovered', 'did we discover', 'we did discover', 'discovered we'], answer: 1, why: 'A fronted <em>Not until</em> phrase triggers inversion in the main clause.' },
   { level: 'C1', topic: 'conditionals', q: '___ the bad weather, we would have gone out.', options: ['Had it not been for', 'Were it not for', 'If it hadn\'t for', 'Without to be'], answer: 0, why: 'Unreal past: <em>Had it not been for</em> = If it hadn\'t been for.' },
@@ -26,5 +38,11 @@ C1.placement = [
   { level: 'C1', topic: 'passive', q: 'The suspect is believed ___ the country last night.', options: ['to leave', 'to have left', 'leaving', 'to be leaving'], answer: 1, why: 'The leaving happened before the believing: perfect infinitive.' },
   { level: 'C1', topic: 'modals', q: 'She can\'t ___ last week\'s exam; she barely studied.', options: ['have passed', 'be passing', 'pass', 'has passed'], answer: 0, why: 'Negative certainty about the past: <em>can\'t have</em> + participle.' },
   { level: 'C1', topic: 'inversion', q: 'Only when the manager arrived ___ the problem.', options: ['they solved', 'did they solve', 'they did solve', 'solved they'], answer: 1, why: 'After <em>Only when … </em>, the main clause takes question order.' },
-  { level: 'C1', topic: 'aspect', q: 'By this time next month, she ___ for the company for a decade.', options: ['will work', 'will have been working', 'is working', 'has worked'], answer: 1, why: 'A duration up to a future point: future perfect continuous.' }
+  { level: 'C1', topic: 'aspect', q: 'By this time next month, she ___ for the company for a decade.', options: ['will work', 'will have been working', 'is working', 'has worked'], answer: 1, why: 'A duration up to a future point: future perfect continuous.' },
+  { level: 'C1', topic: 'wordformation', q: 'The report highlighted the ___ of the current system.', options: ['inefficient', 'inefficiency', 'efficiently', 'efficiency'], answer: 1, why: 'After <em>the</em> and before <em>of</em> we need a noun, and the meaning is negative: <em>inefficiency</em>.' },
+  { level: 'C1', topic: 'concession', q: '___ hard he tried, he could not open the door.', options: ['However', 'Whatever', 'Although', 'Despite'], answer: 0, why: '<em>However</em> + adjective or adverb + subject means "no matter how".' },
+  { level: 'C1', topic: 'inversion', q: 'Seldom ___ such generosity.', options: ['I have seen', 'have I seen', 'I saw', 'did I have seen'], answer: 1, why: 'A negative adverb at the start triggers inversion: <em>have I seen</em>.' },
+  { level: 'C1', topic: 'formal', q: 'It is essential that every student ___ the form by Friday.', options: ['submits', 'submit', 'will submit', 'submitted'], answer: 1, why: 'After <em>essential that</em>, formal English uses the base form (the subjunctive).' },
+  { level: 'C1', topic: 'participle', q: 'Having ___ the report, she sent it to the manager.', options: ['finish', 'finishing', 'finished', 'been finished'], answer: 2, why: '<em>Having</em> + past participle: the finishing came first.' },
+  { level: 'C1', topic: 'likelihood', q: 'The new law is ___ to be unpopular.', options: ['bound', 'probable', 'possible', 'maybe'], answer: 0, why: '<em>Be bound to</em> = certain to. The others do not take <em>to</em> + infinitive.' },
 ];
