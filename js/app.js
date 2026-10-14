@@ -259,7 +259,7 @@ window.App = { routes: {}, cleanup: [] };
       act('Flashcards', `${dueN} due · ${freshN} new today`, '#/review', 'Review'),
       act('My mistakes', mistN ? `${mistN} to learn${mistDue ? `, ${mistDue} due today` : ', none due yet'}, each with its explanation` : 'Nothing saved. Wrong answers will appear here.', '#/mistakes', 'Open'),
       act('Mixed review', 'A few questions from grammar, vocabulary and rewriting', '#/course/mix', 'Start'),
-      act('Placement test', Store.state.placement ? `Last result: ${Store.state.placement.summary}` : '24 questions, B1 to C1', '#/placement', Store.state.placement ? 'Retake' : 'Start'));
+      act('Placement test', Store.state.placement ? `Last result: ${Store.state.placement.summary}` : 'Short, adaptive or complete, B1 to C1', '#/placement', Store.state.placement ? 'Retake' : 'Start'));
     const numbers = h('div', { class: 'stats' },
       h('div', { class: 'stat' }, h('b', {}, Store.streak()), h('span', {}, 'day streak')),
       h('div', { class: 'stat' }, h('b', {}, Store.totalAnswered()), h('span', {}, 'answers so far')),
@@ -281,44 +281,6 @@ window.App = { routes: {}, cleanup: [] };
         h('a', { href: '#/progress' + (k === 'today' ? '' : '/' + k), class: k === tab ? 'on' : '', 'aria-current': k === tab ? 'page' : false }, p[0]))),
       h('p', { class: 'lead' }, PAGES[tab][1]),
       ...PAGES[tab][2]);
-  }
-
-  /* ---------- placement ---------- */
-  function placement() {
-    /* 8 questions per level, drawn at random from a bigger bank, so a retake is not the same test */
-    const items = ['B1', 'B2', 'C1'].flatMap((l) => sample(C1.placement.filter((p) => p.level === l), 8)).map((p) => Object.assign({ type: 'mcq' }, p));
-    const prev = Store.state.placement;
-    const box = h('div');
-    box.append(h('h1', {}, 'Placement test'),
-      h('p', { class: 'lead' }, `${items.length} questions from B1 up to C1. Do not guess wildly: a wrong answer with an explanation teaches you more than a lucky one. It takes about 15–20 minutes.`),
-      prev ? h('div', { class: 'callout' }, `Last result (${prev.date}): ${prev.summary}`) : '',
-      quiz(items, {
-        source: { topic: 'placement', label: 'Placement test', href: '#/placement' },
-        onRetry: placement,
-        onScore(c, t, res) {
-          Store.record('placement', c, t);
-          const lv = { B1: [0, 0], B2: [0, 0], C1: [0, 0] };
-          const missed = new Set();
-          res.forEach((r, i) => { const l = items[i].level; lv[l][1]++; if (r.ok) lv[l][0]++; else missed.add(items[i].topic); });
-          const p = (l) => (lv[l][1] ? lv[l][0] / lv[l][1] : 0);
-          let summary, plan;
-          if (p('B1') < 0.7) { summary = 'Foundations first (around B1).'; plan = 'Start with the grammar lessons in order and use the vocabulary cards daily. Skip the Use of English sets for a couple of weeks.'; }
-          else if (p('B2') < 0.65) { summary = 'Solid B1, building towards B2.'; plan = 'Work through the grammar lessons in order, then start the Use of English multiple-choice cloze and open cloze sets.'; }
-          else if (p('C1') < 0.55) { summary = 'B2 level, C1 is within reach.'; plan = 'Focus on the lessons you missed below, then do Use of English sets every day.'; }
-          else { summary = 'Working at C1 level on these questions.'; plan = 'Go straight to the practice sets and key word transformations. Use lessons as reference for weak spots.'; }
-          Store.setPlacement({ date: Store.today(), summary, lv });
-          const out = h('div', { class: 'card' }, h('h2', { style: 'margin-top:0' }, summary),
-            h('p', {}, `B1: ${lv.B1[0]}/${lv.B1[1]} · B2: ${lv.B2[0]}/${lv.B2[1]} · C1: ${lv.C1[0]}/${lv.C1[1]}`), h('p', {}, plan));
-          const old = prev && prev.lv, tot = (o) => o.B1[0] + o.B2[0] + o.C1[0];
-          if (old) out.append(h('p', { class: 'muted' }, `Last time: ${tot(old)}/${old.B1[1] + old.B2[1] + old.C1[1]}. Now: ${tot(lv)}/${items.length}. The questions are drawn from a bank of ${C1.placement.length}, so they are not always the same.`));
-          const links = [...missed].map((id) => grammar.find((x) => x.id === id)).filter(Boolean);
-          if (links.length) out.append(h('p', {}, 'Lessons to look at first:'), h('ul', {}, links.map((g) => h('li', {}, link('#/grammar/' + g.id, g.title)))));
-          if (missed.has('vocab')) out.append(h('p', {}, 'You also slipped on set phrases and verb patterns: ', link('#/vocab', 'the vocabulary cards'), ' and ', link('#/vquiz', 'quizzes'), ' help.'));
-          out.append(h('p', {}, h('a', { class: 'btn small', href: p('B1') < 0.7 ? '#/grammar' : '#/course' }, p('B1') < 0.7 ? 'Start with the grammar lessons' : 'Start the course')));
-          box.append(out);
-        }
-      }));
-    view(box);
   }
 
   /* ---------- grammar ---------- */
@@ -669,7 +631,7 @@ window.App = { routes: {}, cleanup: [] };
         tile('#/ask', 'Ask the tutor', 'A small chat for your doubts, always one tap away at the bottom right. It only talks about English.', 'AI, needs your key'),
         tile('#/tricks', 'Tricks', 'Short strategies for the tasks students find hardest.', 'tips'),
         tile('#/generate', 'Generate with AI', 'Make extra practice on any topic with your own AI key.', 'optional'),
-        tile('#/placement', 'Placement test', 'Twenty-four questions, B1 to C1, to find where to start.', Store.state.placement ? 'taken' : 'not taken'),
+        tile('#/placement', 'Placement test', 'Short, adaptive or complete: B1 to C1, to find where to start.', Store.state.placement ? 'taken' : 'not taken'),
         tile('#/exams', 'The exams explained', 'What each paper tests and how it is marked.', 'guide')),
       App.limitsNote ? App.limitsNote() : null);
   }
@@ -820,7 +782,7 @@ window.App = { routes: {}, cleanup: [] };
         body: () => [
           h('p', { class: 'lead' }, 'Not sure? Take the placement test: it shows where to start. You can always change your mind later.'),
           h('div', { class: 'grid' },
-            h('a', { class: 'card', href: '#/placement', onclick: () => Store.setWelcomed() }, h('span', { class: 'tag' }, 'Recommended'), h('h3', { style: 'margin:.4em 0 .2em' }, 'Take the placement test'), h('p', { class: 'muted', style: 'margin:0' }, '24 questions from B1 to C1, about 15 to 20 minutes, with an explanation for every answer.')),
+            h('a', { class: 'card', href: '#/placement', onclick: () => Store.setWelcomed() }, h('span', { class: 'tag' }, 'Recommended'), h('h3', { style: 'margin:.4em 0 .2em' }, 'Take the placement test'), h('p', { class: 'muted', style: 'margin:0' }, 'From B1 to C1, in three sizes (about 8 to 25 minutes), with an explanation for every answer.')),
             h('a', { class: 'card', href: '#/course/' + C1.course[0].id, onclick: () => Store.setWelcomed() }, h('span', { class: 'tag' }, 'Guided'), h('h3', { style: 'margin:.4em 0 .2em' }, 'Start the Course'), h('p', { class: 'muted', style: 'margin:0' }, 'Begin with the first unit and follow the steps in order.')),
             h('a', { class: 'card', href: '#/toolkit', onclick: () => Store.setWelcomed() }, h('span', { class: 'tag' }, 'Free choice'), h('h3', { style: 'margin:.4em 0 .2em' }, 'Study on your own'), h('p', { class: 'muted', style: 'margin:0' }, 'Look around and pick what you need.'))),
           h('h2', {}, 'A routine that works'),
@@ -910,7 +872,6 @@ window.App = { routes: {}, cleanup: [] };
     if (a === 'course') return b === 'mix' ? dailyMix() : c === 'review' ? unitReview(b) : b ? unitPage(b) : courseList();
     if (a === 'toolkit') return toolkit();
     if (App.routes[a]) return App.routes[a](b, c, query);
-    if (a === 'placement') return placement();
     if (a === 'progress') return progress(b);
     if (a === 'grammar') return b ? lesson(b) : grammarList();
     if (a === 'vocab') return b ? vocabGroup(b) : vocab();

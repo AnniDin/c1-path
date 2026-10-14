@@ -41,7 +41,7 @@ const pause = () => new Promise((r) => setTimeout(r, 1500)); // gentle pace: Gma
   }
   for (const k of ['GMAIL_USER', 'GMAIL_APP_PASSWORD']) if (!process.env[k]) throw new Error('Missing ' + k);
   const mailer = require('nodemailer').createTransport({ service: 'gmail', auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD } });
-  const send = (addr, mail) => mailer.sendMail({ from: `"C1 Path" <${process.env.GMAIL_USER}>`, to: addr, subject: mail.subject, text: mail.text, html: mail.html, headers: { 'List-Unsubscribe': `<${mail.stop}>` } });
+  const send = (addr, mail) => mailer.sendMail({ from: `"Pica from C1 Path" <${process.env.GMAIL_USER}>`, to: addr, subject: mail.subject, text: mail.text, html: mail.html, headers: { 'List-Unsubscribe': `<${mail.stop}>` } });
   if (to) {
     await send(to, renderWeekly(trick, NIL)); await send(to, renderMonthly(summarise(SAMPLE), NIL));
     console.log('Two test emails sent to', to, '(the monthly one uses sample numbers)'); return;

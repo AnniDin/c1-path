@@ -369,5 +369,5 @@
     return wrap;
   }
 
-  window.Engine = { h, quiz, norm, matches, Speech, shuffle, diffWords, gapItem };
+  window.Engine = { h, quiz, item: (it, n) => R[it.type](it, n), norm, matches, Speech, shuffle, diffWords, gapItem };
 })();

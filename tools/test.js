@@ -225,8 +225,27 @@ const sync = (a, b) => { b.Store.mergeData(a.Store.exportData()); a.Store.mergeD
   const s = L.summarise(JSON.parse(A.Store.exportData()));
   eq('summary adds both devices and names the weak topic', [s.total, s.weak.length && s.weak[0].pct], [12, 25]);
   const mail = L.renderMonthly(s, NIL);
-  eq('monthly email says it is not an exam score and can be stopped', [/not an exam score/.test(mail.html), mail.html.includes('#/unsubscribe/'), /Your month/.test(mail.subject)], [true, true, true]);
+  eq('monthly email says it is not an exam score and can be stopped', [/not an exam score/.test(mail.html), mail.html.includes('#/unsubscribe/'), /your month/i.test(mail.subject), /Pica/.test(mail.text) && /Pica/.test(mail.html) && /icon-192.png/.test(mail.html)], [true, true, true, true]);
   eq('an empty account still gets a sensible summary', /did not answer any questions/.test(L.renderMonthly(L.summarise({}), NIL).html), true);
+}
+
+/* --- the placement test: bank, three sizes, verdict and the adaptive step --- */
+{
+  const D = device(['data/grammar.js', 'data/grammar2.js', 'data/grammar3.js', 'data/grammar4.js', 'data/grammar5.js', 'data/placement.js', 'js/placement.js']), P = D.Placement, bank = D.C1.placement;
+  const topics = new Set(D.C1.grammar.map((g) => g.id)); topics.add('vocab');
+  const bad = bank.filter((q) => q.options.length !== 4 || !(q.answer >= 0 && q.answer < 4) || new Set(q.options).size !== 4 || !topics.has(q.topic) || !q.why || !/___/.test(q.q));
+  eq('every placement question is well formed', bad.map((q) => q.q), []);
+  eq('no placement question is repeated', new Set(bank.map((q) => q.q)).size, bank.length);
+  eq('each level has enough for the complete test', ['B1', 'B2', 'C1'].map((l) => bank.filter((q) => q.level === l).length >= P.MODES.full.per), [true, true, true]);
+  const lv = (items) => ['B1', 'B2', 'C1'].map((l) => items.filter((q) => q.level === l).length);
+  eq('the complete test has 12 per level, easiest first', [lv(P.pick(bank, 12)), P.pick(bank, 12).map((q) => q.level).join('') === 'B1'.repeat(12) + 'B2'.repeat(12) + 'C1'.repeat(12)], [[12, 12, 12], true]);
+  eq('the short test has 4 per level and no repeats', [lv(P.pick(bank, 4)), new Set(P.pick(bank, 4)).size], [[4, 4, 4], 12]);
+  eq('verdict bands', [{ B1: [3, 8], B2: [0, 8], C1: [0, 8] }, { B1: [8, 8], B2: [3, 8], C1: [0, 8] }, { B1: [8, 8], B2: [7, 8], C1: [2, 8] }, { B1: [8, 8], B2: [7, 8], C1: [6, 8] }].map((x) => P.verdict(x).band), [0, 1, 2, 3]);
+  eq('adaptive starts at B2, goes up after a right answer and down after a wrong one', [P.next([]), P.next([{ level: 'B2', ok: true }]), P.next([{ level: 'B2', ok: false }]), P.next([{ level: 'C1', ok: true }]), P.next([{ level: 'B1', ok: false }])], [1, 2, 0, 2, 0]);
+  const top = P.adaptiveLevels([{ level: 'B2', ok: true }, { level: 'C1', ok: true }, { level: 'C1', ok: true }, { level: 'C1', ok: false }]);
+  eq('adaptive: passing C1 counts B1 as passed, and the verdict is C1 work', [top.B1, P.verdict(top).band], [[1, 1], 3]);
+  const low = P.adaptiveLevels([{ level: 'B2', ok: false }, { level: 'B1', ok: false }, { level: 'B1', ok: false }]);
+  eq('adaptive: failing B1 counts C1 as failed, and the verdict is foundations', [low.C1, P.verdict(low).band], [[0, 1], 0]);
 }
 
 console.log(`${passed} passed, ${failed} failed`);

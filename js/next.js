@@ -212,7 +212,7 @@
   A.homeSteps = () => {
     const steps = [], push = (t, s, href, label) => { if (!steps.some((x) => x[2] === href)) steps.push([t, s, href, label]); };
     const st = Store.state, due = A.dueIds().length;
-    if (!st.placement) push('Take the placement test', 'Twenty-four questions, B1 to C1. It shows where to start.', '#/placement', 'Start');
+    if (!st.placement) push('Take the placement test', 'Short, adaptive or complete: B1 to C1. It shows where to start.', '#/placement', 'Start');
     const fresh = A.freshCards ? A.freshCards() : 0;
     if (due + fresh > 0) push(`Review ${due + fresh} vocabulary card${due + fresh === 1 ? '' : 's'}`, `${due} due · ${fresh} new`, '#/review', 'Review');
     /* the exam part with the lowest accuracy (at least 5 answers), and the set that suits the learner's level there */
