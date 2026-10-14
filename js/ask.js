@@ -14,7 +14,8 @@
     + `<path class="wing" d="M14 38 Q26 28 40 40 Q26 50 14 38 Z" fill="#8db1ff" stroke="#0b3d91" stroke-width="1.5"/>`
     + `<circle cx="44" cy="22" r="13" fill="currentColor"/>`
     + `<path class="beak" d="M54 20 L63 24 L54 28 Z" fill="#d98e04"/>`
-    + (mood === 'happy' ? `<path class="eye" d="M44 20 Q47 16 50 20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>`
+    + (mood === 'sad' ? `<circle class="eye" cx="47" cy="21" r="3.2" fill="#fff"/><circle cx="47.5" cy="22.4" r="1.5" fill="#111"/><path d="M41 15 L51 18.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M49.6 25 q-2.6 4 0 5.6 q2.6 -1.6 0 -5.6Z" fill="#8db1ff" stroke="#0b3d91" stroke-width=".6"/>`
+      : mood === 'happy' ? `<path class="eye" d="M44 20 Q47 16 50 20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>`
       : `<circle class="eye" cx="47" cy="${mood === 'think' ? 18 : 20}" r="3.2" fill="#fff"/><circle cx="48" cy="${mood === 'think' ? 17 : 20.5}" r="1.5" fill="#111"/>`)
     + `<path d="M38 11 Q42 6 47 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`;
   /* Pica is the logo: a small one beside the site name in the header (the name alone is still there without JavaScript) */
@@ -78,6 +79,24 @@
     toggle(true);
     ask('Why is my answer wrong? Please explain.', 'Exercise question: ' + x.q + '\nMy answer: ' + (x.given || '(blank)') + '\nCorrect answer: ' + x.correct + (x.why ? '\nThe given explanation: ' + x.why : ''));
   }
+  /* Pica speaks up: a bubble above her button with a few words and optional buttons ([[label, href or function]...]). It stays until closed or 25 s pass. */
+  let notice = null, noticeTimer = 0;
+  function say(text, actions) {
+    if (notice) notice.remove();
+    clearTimeout(noticeTimer);
+    const dismiss = () => { if (notice) { notice.remove(); notice = null; } clearTimeout(noticeTimer); };
+    const close = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Dismiss' }, '✕');
+    notice = h('div', { id: 'pica-notice', role: 'status' }, h('span', { class: 'picaface', 'aria-hidden': 'true', html: PICA('happy') }),
+      h('div', { class: 'picasay' }, h('p', {}, h('strong', {}, 'Pica: '), text),
+        h('div', { class: 'row' }, (actions || []).map(([label, go]) => (typeof go === 'function'
+          ? h('button', { class: 'btn small', type: 'button', onclick: () => { go(); dismiss(); } }, label)
+          : h('a', { class: 'btn small', href: go, onclick: dismiss }, label))))), close);
+    close.addEventListener('click', dismiss);
+    document.body.append(notice);
+    noticeTimer = setTimeout(dismiss, 25000);
+  }
+  window.PicaSay = say;
+  window.PicaSVG = PICA; // the welcome pages draw her too
   window.Tutor = { open: () => toggle(true), toggle, explain };
   /* #/ask keeps old links working: it opens the panel over the Study page */
   A.routes.ask = () => { location.replace('#/toolkit'); setTimeout(() => toggle(true), 50); };

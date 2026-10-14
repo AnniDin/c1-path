@@ -568,3 +568,52 @@ h1:has(.doodle){position:relative;min-height:86px;display:flex;align-items:flex-
 .brand { display: inline-flex; align-items: center; gap: 8px; }
 .brandpica { width: 34px; height: 34px; color: var(--ink); display: inline-block; }
 .brandpica .belly { fill: var(--bg); }
+
+/* doodle scenes v2: sheets, ink lines and Pica, all following the theme */
+.doodle { width: 116px; height: 87px; bottom: 6px; }
+h1:has(.doodle) { min-height: 98px; padding-right: 132px; }
+.doodle .swash { fill: #ffe27a; stroke: none; opacity: .65; }
+.doodle .paper { fill: var(--bg); stroke: var(--ink); }
+.doodle .line { stroke: var(--ink); fill: none; opacity: .7; }
+.doodle .acc { stroke: var(--accent); }
+.doodle .acc-fill { fill: var(--accent); stroke: none; }
+.doodle .dash { stroke: var(--accent); fill: none; stroke-dasharray: 1 6; stroke-width: 3; }
+.doodle .flag { fill: var(--accent); stroke: var(--accent); }
+.doodle .col { fill: var(--accent); fill-opacity: .18; stroke: var(--accent); }
+.doodle .col.hi { fill-opacity: .5; }
+.doodle .tick { stroke: var(--accent); stroke-width: 4.5; fill: none; }
+.doodle .pencil { fill: #ffd24d; stroke: var(--ink); }
+.doodle .tip { fill: #f2c9a0; stroke: var(--ink); }
+.doodle .gold { fill: #ffe27a; stroke: var(--ink); }
+.doodle .pb { fill: var(--ink); stroke: var(--ink); }
+.doodle .pb-line { stroke: var(--ink); }
+.doodle .pbelly { fill: var(--bg); stroke: none; }
+.doodle .pwing { fill: #8db1ff; stroke: var(--accent); }
+.doodle .pk { fill: #d98e04; stroke: #d98e04; }
+.doodle .pw2 { fill: var(--bg); stroke: none; }
+.doodle .pp { fill: var(--ink); stroke: none; }
+.doodle .pe { stroke: var(--bg); }
+.doodle.inline { width: 96px; height: 72px; }
+@media (max-width: 520px) { .doodle { width: 78px; height: 58px; } h1:has(.doodle) { min-height: 70px; padding-right: 88px; } .doodle.inline { width: 80px; height: 60px; } }
+
+/* Pica welcomes you */
+.picasays { display: flex; align-items: flex-end; gap: 18px; margin: 14px 0 22px; }
+.picaface { flex: none; width: 96px; height: 96px; color: var(--ink); display: block; }
+.picaface .belly { fill: var(--bg); }
+.picasays .picasay { position: relative; margin: 0 0 14px; padding: 12px 16px; border: 2px solid var(--ink); background: var(--bg); font-size: 1.05rem; }
+.picasays .picasay::before { content: ""; position: absolute; left: -12px; bottom: 14px; width: 20px; height: 20px; background: var(--bg); border-left: 2px solid var(--ink); border-bottom: 2px solid var(--ink); transform: rotate(45deg); }
+@media (max-width: 520px) { .picaface { width: 64px; height: 64px; } .picasays { gap: 14px; } }
+
+/* Pica speaks up above her button */
+#pica-notice { position: fixed; right: 16px; bottom: 76px; z-index: 40; max-width: min(380px, calc(100vw - 32px)); display: flex; gap: 10px; align-items: flex-start; padding: 12px; background: var(--bg); border: 2px solid var(--ink); box-shadow: 4px 4px 0 var(--line); }
+#pica-notice .picaface { width: 54px; height: 54px; }
+#pica-notice .picasay { flex: 1; }
+#pica-notice .picasay p { margin: 0 0 8px; }
+.exam-focus #pica-notice { display: none; }
+
+/* Pica's greeting on Home is lighter than the welcome: smaller face, no big margins */
+.picasays.greeting { margin: 4px 0 16px; align-items: center; }
+.picasays.greeting .picaface { width: 64px; height: 64px; }
+.picasays.greeting .picasay { margin: 0; padding: 10px 14px; font-size: 1rem; }
+.picasays.greeting .picasay p { margin: 0; }
+.picasays.greeting .picasay p + p { margin-top: 6px; font-size: .92rem; }

@@ -37,6 +37,34 @@
   let t;
   Store.onChange(() => { if (get()) { clearTimeout(t); t = setTimeout(() => publish().catch(() => {}), 8000); } });
 
+  /* Pica tells you when a friend passes you in this week's ranking (optional, on by default). A friend counts as ahead with more answers than you
+     and at least 5. Only a change is announced: the first check of a week just remembers who is ahead, so nobody is "passing" you on Monday morning. */
+  const AHEAD = 'c1path.ahead', OVER = 'c1path.overtake';
+  const overtakeOn = () => { try { return localStorage.getItem(OVER) !== '0'; } catch (e) { return true; } };
+  A.overtakeOn = overtakeOn;
+  A.setOvertake = (on) => { try { localStorage.setItem(OVER, on ? '1' : '0'); } catch (e) { /* optional */ } };
+  let lastCheck = 0;
+  async function checkOvertakes(force) {
+    if (!get() || !window.Cloud || !Cloud.user || !Cloud.user() || !overtakeOn() || !window.PicaSay) return;
+    if (!force && Date.now() - lastCheck < 5 * 60 * 1000) return;
+    lastCheck = Date.now();
+    const rows = ((await Cloud.rpc('friend_board', {})) || []).filter((r) => !r.me && r.week === monday());
+    const mine = weekAnswers(), ahead = rows.filter((r) => r.answers > mine && r.answers >= 5);
+    let prev = null; try { prev = JSON.parse(localStorage.getItem(AHEAD) || 'null'); } catch (e) { /* ignore */ }
+    try { localStorage.setItem(AHEAD, JSON.stringify({ week: monday(), codes: ahead.map((r) => r.code) })); } catch (e) { /* ignore */ }
+    if (!prev || prev.week !== monday()) return;
+    const fresh = ahead.filter((r) => !prev.codes.includes(r.code)).sort((a, b) => b.answers - a.answers);
+    if (!fresh.length) return;
+    const who = fresh.length === 1 ? fresh[0].name : fresh.length === 2 ? fresh[0].name + ' and ' + fresh[1].name : fresh[0].name + ' and ' + (fresh.length - 1) + ' others';
+    window.PicaSay(`${who} just passed you this week (${fresh[0].answers} answers to your ${mine}). A few questions and you are back in front.`, [['Practise now', '#/course/mix'], ['Later', () => {}]]);
+  }
+  A.checkOvertakes = checkOvertakes;
+  const soon = () => checkOvertakes().catch(() => {});
+  setTimeout(soon, 6000);
+  setInterval(soon, 10 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) soon(); });
+  if (window.Cloud && Cloud.onChange) Cloud.onChange(() => setTimeout(soon, 2000));
+
   A.friendsCard = () => {
     const box = h('div');
     const card = (...kids) => A.cardBlock('Friends', ...kids);
@@ -77,6 +105,7 @@
           ...rows.map((r, i) => h('div', { class: 'trow friend' + (r.me ? ' me' : '') }, h('span', { class: 'fwho' }, A.avatarOf ? A.avatarOf(r.name, r.avatar, true) : null, `${i + 1}. ${r.name}${r.me ? ' (you)' : ''}`), A.bar(Math.min(1, r.answers / Math.max(1, rows[0].answers || 1)), r.me ? 'ok' : ''),
             h('span', { class: 'muted' }, `${r.answers} this week · 🔥${r.streak} · L${r.level}`),
             r.me ? h('span') : h('button', { class: 'icon-btn', 'aria-label': 'Remove ' + r.name, onclick: async () => { await Cloud.rpc('remove_friend', { p_code: r.code }); draw(); } }, '✕'))),
+          h('label', { for: 'overtake', class: 'row' }, (() => { const c = h('input', { type: 'checkbox', id: 'overtake', checked: overtakeOn() }); c.addEventListener('change', () => A.setOvertake(c.checked)); return c; })(), ' Pica tells me when a friend passes me this week'),
           h('div', { class: 'row' }, h('label', { for: 'fname2' }, 'Your name'), h('input', { type: 'text', id: 'fname2', maxlength: 24, value: ((rows.find((r) => r.me) || {}).name) || '' }),
             h('button', { class: 'btn small ghost', onclick: async () => { const v = document.getElementById('fname2').value.trim(); if (!v) return; if (CODE.test(v.toUpperCase())) { msg.textContent = 'That looks like a friend code, not a name.'; return; } try { await Cloud.rpc('join_board', { p_name: v }); draw(); } catch (e) { msg.textContent = friendly(e); } } }, 'Change name')),
           h('p', { class: 'muted', style: 'margin-bottom:4px' }, 'Add a friend: type their code.'),

@@ -200,7 +200,7 @@ window.App = { routes: {}, cleanup: [] };
     const weak = App.weakTopics ? App.weakTopics() : [];
     const fig = (n, label) => h('div', {}, h('b', {}, n), h('span', {}, label));
 
-    view(hero,
+    view(App.picaGreeting ? App.picaGreeting() : null, hero,
       h('div', { class: 'figures' },
         h('div', { class: 'streak' }, h('b', {}, icon('flame'), Store.streak()), h('span', {}, 'day streak')),
         fig(`${Store.todayCount()}/${Store.goal()}`, 'answers today'),
@@ -775,7 +775,8 @@ window.App = { routes: {}, cleanup: [] };
   function welcome(step) {
     const steps = [
       {
-        title: 'Welcome to C1 Path',
+        title: 'Welcome to C1 Path', mood: 'happy',
+        say: 'Hi, I am Pica! I collect good words, and I will be your guide here. Let me show you around: it takes two minutes.',
         body: () => [
           h('p', { class: 'lead' }, 'A free place to prepare for the C1 level of English, for Cambridge C1 Advanced, Linguaskill and CertAcles.'),
           h('p', {}, 'It is made for learners who already speak English at around B1 or B2 and want to reach C1. You do not need an account, and you can study in short sessions: 15 to 20 minutes a day is enough to make steady progress.'),
@@ -783,7 +784,8 @@ window.App = { routes: {}, cleanup: [] };
         ]
       },
       {
-        title: 'How you learn here',
+        title: 'How you learn here', mood: 'idle',
+        say: 'My secret: I never memorise a word without knowing why it fits. Do the same, and the words stay with you.',
         body: () => [
           h('p', { class: 'lead' }, 'The idea is simple: understand first, then practise, then review.'),
           h('div', { class: 'grid' },
@@ -794,7 +796,8 @@ window.App = { routes: {}, cleanup: [] };
         ]
       },
       {
-        title: 'Finding your way around',
+        title: 'Finding your way around', mood: 'idle',
+        say: 'These are the places I would visit first. And I am never far: look for me in the corner of every page.',
         body: () => [
           h('div', { class: 'steps' },
             [['Home', 'Your next best step and a quick look at your progress.', '#/'],
@@ -807,7 +810,8 @@ window.App = { routes: {}, cleanup: [] };
         ]
       },
       {
-        title: 'Choose where to start',
+        title: 'Choose where to start', mood: 'happy',
+        say: 'Not sure where to begin? I would take the placement test. Then we go one step at a time.',
         body: () => [
           h('p', { class: 'lead' }, 'Not sure? Take the placement test: it shows where to start. You can always change your mind later.'),
           h('div', { class: 'grid' },
@@ -824,6 +828,8 @@ window.App = { routes: {}, cleanup: [] };
     const last = i === steps.length - 1;
     view(h('p', { class: 'eyebrow' }, `Introduction · ${i + 1} of ${steps.length}`),
       h('h1', {}, s.title),
+      /* Pica says it: the welcome comes from her, not from a faceless page */
+      s.say ? h('div', { class: 'picasays' }, h('span', { class: 'picaface', 'aria-hidden': 'true', html: window.PicaSVG ? window.PicaSVG(s.mood) : '' }), h('p', { class: 'picasay' }, h('strong', {}, 'Pica: '), s.say)) : null,
       ...s.body(),
       h('div', { class: 'pager' },
         i > 0 ? link('#/welcome/' + (i - 1), '← Back', 'btn ghost small') : link('#/', 'Skip the introduction', 'btn ghost small'),

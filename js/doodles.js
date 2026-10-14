@@ -1,21 +1,58 @@
-/* C1 Path – margin doodles: small hand-drawn line drawings beside the page titles, like sketches in an exam notebook.
-   window.Doodle('name') returns a decorative span (hidden from screen readers). */
+/* C1 Path – margin doodles: small hand-drawn scenes beside the page titles, like sketches in an exam notebook. Pica, the magpie, is in every one.
+   window.Doodle('name', 'inline') returns a decorative span (hidden from screen readers). Colours come from CSS (see .doodle in css/style.css),
+   so the scenes follow the light and dark themes. */
 (function () {
-  const BLOB = '<path d="M14 40 Q10 18 34 14 Q62 8 80 20 Q92 34 76 56 Q54 66 28 60 Q16 54 14 40Z" fill="#ffe27a" stroke="none" opacity=".75"/>';
+  /* Pica at (x, y), scaled: her own drawing is about 62 x 52 units, facing right. flip mirrors her to face left. */
+  const pica = (x, y, s, flip, mood) => {
+    const eye = mood === 'happy' ? '<path class="pe" d="M44 20 Q47 16 50 20" fill="none" stroke-width="2"/>' : '<circle class="pw2" cx="47" cy="20" r="3.2"/><circle class="pp" cx="48" cy="20.5" r="1.5"/>';
+    const t = flip ? `translate(${x + 64 * s} ${y}) scale(${-s} ${s})` : `translate(${x} ${y}) scale(${s})`;
+    return `<g class="pica-d" transform="${t}" stroke-width="${(2.2 / s).toFixed(2)}"><path class="pb" d="M10 46 L1 58 L18 52 Z"/><ellipse class="pb" cx="30" cy="40" rx="20" ry="17"/>`
+      + `<path class="pbelly" d="M22 44 Q32 60 46 44 Q38 38 22 44 Z"/><path class="pwing" d="M14 38 Q26 28 40 40 Q26 50 14 38 Z"/><circle class="pb" cx="44" cy="22" r="13"/>`
+      + `<path class="pk" d="M54 20 L63 24 L54 28 Z"/>${eye}<path class="pb-line" d="M38 11 Q42 6 47 9" fill="none" stroke-width="3"/></g>`;
+  };
+  const SPARK = (x, y, r) => `<path class="acc" fill="none" d="M${x} ${y - r} V${y + r} M${x - r} ${y} H${x + r}"/>`;
   const D = {
-    home: '<path d="M22 62 L26 46 L60 12 L72 24 L38 58 Z"/><path d="M26 46 L38 58"/><path d="M60 12 L72 24"/><path d="M50 22 L62 34"/><path d="M12 68 q6 -5 12 0 t12 0 t12 0"/><path d="M82 8 v12 M76 14 h12"/><path d="M84 40 l2 4 M90 34 l4 2"/>',
-    course: '<path d="M10 62 C28 62 20 42 40 42 C60 42 50 24 72 24"/><circle cx="10" cy="62" r="3"/><path d="M74 24 V6 L90 12 L74 18"/><path d="M30 66 h2 M46 62 h2 M58 52 h2" stroke-dasharray="1 5"/>',
-    study: '<path d="M48 22 C36 14 22 14 10 18 V60 C22 56 36 56 48 64 C60 56 74 56 86 60 V18 C74 14 60 14 48 22Z"/><path d="M48 22 V64"/><path d="M18 28 q10 -3 22 2 M18 38 q10 -3 22 2 M18 48 q10 -3 22 2"/><path d="M60 30 q10 -4 18 -1"/><path d="M80 4 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2Z"/>',
-    progress: '<path d="M8 64 H88 M8 64 V10"/><path d="M18 64 V50 H32 V64 M40 64 V38 H54 V64 M62 64 V26 H76 V64"/><path d="M16 38 q20 -2 36 -18 t30 -12"/><path d="M72 6 L84 8 L82 20"/>',
-    exams: '<path d="M18 8 H64 L76 20 V66 H18 Z"/><path d="M64 8 V20 H76"/><path d="M26 30 H56 M26 40 H66 M26 50 H48"/><path d="M52 56 L60 64 L82 38" stroke-width="3.5"/><circle cx="84" cy="14" r="8"/><path d="M84 9 V14 L88 16"/>',
-    empty: '<path d="M22 10 H70 V64 H22 Z"/><path d="M30 22 H62 M30 32 H62 M30 42 H50"/><path d="M48 54 L56 62 L78 36" stroke-width="3.5"/><path d="M14 14 v8 M10 18 h8"/>',
-    trophy: '<path d="M30 10 H66 V32 Q66 50 48 50 Q30 50 30 32 Z"/><path d="M30 16 H18 Q18 34 32 36 M66 16 H78 Q78 34 64 36"/><path d="M48 50 V60 M34 64 H62"/><path d="M40 24 l4 4 8 -9"/><path d="M84 8 v10 M79 13 h10"/>',
-    account: '<circle cx="48" cy="38" r="26"/><circle cx="38" cy="32" r="2.5" fill="currentColor"/><circle cx="58" cy="32" r="2.5" fill="currentColor"/><path d="M34 46 Q48 60 62 46"/><path d="M26 16 q-6 -8 2 -12 M70 14 q8 -6 12 2"/>'
+    /* a notebook with a pencil, Pica perched on its corner */
+    home: () => `<path class="swash" d="M10 72 Q50 84 110 66 Q112 74 100 78 Q50 90 12 80Z"/>
+      <rect class="paper" x="24" y="38" width="62" height="42" rx="2"/><path class="line" d="M34 52 H76 M34 61 H76 M34 70 H62"/><path class="line" d="M24 44 h-4 M24 54 h-4 M24 64 h-4 M24 74 h-4"/>
+      <path class="pencil" d="M78 64 L94 30 L102 34 L86 68 Z"/><path class="tip" d="M78 64 L86 68 L76 74 Z"/><path class="line" d="M94 30 L102 34"/>
+      ${pica(30, 4, 0.62, false, 'happy')}${SPARK(108, 14, 5)}${SPARK(14, 24, 3)}`,
+    /* a winding path to a flag, Pica setting out */
+    course: () => `<path class="swash" d="M8 70 Q60 82 112 62 Q114 70 104 74 Q58 90 10 80Z"/>
+      <path class="dash" d="M18 74 C40 74 34 56 58 56 C82 56 70 38 96 36"/><circle class="acc-fill" cx="18" cy="74" r="3.5"/>
+      <path class="line" d="M98 36 V10"/><path class="flag" d="M98 10 L116 16 L98 24 Z"/>
+      ${pica(2, 44, 0.5, false)}${SPARK(70, 14, 4)}`,
+    /* an open book, Pica reading from the top edge */
+    study: () => `<path class="swash" d="M10 76 Q60 88 112 72 Q114 80 100 84 Q58 94 12 86Z"/>
+      <path class="paper" d="M60 38 C46 30 28 30 14 36 V76 C28 70 46 70 60 78 C74 70 92 70 106 76 V36 C92 30 74 30 60 38Z"/><path class="line" d="M60 38 V78"/>
+      <path class="line" d="M24 46 q16 -3 30 2 M24 56 q16 -3 30 2 M24 66 q16 -3 30 2 M68 48 q14 -5 30 -2 M68 58 q14 -5 30 -2"/>
+      ${pica(52, 2, 0.58, true, 'happy')}${SPARK(108, 20, 5)}`,
+    /* bars that grow, Pica on the tallest */
+    progress: () => `<path class="line" d="M10 80 H112"/>
+      <rect class="col" x="18" y="58" width="20" height="22"/><rect class="col" x="46" y="44" width="20" height="36"/><rect class="col hi" x="74" y="26" width="20" height="54"/>
+      <path class="acc" fill="none" d="M20 48 Q44 42 60 26"/><path class="acc" fill="none" d="M52 24 L61 25 L60 34"/>
+      ${pica(68, -3, 0.5, false)}${SPARK(108, 40, 4)}`,
+    /* a test paper with a tick, a stopwatch, Pica checking it */
+    exams: () => `<path class="swash" d="M10 76 Q60 88 112 72 Q114 80 100 84 Q58 94 12 86Z"/>
+      <path class="paper" d="M22 24 H64 L76 36 V80 H22 Z"/><path class="line" d="M64 24 V36 H76"/><path class="line" d="M30 46 H66 M30 55 H66 M30 64 H50"/>
+      <path class="tick" d="M52 66 L60 74 L84 44"/>
+      <circle class="paper" cx="98" cy="62" r="13"/><path class="line" d="M98 62 V54 M98 62 L104 66 M94 46 H102 M98 46 V49"/>
+      ${pica(26, -1, 0.44, false)}`,
+    /* Pica framed like a profile picture */
+    account: () => `<circle class="paper" cx="60" cy="46" r="34"/><circle class="line" fill="none" cx="60" cy="46" r="40" stroke-dasharray="2 6"/>
+      ${pica(38, 25, 0.7, false, 'happy')}${SPARK(106, 14, 5)}${SPARK(12, 20, 4)}`,
+    /* nothing here yet: a tidy sheet and Pica ticking it off */
+    empty: () => `<path class="paper" d="M30 14 H84 V76 H30 Z"/><path class="line" d="M40 28 H74 M40 38 H74 M40 48 H60"/><path class="tick" d="M56 62 L64 70 L90 40"/>
+      ${pica(2, 47, 0.5, false, 'happy')}${SPARK(100, 14, 4)}`,
+    /* Pica beside a trophy */
+    trophy: () => `<path class="swash" d="M30 78 Q70 88 112 74 Q112 82 100 84 Q60 92 32 86Z"/>
+      <path class="gold" d="M62 14 H98 V36 Q98 54 80 54 Q62 54 62 36 Z"/><path class="line" d="M62 20 H50 Q50 38 64 40 M98 20 H110 Q110 38 96 40"/><path class="line" d="M80 54 V68 M66 72 H94"/><path class="line" d="M72 28 l5 5 10 -11"/>
+      ${pica(0, 41, 0.55, false, 'happy')}${SPARK(112, 6, 4)}`
   };
   window.Doodle = (name, cls) => {
     const s = document.createElement('span');
     s.className = 'doodle ' + (cls || ''); s.setAttribute('aria-hidden', 'true');
-    s.innerHTML = `<svg viewBox="0 0 96 72" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" focusable="false">${BLOB}${D[name] || ''}</svg>`;
+    s.innerHTML = `<svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false">${(D[name] || (() => ''))()}</svg>`;
     return s;
   };
 })();
