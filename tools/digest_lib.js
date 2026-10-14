@@ -12,7 +12,7 @@ let site = null; // the site's own data (tricks, grammar titles...) loaded once
 function siteData() {
   if (site) return site;
   const sb = { console }; sb.window = sb; vm.createContext(sb);
-  ['tricks', 'tricks2', 'tricks3', 'tricks4', 'trickdrills', 'grammar', 'grammar2', 'grammar3', 'grammar4', 'grammar5', 'practice'].forEach((f) => {
+  ['tricks', 'tricks2', 'tricks3', 'tricks4', 'trickdrills', 'trickdrills2', 'grammar', 'grammar2', 'grammar3', 'grammar4', 'grammar5', 'practice'].forEach((f) => {
     try { vm.runInContext(read('data/' + f + '.js'), sb, { filename: f }); } catch (e) { /* a data file the sender does not need */ }
   });
   return (site = sb.C1);
