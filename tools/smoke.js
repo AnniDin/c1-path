@@ -176,6 +176,14 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
     st.placement = { date: '2026-01-01', summary: 'x' }; st.stats['u-wf'] = { c: 2, t: 10 };
     check('the weakest exam part is recommended at home', A.homeSteps().some((s) => /#\/practice\/wf\/\d+/.test(s[2])));
     check('home always ends with a mixed review and has no duplicate links', A.homeSteps().slice(-1)[0][2] === '#/course/mix' && new Set(A.homeSteps().map((s) => s[2])).size === A.homeSteps().length);
+    const lessons = st.lessons; st.lessons = {};
+    st.placement = { date: '2026-01-01', summary: 'x', band: 0, missed: ['inversion', 'wish'] };
+    check('home sends you to the first lesson the placement test missed', A.homeSteps()[0][2] === '#/grammar/inversion');
+    st.lessons = { inversion: 1 };
+    check('then to the next missed lesson', A.homeSteps()[0][2] === '#/grammar/wish');
+    st.lessons = { inversion: 1, wish: 1 }; st.placement = { date: '2026-01-01', summary: 'x', band: 0, missed: ['inversion'] };
+    check('a foundations result with few lessons read suggests starting the grammar lessons', A.homeSteps()[0][2] === '#/grammar');
+    st.lessons = lessons;
     st.placement = keep[0]; if (keep[1]) st.stats['u-wf'] = keep[1]; else delete st.stats['u-wf'];
   }
 }

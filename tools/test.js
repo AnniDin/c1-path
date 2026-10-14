@@ -248,5 +248,27 @@ const sync = (a, b) => { b.Store.mergeData(a.Store.exportData()); a.Store.mergeD
   eq('adaptive: failing B1 counts C1 as failed, and the verdict is foundations', [low.C1, P.verdict(low).band], [[0, 1], 0]);
 }
 
-console.log(`${passed} passed, ${failed} failed`);
-process.exit(failed ? 1 : 0);
+let swDone = Promise.resolve();
+/* --- the service worker: scripts come from the cache without the network, the page itself is network-first, installs bypass the HTTP cache --- */
+{
+  const store = {}, calls = [], handlers = {};
+  class Req { constructor(u, o) { this.url = u.url || new URL(u, 'https://x.test/c1-path/').href; this.method = 'GET'; this.mode = (o && o.mode) || 'no-cors'; this.cache = o && o.cache; this.headers = { get: () => null }; } }
+  const cacheObj = (n) => ({ addAll: async (rs) => { rs.forEach((r) => { calls.push('add ' + r.cache); (store[n] = store[n] || {})[r.url] = 'x'; }); }, put: async (r, v) => { (store[n] = store[n] || {})[r.url] = v; }, match: async (r) => (store[n] || {})[r.url] });
+  const sw = { self: { location: { origin: 'https://x.test' }, addEventListener: (k, f) => { handlers[k] = f; }, skipWaiting() {}, clients: { claim() {} } }, URL, Request: Req, Response: class {},
+    caches: { open: async (n) => cacheObj(n), match: async (r) => { for (const n in store) if (store[n][r.url]) return store[n][r.url]; }, keys: async () => Object.keys(store), delete: async () => {} },
+    fetch: async (r, o) => { calls.push('net ' + new URL(r.url).pathname + (o ? ' ' + o.cache : '')); return { ok: true, clone() { return this; } }; }, console };
+  vm.createContext(sw); vm.runInContext(read('sw.js'), sw);
+  let w; handlers.install({ waitUntil: (p) => { w = p; } });
+  swDone = w.then(async () => {
+    const adds = calls.splice(0), go = async (url, mode) => { let p; handlers.fetch({ request: new Req(url, { mode }), respondWith: (x) => { p = x; } }); if (p) await p; return calls.splice(0); };
+    eq('install fetches every file past the HTTP cache', [adds.length > 100, adds.every((c) => c === 'add reload')], [true, true]);
+    eq('a script is served from the cache with no network', await go('js/app.js'), []);
+    eq('the page is network-first', [await go('index.html', 'navigate'), await go('./', 'navigate')], [['net /c1-path/index.html no-cache'], ['net /c1-path/ no-cache']]);
+    eq('a file that was not precached is fetched once, then cached', [(await go('icons/new.png')).length, (await go('icons/new.png')).length], [1, 0]);
+  });
+}
+
+swDone.then(() => {
+  console.log(`${passed} passed, ${failed} failed`);
+  process.exit(failed ? 1 : 0);
+});

@@ -52,7 +52,7 @@
     const shown = mode === 'adaptive' ? adaptiveLevels(res.map((r, i) => ({ level: items[i].level, ok: r.ok }))) : lv;
     const v = verdict(shown);
     Store.record('placement', res.filter((r) => r.ok).length, res.length);
-    Store.setPlacement({ date: Store.today(), summary: v.summary, lv: shown, mode });
+    Store.setPlacement({ date: Store.today(), summary: v.summary, lv: shown, mode, band: v.band, missed: [...missed].filter((id) => A.grammar.some((g) => g.id === id)) });
     const out = h('div', { class: 'card' }, h('h2', { style: 'margin-top:0' }, v.summary),
       h('p', {}, mode === 'adaptive'
         ? `${res.filter((r) => r.ok).length} of ${res.length} right. B1: ${lv.B1[0]}/${lv.B1[1]} · B2: ${lv.B2[0]}/${lv.B2[1]} · C1: ${lv.C1[0]}/${lv.C1[1]}`

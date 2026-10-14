@@ -213,6 +213,10 @@
     const steps = [], push = (t, s, href, label) => { if (!steps.some((x) => x[2] === href)) steps.push([t, s, href, label]); };
     const st = Store.state, due = A.dueIds().length;
     if (!st.placement) push('Take the placement test', 'Short, adaptive or complete: B1 to C1. It shows where to start.', '#/placement', 'Start');
+    /* what the placement test found: the lessons it missed first (until read), and for a B1 result a few foundation lessons before the course */
+    const pl = st.placement, unread = ((pl && pl.missed) || []).map((id) => C1.grammar.find((g) => g.id === id)).filter((g) => g && !st.lessons[g.id]);
+    if (unread[0]) push('Lesson from your placement test: ' + unread[0].title, `You missed this on the test. ${unread.length - 1 ? unread.length - 1 + ' more to read after it.' : 'It is the last one.'}`, '#/grammar/' + unread[0].id, 'Read');
+    else if (pl && pl.band === 0 && Object.keys(st.lessons).length < 3) push('Build your foundations', 'Your placement result says to start with the grammar lessons, in order.', '#/grammar', 'Start');
     const fresh = A.freshCards ? A.freshCards() : 0;
     if (due + fresh > 0) push(`Review ${due + fresh} vocabulary card${due + fresh === 1 ? '' : 's'}`, `${due} due · ${fresh} new`, '#/review', 'Review');
     /* the exam part with the lowest accuracy (at least 5 answers), and the set that suits the learner's level there */
