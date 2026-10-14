@@ -563,3 +563,8 @@ h1:has(.doodle){position:relative;min-height:86px;display:flex;align-items:flex-
 }
 .card:has(> .vcard) { border-top: 0; padding: 0; }
 @media (max-width: 520px) { .card.flash { padding: 20px 16px; } }
+
+/* Pica beside the site name */
+.brand { display: inline-flex; align-items: center; gap: 8px; }
+.brandpica { width: 34px; height: 34px; color: var(--ink); display: inline-block; }
+.brandpica .belly { fill: var(--bg); }

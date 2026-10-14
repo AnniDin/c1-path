@@ -10,13 +10,16 @@
   const PICA = (mood) => `<svg class="pica ${mood || 'idle'}" viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true" focusable="false">`
     + `<path class="tail" d="M10 46 L1 58 L18 52 Z" fill="currentColor"/>`
     + `<ellipse cx="30" cy="40" rx="20" ry="17" fill="currentColor"/>`
-    + `<path d="M22 44 Q32 60 46 44 Q38 38 22 44 Z" fill="#fff"/>`
+    + `<path class="belly" d="M22 44 Q32 60 46 44 Q38 38 22 44 Z" fill="#fff"/>`
     + `<path class="wing" d="M14 38 Q26 28 40 40 Q26 50 14 38 Z" fill="#8db1ff" stroke="#0b3d91" stroke-width="1.5"/>`
     + `<circle cx="44" cy="22" r="13" fill="currentColor"/>`
     + `<path class="beak" d="M54 20 L63 24 L54 28 Z" fill="#d98e04"/>`
     + (mood === 'happy' ? `<path class="eye" d="M44 20 Q47 16 50 20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>`
       : `<circle class="eye" cx="47" cy="${mood === 'think' ? 18 : 20}" r="3.2" fill="#fff"/><circle cx="48" cy="${mood === 'think' ? 17 : 20.5}" r="1.5" fill="#111"/>`)
     + `<path d="M38 11 Q42 6 47 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`;
+  /* Pica is the logo: a small one beside the site name in the header (the name alone is still there without JavaScript) */
+  const brand = document.querySelector('.brand');
+  if (brand) brand.prepend(h('span', { class: 'brandpica', 'aria-hidden': 'true', html: PICA('idle') }));
   const pica = (mood, cls) => h('span', { class: 'picawrap ' + (cls || ''), html: PICA(mood) });
 
   /* **bold** and line breaks, built with DOM nodes so nothing from the model is ever inserted as HTML */
