@@ -191,11 +191,20 @@
     /* ---- notebook ---- */
     notes() { return state.notes.slice().sort((a, b) => b.ts - a.ts); },
     addNote(n) {
-      const note = { id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title: n.title || '', text: n.text || '', tag: n.tag || 'Other', href: n.href || '', source: n.source || '', ts: Date.now() };
+      const note = { id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title: n.title || '', text: n.text || '', tag: n.tag || 'Other', href: n.href || '', source: n.source || '', parent: n.parent || '', ts: Date.now() };
       state.notes.push(note); save(); return note;
     },
+    /* every note under this one, at any depth */
+    noteDescendants(id) {
+      const out = [], walk = (p, d) => { if (d > 6) return; state.notes.filter((x) => x.parent === p).forEach((c) => { out.push(c); walk(c.id, d + 1); }); };
+      walk(id, 0); return out;
+    },
     updateNote(id, patch) { const n = state.notes.find((x) => x.id === id); if (n) { Object.assign(n, patch, { ts: Date.now() }); save(); } },
-    deleteNote(id) { state.notes = state.notes.filter((x) => x.id !== id); bury('n', id); save(); },
+    /* a note goes with all its sub-notes */
+    deleteNote(id) {
+      const gone = new Set([id].concat(Store.noteDescendants(id).map((x) => x.id)));
+      state.notes = state.notes.filter((x) => !gone.has(x.id)); gone.forEach((g) => bury('n', g)); save();
+    },
 
     /* ---- writing drafts, skills self-assessment, daily goal ---- */
     draft(id) { return state.drafts[id] || null; },

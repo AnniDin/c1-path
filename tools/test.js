@@ -274,7 +274,48 @@ let swDone = Promise.resolve();
   });
 }
 
-swDone.then(() => {
+/* --- notes: safe Markdown, sub-notes, categories, and the AI organiser's answer is checked before anything changes --- */
+let notesDone = Promise.resolve();
+{
+  const N = device(['js/notes.js']).Notes, md = N.md;
+  eq('Markdown marks become tags', md('**b** *i* ~~s~~ ==m== `c`'), '<p><strong>b</strong> <em>i</em> <s>s</s> <mark>m</mark> <code>c</code></p>');
+  eq('HTML in a note is escaped, not run', [md('<script>alert(1)</script> <img src=x onerror=y>').includes('<script'), md('<b>x</b>').includes('&lt;b&gt;'), md('[x](javascript:alert(1))').includes('<a ')], [false, true, false]);
+  eq('only http(s) links become links, opened safely', md('[site](https://example.com/a?b=1)'), '<p><a href="https://example.com/a?b=1" target="_blank" rel="noopener">site</a></p>');
+  eq('lists, headings and quotes', [md('- a\n- b'), md('1. a\n2. b'), md('# T'), md('> q')], ['<ul><li>a</li><li>b</li></ul>', '<ol><li>a</li><li>b</li></ol>', '<h4>T</h4>', '<blockquote>q</blockquote>']);
+  eq('formatting inside code is left alone and plain text keeps its line breaks', [md('`**x**`'), md('a\nb')], ['<p><code>**x**</code></p>', '<p>a<br>b</p>']);
+  const n = (id, parent, ts, tag) => ({ id, parent: parent || '', ts: ts || 1, tag: tag || 'Other', title: id, text: id });
+  const ids = (ts) => ts.map((x) => x.note.id + ':' + x.depth + '(' + x.children.map((c) => c.note.id).join(',') + ')');
+  eq('sub-notes nest under their parent, oldest first', ids(N.tree([n('a'), n('b', 'a', 3), n('c', 'a', 2)])), ['a:0(c,b)']);
+  eq('a note whose parent is missing is top-level', N.tree([n('x', 'gone')]).map((x) => x.note.id), ['x']);
+  const flat = (ts) => ts.flatMap((x) => [x.note.id].concat(flat(x.children)));
+  eq('a loop of parents still shows every note exactly once', flat(N.tree([n('p', 'q'), n('q', 'p')])).sort(), ['p', 'q']);
+  eq('nesting stops at 3 levels in the display', N.tree([n('a'), n('b', 'a'), n('c', 'b'), n('d', 'c')]).length >= 1 && JSON.stringify(N.tree([n('a'), n('b', 'a'), n('c', 'b'), n('d', 'c')])).includes('"depth":3'), false);
+  eq('categories: defaults first, then the ones in use', N.categories([n('a', '', 1, 'Zebra'), n('b', '', 1, 'Idioms'), n('c', '', 1, 'Grammar')]).slice(-2), ['Idioms', 'Zebra']);
+  const all = [n('a'), n('b', 'a'), n('c', 'b'), n('d')];
+  eq('a note cannot move under itself or its own descendants, or beyond 3 levels', [N.canMove(all, 'a', 'a'), N.canMove(all, 'a', 'c'), N.canMove(all, 'd', 'c'), N.canMove(all, 'd', 'b'), N.canMove(all, 'b', '')], [false, false, false, true, true]);
+  /* deleting a note deletes its sub-notes, and the deletion syncs */
+  const D = device(), a1 = D.Store.addNote({ text: 'a' }), b1 = D.Store.addNote({ text: 'b', parent: a1.id }), c1 = D.Store.addNote({ text: 'c', parent: b1.id }), o1 = D.Store.addNote({ text: 'other' });
+  eq('descendants are found at any depth', D.Store.noteDescendants(a1.id).map((x) => x.text).sort(), ['b', 'c']);
+  D.Store.deleteNote(a1.id);
+  eq('deleting a note takes its sub-notes with it and leaves the rest', D.Store.notes().map((x) => x.text), ['other']);
+  /* the tutor: at most two check questions per chat, one answer per question */
+  const AIc = device(['js/ai.js']).AI, tut = (t) => ({ role: 'tutor', text: t }), usr = { role: 'user', text: 'q' };
+  eq('Pica may set a check question at first', /may end with one check question/.test(AIc.checkRule([usr])), true);
+  eq('after a check question she only marks the answer', /answering your check question/.test(AIc.checkRule([usr, tut('Because...\nTry it: I ___ (go)'), usr])), true);
+  eq('after two check questions she sets no more', /may NOT set any exercise/.test(AIc.checkRule([usr, tut('A\nTry it: x'), usr, tut('ok'), usr, tut('B\nTry it: y'), usr, tut('ok'), usr])), true);
+  /* the organiser: a made-up answer from the model is cleaned before it can change anything */
+  const notes = [n('n1', '', 5, 'Grammar'), n('n2', '', 4, 'Grammar'), n('n3', '', 3, 'Other'), n('n4', '', 2, 'Other')];
+  const reply = { notes: [{ id: 'n1', category: 'Tenses <b>!</b>', parent: '' }, { id: 'n2', category: 'Tenses', parent: 'n1' }, { id: 'n3', category: 'Idioms', parent: 'n3' }, { id: 'n4', category: '', parent: 'nope' }, { id: 'zzz', category: 'X', parent: '' }] };
+  const AIo = device(['js/ai.js']);
+  AIo.localStorage.setItem('c1path.apikey.gemini', 'test-key');
+  AIo.fetch = async () => ({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: 'Here you go: ' + JSON.stringify(reply) }] } }] }) });
+  notesDone = AIo.AI.organizeNotes(notes, ['Grammar', 'Other']).then((r) => {
+    const by = Object.fromEntries(r.changes.map((c) => [c.id, c]));
+    eq('the organiser keeps every note once, strips markup from categories and drops bad parents', [r.changes.length, by.n1.category, by.n2.parent, by.n3.parent, by.n4.category, by.n4.parent], [4, 'Tenses', 'n1', '', 'Other', '']);
+  });
+}
+
+swDone.then(() => notesDone).then(() => {
   console.log(`${passed} passed, ${failed} failed`);
   process.exit(failed ? 1 : 0);
 });
