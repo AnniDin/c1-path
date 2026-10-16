@@ -265,6 +265,7 @@ C1.practice.forEach((p) => { routes.push('practice/' + p.id); p.sets.forEach((_,
 ((C1.speaking || {}).sets || []).forEach((s) => routes.push('skills/speaking/' + s.id));
 (C1.pron || []).forEach((g) => routes.push('skills/pronunciation/' + g.id));
 sb.Store.state.welcomed = true;
+const rawTags = [];
 for (const r of routes) {
   try {
     sb.location.hash = '#/' + r; app.children = []; sb.App.route();
@@ -275,8 +276,11 @@ for (const r of routes) {
       if (b) { try { (b.ls.click || []).forEach((f) => f({ preventDefault() {} })); check('quiz result on #/' + r + ' has no null/undefined text', !/null|undefined|\[object/.test(app.textContent), app.textContent.match(/.{20}(null|undefined).{10}/)); } catch (e) { check('checking answers on #/' + r, false, e.message); } }
     }
     check('route #/' + r + ' renders', redirected || app.children.length > 0 && app.textContent.trim().length > 20 && !/^Not found/.test(app.textContent), 'empty or not found');
+    const raw = /<\/?(em|strong|b|i|br|u|mark|code|span|p|ul|ol|li|sub|sup)[^>]*>/i.exec(app.textContent);
+    if (raw) rawTags.push('#/' + r + ' -> ' + app.textContent.slice(Math.max(0, raw.index - 40), raw.index + 50).replace(/\s+/g, ' '));
   } catch (e) { check('route #/' + r + ' renders', false, e.stack.split(String.fromCharCode(10)).slice(0, 3).join(' / ')); }
 }
+check('no page shows raw HTML tags as text', rawTags.length === 0, rawTags.slice(0, 8).join(' || '));
 /* ---- recordings and links ---- */
 {
   const A = (C1.audio || {}).listening || {};

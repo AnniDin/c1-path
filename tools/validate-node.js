@@ -51,6 +51,7 @@ Object.entries(sandbox.C1.vocabMulti || {}).forEach(([ph, list]) => {
   if (list.length !== n) issues.push('vocabmulti: ' + ph + ' has ' + list.length + ' examples for ' + n + ' senses');
   list.forEach((e, i) => { if ((e.match(/\[\[.+?\]\]/g) || []).length !== 1) issues.push('vocabmulti: ' + ph + ' example ' + (i + 1) + ' needs exactly one [[phrase]] marker'); });
 });
+Object.values(cardsByPhrase).forEach((c) => { if (/<[a-z\/][^>]*>/i.test(c.phrase + c.meaning)) issues.push('vocabulary: the card "' + c.phrase + '" has HTML in its phrase or meaning (they are shown as plain text)'); });
 Object.values(cardsByPhrase).forEach((c) => { if (c.meaning.includes(';') && !(sandbox.C1.vocabMulti || {})[c.phrase]) issues.push('vocabmulti: missing examples for ' + c.phrase); });
 const swSrc = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
 { const want = require('./stamp_sw').expected().name; if (!swSrc.includes("'" + want + "'")) issues.push('sw.js cache name is out of date: run node tools/stamp_sw.js'); }
