@@ -85,11 +85,26 @@
     } catch (e) { return []; }
   }
 
+  /* a request that fails for a passing reason (no connection, 429 busy, 5xx server trouble) is tried again after a short wait, up to 3 times in all;
+     a refusal that will not change (bad key, bad request) is returned at once. AI.onRetry(n, total) lets the page say it is trying again. */
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  async function attempt(run) {
+    const total = AI.retryDelays.length + 1;
+    for (let i = 0; ; i++) {
+      let res = null, err = null;
+      try { res = await run(); } catch (e) { err = e; }
+      const passing = err || res.status === 429 || res.status >= 500;
+      if (!passing || i >= total - 1) { if (err) throw err; return res; }
+      if (AI.onRetry) AI.onRetry(i + 2, total);
+      await wait(AI.retryDelays[i]);
+    }
+  }
+
   async function call(system, user, maxTokens, retried) {
     const p = prov(), key = get(p.keyStore);
     if (!key) throw new Error('No API key set. Add one in Review, under AI feedback.');
     let res;
-    try { res = await request(p, key, modelName(), system, user, maxTokens || 1600, retried === 'nothink'); }
+    try { res = await attempt(() => request(p, key, modelName(), system, user, maxTokens || 1600, retried === 'nothink')); }
     catch (e) { throw new Error('Could not reach the API. Check your connection.'); }
     if (!res.ok) {
       let detail = '';
@@ -182,6 +197,8 @@
     },
 
     /* the tutor: a short conversation about English and the exams only. The scope is set in the instructions, so it is a strong guide, not a guarantee. */
+    retryDelays: [1000, 2500], /* waits between the tries of a failing request: 3 tries in all */
+    onRetry: null,
     /* one practice question after an explanation, and never more than MAX_CHECKS in a conversation: the code decides, not the model */
     MAX_CHECKS: 2,
     checkRule(history) {

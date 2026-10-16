@@ -315,7 +315,28 @@ let notesDone = Promise.resolve();
   });
 }
 
-swDone.then(() => notesDone).then(() => {
+/* --- AI requests: a passing failure is tried again (3 tries), a refusal is not --- */
+let retryDone = Promise.resolve();
+{
+  const mk = (replies) => {
+    const D = device(['js/ai.js']), seen = [];
+    D.localStorage.setItem('c1path.apikey.gemini', 'k'); D.AI.retryDelays = [0, 0];
+    D.fetch = async () => { const r = replies[Math.min(seen.length, replies.length - 1)]; seen.push(1); if (r === 'net') throw new Error('offline'); return r; };
+    D.D = { seen, retries: [] }; D.AI.onRetry = (n, t) => D.D.retries.push(n + '/' + t);
+    return D;
+  };
+  const okRes = { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: 'OK' }] } }] }) };
+  const bad = (status) => ({ ok: false, status, json: async () => ({ error: { message: 'x' } }) });
+  const A1 = mk([bad(503), bad(503), okRes]), A2 = mk([bad(401)]), A3 = mk(['net']), A4 = mk([bad(429), okRes]);
+  retryDone = Promise.all([A1.AI.test(), A2.AI.test().catch((e) => 'ERR'), A3.AI.test().catch((e) => e.message), A4.AI.test()]).then(([r1, r2, r3, r4]) => {
+    eq('two busy answers and then a good one: Pica gets the answer, after 3 tries', [r1, A1.D.seen.length, A1.D.retries], ['OK', 3, ['2/3', '3/3']]);
+    eq('a refused key is not tried again', [r2, A2.D.seen.length], ['ERR', 1]);
+    eq('no connection: 3 tries, then the error to show', [r3, A3.D.seen.length], ['Could not reach the API. Check your connection.', 3]);
+    eq('a 429 (busy) is tried again', [r4, A4.D.seen.length], ['OK', 2]);
+  });
+}
+
+swDone.then(() => notesDone).then(() => retryDone).then(() => {
   console.log(`${passed} passed, ${failed} failed`);
   process.exit(failed ? 1 : 0);
 });

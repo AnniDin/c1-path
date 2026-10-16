@@ -56,9 +56,19 @@
     if (!text || send.disabled) return;
     if (Date.now() - last < 2000) { msg.textContent = 'One moment, then ask again.'; return; }
     last = Date.now();
-    history.push({ role: 'user', text }); box.value = ''; msg.textContent = 'Pica is thinking…'; portrait.replaceChildren(pica('think')); send.disabled = true; draw();
-    try { history.push({ role: 'tutor', text: await AI.chat(history, screen || (withPage.checked ? onScreen() : '')) }); msg.textContent = ''; }
-    catch (e) { msg.textContent = e.message; }
+    history.push({ role: 'user', text }); box.value = '';
+    const shown = screen || (withPage.checked ? onScreen() : '');
+    await run(shown);
+  }
+  /* answers the last question; if it still fails after the automatic tries, the question stays and "Try again" asks it once more */
+  async function run(screen) {
+    msg.textContent = 'Pica is thinking…'; portrait.replaceChildren(pica('think')); send.disabled = true; draw();
+    AI.onRetry = (n, total) => { msg.textContent = `Pica could not reach the AI. Trying again (${n} of ${total})…`; };
+    try { history.push({ role: 'tutor', text: await AI.chat(history, screen) }); msg.textContent = ''; }
+    catch (e) {
+      msg.replaceChildren(...[e.message + ' ', AI.configured() ? h('button', { class: 'btn small', type: 'button', onclick: () => run(screen) }, 'Try again') : null].filter(Boolean));
+    }
+    AI.onRetry = null;
     send.disabled = false; portrait.replaceChildren(pica(history.length && history[history.length - 1].role === 'tutor' ? 'happy' : 'idle')); draw();
   }
   function toggle(show) {
