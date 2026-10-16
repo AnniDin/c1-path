@@ -17,7 +17,7 @@
       catch (e) { box.checked = !box.checked; msg.textContent = 'Could not save this: ' + e.message; }
       box.disabled = false;
     };
-    weekly.addEventListener('change', save(weekly, 'set_digest', 'Done. The next trick arrives on Thursday at 9:00 (Spanish time).', 'Done. No more trick emails.'));
+    weekly.addEventListener('change', save(weekly, 'set_digest', 'Done. The next trick arrives on Thursday morning, about 9:30 (Spanish time).', 'Done. No more trick emails.'));
     monthly.addEventListener('change', save(monthly, 'set_monthly', 'Done. The first summary arrives on the first Thursday of next month.', 'Done. No monthly summary.'));
     /* the summary needs digest_monthly.sql; without it the card still offers the weekly trick */
     Cloud.rpc('get_digest_prefs').then((p) => { weekly.checked = !!(p && p.weekly); monthly.checked = !!(p && p.monthly); monthlyRow.hidden = false; weekly.disabled = monthly.disabled = false; })
@@ -25,7 +25,7 @@
         .catch(() => { msg.textContent = 'Emails are not available on this copy of the site yet.'; }));
     return A.cardBlock('Emails (optional)',
       h('p', { class: 'muted' }, 'Both are off unless you switch them on, and every email has a link that stops them all. They go to ', h('strong', {}, (Cloud.user() || {}).email || 'your email'), '.'),
-      h('label', { for: 'digest-on', class: 'row' }, weekly, ' One little trick a week, on Thursday at 9:00 (Spanish time), with a link to practise it'),
+      h('label', { for: 'digest-on', class: 'row' }, weekly, ' One little trick a week, on Thursday morning, about 9:30 (Spanish time), with a link to practise it'),
       monthlyRow,
       h('p', { class: 'muted' }, 'The monthly summary is built from the progress copy you keep in the cloud: answers, streak and the topics to revisit. It is not an exam score.'), msg);
   };
