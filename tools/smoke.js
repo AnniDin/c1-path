@@ -169,6 +169,21 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
     check('after passing a difficulty-3 set the next one is difficulty 3 or above', A.competence('cloze') >= 3 && recsAt(midSet, 95).filter((r) => /practice\/cloze\/\d+/.test(r.href)).every((r) => lvl('cloze', +r.href.split('/').pop()) >= 3));
     delete sb.Store.state.scores['cloze/' + midSet];
   }
+  /* a backlog of due cards: sessions and counts are capped, the cap is a setting, and the backlog can be spread over the next days */
+  {
+    const S = sb.Store, A = sb.App, keep = JSON.stringify(S.state.cards), cards = A.allCards.slice(0, 80);
+    cards.forEach((c, i) => { S.state.cards[c.id] = { box: 1, due: '2020-01-' + String(1 + (i % 28)).padStart(2, '0'), ts: 1 }; });
+    check('with 80 due cards a session shows only the cap (20 by default), the most overdue first', A.dueIds().length === 20 && A.dueAll().length === 80);
+    S.setReviewCap(10);
+    check('the cap can be changed to 10, 20, 30 or 50, and counts follow it', A.dueIds().length === 10 && [10, 20, 30, 50].includes(S.reviewCap()));
+    S.setReviewCap(20);
+    const moved = S.spreadBacklog(20);
+    check('spreading keeps 20 for today and moves the rest to the coming days, 20 a day', moved.length === 60 && A.dueAll().length === 20 && A.dueIds().length === 20);
+    S.restoreDue(moved);
+    check('undo puts the dates back', A.dueAll().length === 80);
+    S.state.cards = JSON.parse(keep);
+    for (const r of ['review', 'vocab']) { sb.location.hash = '#/' + r; app.children = []; sb.App.route(); check('#/' + r + ' renders with the cap', app.textContent.length > 20); }
+  }
   /* Pica: the daily greeting, being sad after days away, the first-time tip per task, and the About page */
   {
     const A = sb.App, text = (el) => (el && el.textContent) || '';
@@ -254,7 +269,7 @@ pending.push((async () => {
     check('a good code is cleaned up', c(' 7d379a ', 'AAAAAA', []).code === '7D379A');
   }
 /* ---- every route renders ---- */
-const C1 = sb.C1, routes = ['', 'welcome', 'ask', 'course', 'course/mix', 'toolkit', 'progress', 'review', 'progress/progress', 'progress/settings', 'account', 'about', 'mistakes', 'mistakes/practice', 'placement', 'placement/short', 'placement/adaptive', 'placement/full', 'exams', 'privacy', 'about', 'unsubscribe', 'mock', 'tricks', 'generate', 'certacles', 'plan', 'weak',
+const C1 = sb.C1, routes = ['', 'welcome', 'ask', 'course', 'course/mix', 'toolkit', 'progress', 'review', 'progress/progress', 'progress/settings', 'account', 'about', 'mistakes', 'mistakes/practice', 'vgames', 'vgames/match', 'vgames/type', 'vgames/gap', 'vgames/mean', 'vgames/hear', 'vgames/mix', 'placement', 'placement/short', 'placement/adaptive', 'placement/full', 'exams', 'privacy', 'about', 'unsubscribe', 'mock', 'tricks', 'generate', 'certacles', 'plan', 'weak',
   'grammar', 'vocab', 'practice', 'skills', 'skills/listening', 'skills/writing', 'skills/writing/guide', 'skills/speaking', 'skills/pronunciation', 'vquiz/all'];
 C1.course.forEach((u) => routes.push('course/' + u.id, 'course/' + u.id + '/review'));
 C1.grammar.forEach((g) => routes.push('grammar/' + g.id));

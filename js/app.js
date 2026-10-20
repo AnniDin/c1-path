@@ -31,10 +31,10 @@ window.App = { routes: {}, cleanup: [] };
   const setKey = (typeId, i) => typeId + '/' + i;
   let unitCtx = null; // unit id when a page was opened from inside a course unit (?u=)
 
-  const topicLabels = { 'v-cards': 'Vocabulary cards', 'v-quiz': 'Vocabulary quizzes', placement: 'Placement test', mix: 'Mixed review', trick: 'Trick practice', 'unit-review': 'Unit reviews' };
+  const topicLabels = { 'v-cards': 'Vocabulary cards', 'v-quiz': 'Vocabulary quizzes', 'v-games': 'Vocabulary games', placement: 'Placement test', mix: 'Mixed review', trick: 'Trick practice', 'unit-review': 'Unit reviews' };
   C1.grammar.forEach((g) => (topicLabels['g-' + g.id] = g.title));
   C1.practice.forEach((p) => (topicLabels['u-' + p.id] = p.title));
-  const topicHref = (k) => k.startsWith('g-') ? '#/grammar/' + k.slice(2) : k.startsWith('u-') ? '#/practice/' + k.slice(2) : k.startsWith('v-') ? (k === 'v-quiz' ? '#/vquiz' : '#/vocab') : ({ listen: '#/skills/listening', mix: '#/course/mix', placement: '#/placement', dictation: '#/skills/dictation', pron: '#/skills/pronunciation', retry: '#/mistakes', 'unit-review': '#/course', ai: '#/generate', weak: '#/weak' })[k] || '#/progress';
+  const topicHref = (k) => k.startsWith('g-') ? '#/grammar/' + k.slice(2) : k.startsWith('u-') ? '#/practice/' + k.slice(2) : k.startsWith('v-') ? (k === 'v-quiz' ? '#/vquiz' : k === 'v-games' ? '#/vgames' : '#/vocab') : ({ listen: '#/skills/listening', mix: '#/course/mix', placement: '#/placement', dictation: '#/skills/dictation', pron: '#/skills/pronunciation', retry: '#/mistakes', 'unit-review': '#/course', ai: '#/generate', weak: '#/weak' })[k] || '#/progress';
 
   const allCards = C1.vocab.flatMap((g) => g.cards.map((c, i) => Object.assign({ id: g.id + '-' + i, group: g.id, groupTitle: g.title, section: g.section }, c)));
   const cardById = Object.fromEntries(allCards.map((c) => [c.id, c]));
@@ -64,9 +64,17 @@ window.App = { routes: {}, cleanup: [] };
     const a = Store.accuracy(topic);
     return a == null ? null : h('span', { class: 'tag' + (a >= 0.8 ? ' ok' : '') }, pct(a) + '% correct');
   };
-  const dueIds = () => allCards.filter((c) => Store.isDue(c.id)).map((c) => c.id);
+  /* every due card, and the part of them one session shows (the cap): counts and sessions use the capped list, so a backlog never looks like a mountain */
+  let spreadUndo = null; /* the cards moved by "Spread my backlog", for the one Undo offered right after */
+  const dueAll = () => Store.dueCards().filter((id) => cardById[id]);
+  const dueIds = () => dueAll().slice(0, Store.reviewCap());
   const newIds = (group) => allCards.filter((c) => !Store.card(c.id) && (!group || c.group === group)).map((c) => c.id);
   const NEW_PER_DAY = 10;
+  /* new cards offered today: the daily limit, and never more than the session has room for after the due cards */
+  const freshToday = (group) => Math.max(0, Math.min(group ? 12 : NEW_PER_DAY - Store.newTodayCount(), newIds(group).length, Store.reviewCap() - dueIds().length));
+  /* "Cards per session": 10, 20, 30 or 50 (the cards beyond it wait for the next session) */
+  const capChips = (after) => h('div', { class: 'row', role: 'group', 'aria-label': 'Cards per review session' }, h('span', { class: 'muted' }, 'Cards per session:'),
+    [10, 20, 30, 50].map((n) => h('button', { class: 'btn small' + (Store.reviewCap() === n ? '' : ' ghost'), 'aria-pressed': String(Store.reviewCap() === n), onclick: () => { Store.setReviewCap(n); if (after) after(); } }, String(n))));
   const sectionHead = (title, blurb, right) => h('div', { class: 'section-h' }, h('div', {}, h('h2', {}, title), blurb ? h('div', { class: 'muted' }, blurb) : null), right || null);
   const scoreChip = (key) => { const s = Store.score(key); return s ? h('span', { class: 'chip best' }, 'best ' + pct(s.p) + '%') : null; };
   const setsDone = (p) => p.sets.filter((_, i) => Store.score(setKey(p.id, i))).length;
@@ -176,7 +184,7 @@ window.App = { routes: {}, cleanup: [] };
   function home() {
     const st = Store.state;
     const due = dueIds().length;
-    const fresh = Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length));
+    const fresh = freshToday();
     const nc = nextCourseStep();
 
     const steps = App.homeSteps ? App.homeSteps() : [['Mixed review', 'A few questions from grammar, vocabulary and rewriting', '#/course/mix', 'Start']];
@@ -253,7 +261,7 @@ window.App = { routes: {}, cleanup: [] };
       const list = byGroup(pre);
       return list.length ? cardBlock(name, list.map(([k, s]) => { const a = s.c / s.t; return h('div', { class: 'trow' }, link(topicHref(k), topicLabels[k] || k), bar(a, barCls(a)), h('span', {}, pct(a) + '%')); })) : null;
     });
-    const dueN = dueIds().length, freshN = Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length)), mistN = Store.mistakes().length, mistDue = Store.dueMistakes().length;
+    const dueN = dueIds().length, freshN = freshToday(), mistN = Store.mistakes().length, mistDue = Store.dueMistakes().length;
     const act = (t, d, href, cta) => h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, t), h('div', { class: 'muted' }, d)), link(href, cta, 'btn small' + ' ghost'));
     const doNow = h('section', {}, h('h2', {}, 'Do now'),
       act('Flashcards', `${dueN} due · ${freshN} new today`, '#/review', 'Review'),
@@ -373,7 +381,13 @@ window.App = { routes: {}, cleanup: [] };
   }
 
   function vocab() {
-    const due = dueIds().length, fresh = Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length));
+    const due = dueIds().length, fresh = freshToday(), waiting = dueAll().length, cap = Store.reviewCap(), undoBox = h('div');
+    /* a long backlog: say how long it takes at this pace and offer to spread it (nothing is lost: cards keep their level; Undo restores the dates) */
+    const backlog = waiting > 2 * cap ? h('div', { class: 'callout' }, h('strong', {}, `${waiting} cards are waiting.`), ` At ${cap} a day they are cleared in about ${Math.ceil(waiting / cap)} days. You can also spread them over the next days, ${cap} a day, most overdue first.`,
+      h('div', { class: 'row' }, h('button', { class: 'btn small', onclick: () => { spreadUndo = Store.spreadBacklog(cap); route(); } }, 'Spread my backlog'))) : null;
+    /* shown once, right after spreading: how many moved, and Undo */
+    const moved = spreadUndo; spreadUndo = null;
+    const spreadNote = moved ? h('div', { class: 'callout', role: 'status' }, `${moved.length} cards moved to the coming days, ${cap} a day. `, h('button', { class: 'linkbtn', onclick: () => { Store.restoreDue(moved); route(); } }, 'Undo')) : null;
     const results = h('div');
     const search = h('input', { type: 'text', class: 'wide', placeholder: 'Search all ' + allCards.length + ' items (phrase or meaning)…', 'aria-label': 'Search vocabulary' });
     search.addEventListener('input', () => {
@@ -396,8 +410,9 @@ window.App = { routes: {}, cleanup: [] };
     view(back('#/toolkit', 'Study'), h('h1', {}, 'Vocabulary'),
       h('p', { class: 'lead' }, 'Phrasal verbs, collocations, idioms and topic language, grouped by the idea that connects them. Learn the idea and dozens of items become guessable.'),
       h('div', { class: 'card' }, h('h3', { style: 'margin-top:0' }, 'Daily practice'),
-        h('p', {}, `${due} due · ${fresh} new available today · ${allCards.length} items in total`),
-        h('div', { class: 'row' }, link('#/review', 'Start review', 'btn'), link('#/vquiz', 'Mixed quiz', 'btn ghost'), accTag('v-cards'))),
+        h('p', {}, `${due} to review now${waiting > due ? ' (' + (waiting - due) + ' more are waiting)' : ''} · ${fresh} new available today · ${allCards.length} items in total`),
+        h('div', { class: 'row' }, link('#/review', due ? `Review ${due} now` : 'Start review', 'btn'), link('#/vgames', 'Vocabulary games', 'btn ghost'), link('#/vquiz', 'Mixed quiz', 'btn ghost'), accTag('v-cards')),
+        capChips(() => route()), backlog, spreadNote),
       search, results, ...sections);
   }
 
@@ -425,8 +440,8 @@ window.App = { routes: {}, cleanup: [] };
   }
 
   function review(group) {
-    let queue = shuffle(dueIds().filter((id) => !group || cardById[id].group === group))
-      .concat(newIds(group).slice(0, group ? 12 : Math.max(0, NEW_PER_DAY - Store.newTodayCount())));
+    const dueNow = (group ? dueAll().filter((id) => cardById[id].group === group) : dueAll()).slice(0, Store.reviewCap());
+    let queue = shuffle(dueNow).concat(newIds(group).slice(0, Math.max(0, Math.min(group ? 12 : NEW_PER_DAY - Store.newTodayCount(), Store.reviewCap() - dueNow.length))));
     if (group && !queue.length) queue = shuffle(allCards.filter((c) => c.group === group).map((c) => c.id)).slice(0, 10);
     const total = queue.length;
     let reviewed = 0;
@@ -448,7 +463,9 @@ window.App = { routes: {}, cleanup: [] };
       if (!queue.length) {
         box.append(h('div', { class: 'card' }, h('h2', { style: 'margin-top:0' }, total ? 'Session complete' : 'Nothing due right now'),
           h('p', {}, total ? `You reviewed ${reviewed} card${reviewed === 1 ? '' : 's'}. Cards come back when they are due.` : 'Come back tomorrow, or open a group and study it ahead.'),
-          link(unitCtx ? '#/course/' + unitCtx : gBack, unitCtx ? 'Back to the unit' : 'Back', 'btn')));
+          (() => { const more = (group ? dueAll().filter((id) => cardById[id].group === group) : dueAll()).length; return more ? h('p', { class: 'muted' }, `${more} more card${more === 1 ? ' is' : 's are'} waiting. There is no hurry: you can stop here.`) : null; })(),
+          h('div', { class: 'row' }, (group ? dueAll().filter((id) => cardById[id].group === group) : dueAll()).length ? h('button', { class: 'btn', onclick: () => review(group) }, 'Another round') : null,
+            link('#/vgames', 'Play a vocabulary game', 'btn ghost'), link(unitCtx ? '#/course/' + unitCtx : gBack, unitCtx ? 'Back to the unit' : 'Back', 'btn ghost'))));
         return;
       }
       const id = queue[0], c = cardById[id];
@@ -903,7 +920,7 @@ window.App = { routes: {}, cleanup: [] };
     stepsLeft: () => { const all = C1.course.flatMap((u) => unitSteps(u)); return { done: all.filter((x) => x.done).length, total: all.length }; },
     unitsDone: () => C1.course.filter((u) => unitDone(u) === unitSteps(u).length).length, unitCount: () => C1.course.length,
     multiToggle, topicHref, icon, view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
-    unitBack, unitFooter, uq, partOf, setKey, scoreChip, nextInUnit, nextCourseStep, dueIds, updateBadge, dataCard, freshCards: () => Math.max(0, Math.min(NEW_PER_DAY - Store.newTodayCount(), newIds().length)), start: route, route
+    unitBack, unitFooter, uq, partOf, setKey, scoreChip, nextInUnit, nextCourseStep, dueIds, dueAll, capChips, exOf, sayPhrase, updateBadge, dataCard, freshCards: () => freshToday(), start: route, route
   });
   Object.defineProperty(window.App, 'unitCtx', { get: () => unitCtx });
 })();

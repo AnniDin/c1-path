@@ -636,3 +636,15 @@ h1:has(.doodle) { min-height: 98px; padding-right: 132px; }
 .notes-group { margin: 10px 0; } .notes-group > summary { cursor: pointer; padding: 4px 0; border-bottom: 2px solid var(--ink); }
 .notes-cat { padding: 4px 16px 0; gap: 12px; } .notes-status { padding: 0 16px; }
 .proposal { padding: 10px 12px; margin: 8px 0; } .proposal ul { padding-left: 1.2em; margin: .4em 0; font-size: .9rem; }
+
+/* vocabulary games: the pairs game */
+.vg-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
+.vg-col { display: grid; gap: 8px; align-content: start; }
+.vg-tile { font: inherit; text-align: left; padding: 10px 12px; border: 2px solid var(--ink); background: var(--bg); color: var(--ink); cursor: pointer; min-height: 3em; }
+.vg-tile:hover:not(:disabled), .vg-tile:focus-visible { border-color: var(--accent); }
+.vg-tile.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.vg-tile.done { opacity: .55; border-style: dashed; cursor: default; }
+.vg-tile.bad { animation: vgshake .3s; border-color: #c0392b; }
+@keyframes vgshake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+@media (max-width: 520px) { .vg-cols { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .vg-tile.bad { animation: none; } }

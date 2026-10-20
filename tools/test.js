@@ -315,6 +315,24 @@ let notesDone = Promise.resolve();
   });
 }
 
+/* --- vocabulary games: every question is well formed and has one answer --- */
+{
+  const D = device(['data/vocab.js', 'data/vocab2.js', 'data/vocab3.js', 'data/vocab4.js', 'data/vocab5.js', 'data/vocab6.js', 'data/vocabmulti.js', 'js/vgames.js']), G = D.VGames;
+  const all = D.C1.vocab.flatMap((g) => g.cards.map((c, i) => Object.assign({ id: g.id + '-' + i, group: g.id, groupTitle: g.title, section: g.section }, c)));
+  const shuffle = (a) => a.slice().sort(() => Math.random() - 0.5), exOf = (c) => [c.ex];
+  for (const kind of ['mean', 'type', 'gap', 'hear', 'mix']) {
+    const items = G.build(kind, all, 40, shuffle, exOf), uids = new Set(items.map((i) => i.uid));
+    const bad = items.filter((it) => !it.why || !it.uid || (it.type === 'mcq' ? it.options.length !== 4 || new Set(it.options).size !== 4 || !(it.answer >= 0 && it.answer < 4) : !it.answers.length || it.answers.some((a) => !a.trim()) || !/___/.test(it.q)));
+    eq('game "' + kind + '": 40 well formed questions from different cards', [items.length, uids.size, bad.length], [40, 40, 0]);
+  }
+  const g = G.build('gap', all, 5, shuffle, exOf)[0];
+  eq('a fill-the-gap question hides the expression and accepts it', [/\[\[/.test(g.q), g.answers.length], [false, 1]);
+  const t = G.build('type', all, 30, shuffle, exOf);
+  eq('typed questions only use expressions that can be typed', t.every((it) => it.answers.every((a) => /^[a-z' -]+$/i.test(a))), true);
+  eq('"to" can be left out when typing a verb phrase', G.answersOf({ phrase: 'to break the ice' }), ['to break the ice', 'break the ice']);
+}
+
+
 /* --- AI requests: a passing failure is tried again (3 tries), a refusal is not --- */
 let retryDone = Promise.resolve();
 {

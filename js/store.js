@@ -229,6 +229,19 @@
     INTERVALS: [0, 1, 2, 4, 7, 14, 30, 60],
     card(id) { return state.cards[id]; },
     isDue(id) { const c = state.cards[id]; return !!c && c.due <= dayStr(); },
+    /* how many cards one review session shows (10, 20, 30 or 50): the rest wait, so a long absence does not bury you */
+    reviewCap() { try { const n = +localStorage.getItem('c1path.reviewcap'); return [10, 20, 30, 50].includes(n) ? n : 20; } catch (e) { return 20; } },
+    setReviewCap(n) { try { localStorage.setItem('c1path.reviewcap', String(n)); } catch (e) { /* optional */ } },
+    /* the ids of the cards that are due, the most overdue first (then the weakest) */
+    dueCards() { return Object.entries(state.cards).filter(([, c]) => c.due <= dayStr()).sort((a, b) => (a[1].due < b[1].due ? -1 : a[1].due > b[1].due ? 1 : a[1].box - b[1].box)).map(([id]) => id); },
+    /* keep perDay due cards for today and spread the rest over the next days, perDay a day, most overdue first. Returns [[id, old due]] so it can be undone. */
+    spreadBacklog(perDay, only) {
+      const keep = only ? new Set(only) : null, moved = [];
+      Store.dueCards().filter((id) => !keep || keep.has(id)).slice(perDay).forEach((id, i) => { const c = state.cards[id]; moved.push([id, c.due]); c.due = addDays(1 + Math.floor(i / perDay)); c.ts = Math.max(Date.now(), (c.ts || 0) + 1); });
+      if (moved.length) save();
+      return moved;
+    },
+    restoreDue(list) { list.forEach(([id, due]) => { const c = state.cards[id]; if (c) { c.due = due; c.ts = Math.max(Date.now(), (c.ts || 0) + 1); } }); save(); },
     rate(id, rating) { // 0 again, 1 hard, 2 good, 3 easy
       const isNew = !state.cards[id];
       const c = state.cards[id] || { box: 0, due: dayStr() };
