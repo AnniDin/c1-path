@@ -721,3 +721,19 @@ h1:has(.doodle) { min-height: 98px; padding-right: 132px; }
   .note-toolbar .tb { min-height: 36px; padding: 6px 10px; }
 }
 @media (max-width: 520px) { .stamp { font-size: .85rem; letter-spacing: .08em; right: 10px; top: 10px; } }
+
+/* the page behind the content: a faint dotted-notebook grid and a soft wash of the accent colour at the top, instead of one flat colour.
+   Cards stay solid, like sheets on a desk; a timed exam paper and the high-contrast theme keep a plain background. */
+:root { --dot: rgba(11, 61, 145, .17); --glow: rgba(11, 61, 145, .09); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --dot: rgba(141, 177, 255, .19); --glow: rgba(141, 177, 255, .10); } }
+:root[data-theme="dark"] { --dot: rgba(141, 177, 255, .19); --glow: rgba(141, 177, 255, .10); }
+:root[data-theme="sepia"] { --dot: rgba(122, 47, 13, .20); --glow: rgba(193, 154, 91, .26); }
+:root[data-theme="contrast"] { --dot: transparent; --glow: transparent; }
+body {
+  background-image: radial-gradient(circle at 1px 1px, var(--dot) 1.3px, transparent 1.8px), radial-gradient(90% 420px at 12% -40px, var(--glow), transparent 70%), radial-gradient(70% 380px at 100% 100%, var(--glow), transparent 70%);
+  background-size: 22px 22px, 100% 100%, 100% 100%;
+  background-repeat: repeat, no-repeat, no-repeat;
+  background-attachment: scroll, scroll, scroll;
+}
+body.exam-focus { background-image: none; }
+@media print { body { background-image: none; } }
