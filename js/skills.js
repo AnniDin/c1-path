@@ -108,6 +108,20 @@
     : it.q.replace('___', '<span class="blank"></span>');
   const correctText = (it) => (it.type === 'mcq' ? it.options[it.answer] : it.answers.slice(0, 2).join(' / '));
 
+  /* the cause of a mistake: the trick that would have settled it, or else the topic it came from */
+  const causeOf = (m) => {
+    const it = m.item, r = C1.trickFor(it.q || (it.first + ' ' + it.key + ' ' + it.second), m.given, it.options ? [it.options[it.answer]] : it.answers);
+    return r ? { key: 't:' + r.key, title: r.title, trick: r.key } : { key: 'k:' + (m.topic || 'other'), title: m.label || 'Other', topic: m.topic || '' };
+  };
+  /* every saved mistake in groups by cause: the biggest group first, then the one slipped on most recently */
+  function causes(list) {
+    const by = new Map();
+    list.forEach((m) => { const c = causeOf(m), g = by.get(c.key) || Object.assign({ items: [] }, c); g.items.push(m); by.set(c.key, g); });
+    const last = (g) => Math.max(...g.items.map((m) => m.ts || 0));
+    return [...by.values()].sort((a, b) => b.items.length - a.items.length || last(b) - last(a));
+  }
+  A.mistakeCauses = () => causes(Store.mistakes());
+
   /* mistakes that one trick would settle, grouped: "3 slips on wish and if only", with a link to the trick and its practice */
   function repeated() {
     const by = {};
@@ -122,7 +136,7 @@
   }
 
   function mistakes() {
-    let cur = 'All', sort = 'recent';
+    let cur = 'All', sort = 'recent', mode = Store.mistakes().length >= 4 ? 'cause' : 'list';
     const list = h('div');
     const chips = h('div', { class: 'toc' });
     function filtered() {
@@ -149,8 +163,27 @@
         h('div', { class: 'fb good' }, h('b', {}, 'Correct: '), correctText(it)),
         h('div', { class: 'why', html: '<b>Why:</b> ' + (it.why || '') }), extra);
     }
+    /* by cause: one card per cause, with what to read and a short practice of just those mistakes */
+    function byCause() {
+      const gs = causes(Store.mistakes());
+      return gs.map((g) => {
+        const latest = g.items.slice().sort((x, y) => (y.ts || 0) - (x.ts || 0))[0], it = latest.item, n = g.items.length, again = g.items.reduce((s, m) => s + (m.count || 1), 0);
+        const read = g.trick ? link('#/tricks/' + g.trick, 'Read the trick', 'btn small ghost') : (A.topicHref && g.topic ? link(A.topicHref(g.topic), 'Open the topic', 'btn small ghost') : null);
+        return h('div', { class: 'card cause' },
+          h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, g.title), h('div', { class: 'muted' }, `${n} mistake${n === 1 ? '' : 's'} saved${again > n ? ` · ${again} slips in all` : ''} · last on ${fmtDate(latest.ts)}`)),
+            h('div', { class: 'row' }, read, link('#/mistakes/practice/' + encodeURIComponent(g.key), `Practise ${Math.min(n, 10)}`, 'btn small'))),
+          h('p', { class: 'muted causeex', html: 'For example: ' + strip(promptHtml(it)).slice(0, 140) + ' &rarr; <b>' + strip(correctText(it)).slice(0, 60) + '</b>' }));
+      });
+    }
     function draw() {
       const all = Store.mistakes();
+      modeBar.replaceChildren(h('span', { class: 'muted' }, 'View:'), ...[['cause', 'By cause'], ['list', 'All, one by one']].map(([m, label]) => h('button', { class: 'btn small' + (mode === m ? '' : ' ghost'), 'aria-pressed': String(mode === m), onclick: () => { mode = m; draw(); } }, label)));
+      topBox.replaceChildren(...(mode === 'list' ? [repeated()].filter(Boolean) : []));
+      chipsBox.hidden = mode === 'cause';
+      if (mode === 'cause') {
+        list.replaceChildren(...(all.length ? byCause() : [h('div', { class: 'card' }, Doodle('empty', 'inline'), h('p', {}, 'No mistakes saved. Every wrong answer lands here, grouped by what caused it.'))]));
+        A.updateBadge(); return;
+      }
       chips.replaceChildren(...MGROUPS.map(([name, f]) => h('a', {
         href: '#', class: cur === name ? 'on' : '', onclick: (e) => { e.preventDefault(); cur = name; draw(); }
       }, `${name} (${all.filter(f).length})`)));
@@ -160,24 +193,26 @@
       A.updateBadge();
     }
     const n = Store.mistakes().length, nDue = Store.dueMistakes().length;
+    const modeBar = h('div', { class: 'row', role: 'group', 'aria-label': 'How to list the mistakes' }), topBox = h('div'), chipsBox = h('div', {}, chips);
     view(back('#/progress', 'Review'), h('h1', {}, 'My mistakes'),
       h('p', { class: 'lead' }, 'Every question you answered wrongly is saved here with the correct answer and the reason. A mistake comes back a day after the slip and again three days after your first right answer; after two right answers it disappears, so this list shows what you still need to learn.'),
       h('div', { class: 'row' },
         n ? link('#/mistakes/practice', (nDue ? `Practise ${Math.min(nDue, 10)} due today` : `Practise ${Math.min(n, 10)} early`), 'btn') : null,
         h('label', { class: 'muted' }, 'Sort ', h('select', { onchange: (e) => { sort = e.target.value; draw(); } }, h('option', { value: 'recent' }, 'Newest first'), h('option', { value: 'repeated' }, 'Most repeated'))),
         n ? h('button', { class: 'btn small ghost', onclick: () => { if (confirm('Remove all saved mistakes?')) { Store.clearMistakes(); draw(); } } }, 'Clear all') : null),
-      repeated(), chips, list);
+      modeBar, topBox, chipsBox, list);
     draw();
   }
 
-  function mistakePractice() {
-    /* the ones that are due come first; if fewer than ten are due, the rest are the next in line */
-    const due = Store.dueMistakes(), rest = Store.mistakes().filter((m) => !due.includes(m)).sort((a, b) => (a.due || 0) - (b.due || 0));
+  function mistakePractice(cause) {
+    /* the ones that are due come first; if fewer than ten are due, the rest are the next in line. With a cause, only the mistakes of that cause. */
+    const mine = Store.mistakes().filter((m) => !cause || causeOf(m).key === cause), title = cause && mine[0] ? causeOf(mine[0]).title : '';
+    const due = mine.filter((m) => Store.dueMistakes().includes(m)), rest = mine.filter((m) => !due.includes(m)).sort((a, b) => (a.due || 0) - (b.due || 0));
     const items = sample(due, 10).concat(rest).slice(0, 10).flatMap((m) => [Engine.recording(m.item), m.item].filter(Boolean));
     if (!items.length) { location.hash = '#/mistakes'; return; }
-    view(back('#/mistakes', 'My mistakes'), h('h1', {}, 'Practise your mistakes'),
+    view(back('#/mistakes', 'My mistakes'), h('h1', {}, title ? 'Practise: ' + title : 'Practise your mistakes'),
       h('p', { class: 'muted' }, 'Answer correctly twice (in two sessions) and a mistake leaves your list.'),
-      quiz(items, { source: { topic: 'retry', label: 'Mistake practice', href: '#/mistakes' }, onRetry: mistakePractice, onScore: (c, t) => Store.record('retry', c, t) }));
+      quiz(items, { source: { topic: 'retry', label: 'Mistake practice', href: '#/mistakes' }, onRetry: () => mistakePractice(cause), onScore: (c, t) => Store.record('retry', c, t) }));
   }
 
   A.limitsNote = () => h('div', { class: 'callout warn' }, h('strong', {}, 'Honest limits. '), 'No website can give you an official mark. Speaking and Writing come with analysers that spot weak points, models to compare with and criteria to assess yourself against. ', AI.configured() ? 'AI feedback is switched on. ' : h('span', {}, 'For examiner-style feedback you can optionally ', link('#/progress', 'add your own AI key'), '. '), 'If you can, also share your recordings and texts with a teacher or language partner.');
@@ -635,7 +670,7 @@
   }
 
   /* ---------- routes ---------- */
-  A.routes.mistakes = (b) => (b === 'practice' ? mistakePractice() : mistakes());
+  A.routes.mistakes = (b, c) => (b === 'practice' ? mistakePractice(c || null) : mistakes());
   A.routes.notebook = () => { A.openNotes && A.openNotes(); location.replace('#/'); };
   A.routes.skills = (b, c) => {
     if (b === 'pronunciation') return A.routes.pronunciation(c);

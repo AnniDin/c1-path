@@ -90,6 +90,43 @@
   const skip = $(w, '.skip');
   ok('the skip link exists and points to the main content', !!skip && skip.getAttribute('href') === '#app');
 
+  /* ---------- 7b. keyboard use of the newer pieces: the course map, the notes drawer, the pairs game, the tutor, the mistakes view ---------- */
+  {
+    const press = (target, key, mods) => target.dispatchEvent(new w.KeyboardEvent('keydown', Object.assign({ key, bubbles: true, cancelable: true }, mods || {})));
+    await go(w, '#/course', 500);
+    const nodes = $$(w, '.cm-node');
+    ok('the course map is made of real links, each with a spoken name', nodes.length === w.C1.course.length && nodes.every((a) => a.tagName === 'A' && /^Unit \d+, /.test(a.getAttribute('aria-label') || '')));
+    ok('the course map has no empty tab stops', nodes.every((a) => a.tabIndex === 0));
+    ok('the map and list buttons say which is pressed', $$(w, '[aria-label="Course view"] button').filter((b) => b.getAttribute('aria-pressed') === 'true').length === 1);
+    /* the notes drawer (transitions off: a frame that is not on screen does not run them, and a drawer that is still sliding in cannot take focus) */
+    const still = w.document.createElement('style'); still.textContent = '*{transition:none!important;animation:none!important}'; w.document.head.append(still);
+    press(w.document, 'n', { altKey: true }); await sleep(400);
+    const drawer = $(w, '#notes'), ta = drawer && drawer.querySelector('textarea');
+    ok('Alt+N opens the notes and puts the cursor in the note box', !!drawer && drawer.getAttribute('aria-hidden') === 'false' && w.document.activeElement === ta, 'hidden=' + (drawer && drawer.getAttribute('aria-hidden')) + ' active=' + (w.document.activeElement && w.document.activeElement.tagName) + ' vis=' + (drawer && w.getComputedStyle(drawer).visibility));
+    ok('every formatting button has a name', $$(w, '#notes .note-toolbar button').length >= 9 && $$(w, '#notes .note-toolbar button').every((b) => (b.getAttribute('aria-label') || '').length > 1));
+    ta.value = 'hello world'; ta.setSelectionRange(0, 5); press(ta, 'b', { ctrlKey: true });
+    ok('Ctrl+B makes the selected word bold', ta.value === '**hello** world', ta.value);
+    press(w.document, 'Escape'); await sleep(250);
+    ok('Escape closes the notes and returns to the Notes button', $(w, '#notes').getAttribute('aria-hidden') === 'true' && w.document.activeElement === $(w, '#qnote'));
+    /* the pairs game */
+    await go(w, '#/vgames/match', 500);
+    const tiles = $$(w, '.vg-tile');
+    ok('the pairs game is twelve buttons', tiles.length === 12 && tiles.every((b) => b.tagName === 'BUTTON'));
+    tiles[0].click(); await sleep(60);
+    ok('a chosen tile says it is pressed, and pressing it again lets go', tiles[0].getAttribute('aria-pressed') === 'true' && (tiles[0].click(), tiles[0].getAttribute('aria-pressed') === 'false'));
+    ok('the game announces progress politely', !!$(w, '#app [role=status][aria-live=polite]'));
+    /* the tutor */
+    const fab = $(w, '#tutor-btn'); fab.click(); await sleep(250);
+    ok('the tutor panel opens and moves focus into it', $(w, '#tutor') && !$(w, '#tutor').hidden && $(w, '#tutor').contains(w.document.activeElement));
+    press(w.document, 'Escape'); await sleep(250);
+    ok('Escape closes the tutor and returns to its button', $(w, '#tutor').hidden && w.document.activeElement === fab);
+    /* mistakes by cause */
+    w.Store.logResults([{ ok: false, given: 'have', item: { type: 'mcq', q: 'I wish I ___ time.', options: ['had', 'have', 'x', 'y'], answer: 0, why: 'w' } }], { topic: 'g-wish', label: 'Wishes', href: '#/grammar/wish' });
+    await go(w, '#/mistakes', 500);
+    ok('the mistakes view buttons say which is pressed', $$(w, '[aria-label="How to list the mistakes"] button').filter((b) => b.getAttribute('aria-pressed') === 'true').length === 1);
+    ok('every control on the mistakes page has a name', $$(w, '#app a[href], #app button').filter((e) => e.offsetParent !== null).every((e) => (e.getAttribute('aria-label') || e.textContent || '').trim().length > 0));
+  }
+
   /* ---------- 8. phone width and both themes: no sideways scroll, no axe violations ---------- */
   const ROUTES = ['#/', '#/course', '#/course/work', '#/toolkit', '#/mock', '#/certacles', '#/exams', '#/plan', '#/progress', '#/progress/progress', '#/progress/settings', '#/ask', '#/account', '#/practice', '#/practice/mcq', '#/practice/mcq/0', '#/grammar', '#/grammar/inversion',
     '#/vocab', '#/skills/listening', '#/skills/listening/work', '#/skills/writing', '#/skills/writing/essay-work', '#/skills/speaking', '#/skills/pronunciation', '#/tricks', '#/about', '#/unsubscribe/not-a-token', '#/generate', '#/weak', '#/mistakes', '#/privacy', '#/vgames', '#/vgames/match', '#/vgames/type', '#/vgames/hear', '#/placement', '#/placement/short', '#/placement/adaptive', '#/placement/full', '#/review'];

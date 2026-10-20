@@ -24,8 +24,13 @@
   const pica = (mood, cls) => h('span', { class: 'picawrap ' + (cls || ''), html: PICA(mood) });
 
   /* **bold** and line breaks, built with DOM nodes so nothing from the model is ever inserted as HTML */
-  const rich = (text) => h('div', {}, String(text).split(/\n{2,}/).map((para) => h('p', {}, para.split('\n').flatMap((line, i) =>
-    (i ? [h('br')] : []).concat(line.split('**').map((bit, k) => (k % 2 ? h('strong', {}, bit) : bit)))))));
+  /* [label](link to a page of this site) becomes a link, for pages of this site only (a model can never send the reader elsewhere) */
+  const bold = (s) => s.split('**').map((bit, k) => (k % 2 ? h('strong', {}, bit) : bit));
+  const inline = (line) => line.split(/(\[[^\]]+\]\(#\/[^)\s]*\))/).flatMap((seg) => {
+    const m = /^\[([^\]]+)\]\((#\/[^)\s]*)\)$/.exec(seg);
+    return m ? [h('a', { href: m[2], onclick: () => toggle(false) }, m[1])] : bold(seg);
+  });
+  const rich = (text) => h('div', {}, String(text).split(/\n{2,}/).map((para) => h('p', {}, para.split('\n').flatMap((line, i) => (i ? [h('br')] : []).concat(inline(line))))));
 
   const log = h('div', { class: 'chatlog', role: 'log', 'aria-live': 'polite', 'aria-label': 'Conversation with the tutor' });
   const msg = h('p', { class: 'muted chatmsg', role: 'status' });
@@ -37,7 +42,7 @@
   const close = h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close the tutor' }, '✕');
   const panel = h('section', { id: 'tutor', role: 'dialog', 'aria-label': 'Tutor', hidden: true },
     h('header', {}, portrait, h('div', { class: 'picatitle' }, h('strong', {}, 'Pica'), h('span', { class: 'muted' }, 'your C1 tutor')), close),
-    h('p', { class: 'muted chatnote' }, 'English and the C1 exams only. Pica is an AI and can be wrong: check important points.'),
+    h('p', { class: 'muted chatnote' }, 'English and the C1 exams only. With an AI key Pica can be wrong, so check important points; without one she only quotes this site.'),
     log, msg, h('div', { class: 'chatbox' }, box, h('label', { class: 'chatpage', for: 'tutor-page' }, withPage, ' Show Pica what is on my screen'), h('div', { class: 'chatbtns' }, send, reset)));
   const fab = h('button', { id: 'tutor-btn', type: 'button', 'aria-expanded': 'false', 'aria-controls': 'tutor', title: 'Ask Pica, the tutor, a question about English' }, pica('idle', 'fabpica'), h('span', {}, 'Ask Pica'));
 
@@ -45,7 +50,7 @@
     const keyless = !AI.configured();
     log.replaceChildren(...(history.length
       ? history.map((m) => h('div', { class: 'turn ' + m.role }, h('strong', {}, m.role === 'user' ? 'You' : 'Pica'), m.role === 'user' ? h('p', {}, m.text) : rich(m.text)))
-      : [keyless ? h('div', { class: 'callout' }, 'Pica uses your own free AI key. ', h('a', { href: '#/account', onclick: () => toggle(false) }, 'Add one on your account page'), ' (Google Gemini and Groq both have free plans).') : null,
+      : [keyless ? h('div', { class: 'callout' }, 'Without an AI key, Pica answers from the lessons, tricks and vocabulary on this site. For any question, ', h('a', { href: '#/account', onclick: () => toggle(false) }, 'add a free key on your account page'), ' (Google Gemini and Groq both have free plans).') : null,
         h('div', { class: 'picahello' }, pica('happy', 'big'), h('p', {}, h('strong', {}, 'Hi, I am Pica.'), ' I collect shiny words, and I am happy to share them. Ask me about grammar, vocabulary, pronunciation or the C1 exams. For example:')),
         h('div', { class: 'chatex' }, EXAMPLES.map((q) => h('button', { class: 'btn small ghost', type: 'button', onclick: () => ask(q) }, q)))].filter(Boolean)));
     log.scrollTop = history.length ? log.scrollHeight : 0;
@@ -62,6 +67,12 @@
   }
   /* answers the last question; if it still fails after the automatic tries, the question stays and "Try again" asks it once more */
   async function run(screen) {
+    /* no AI key: Pica answers from the lessons, tricks and vocabulary of the site, on this device */
+    if (!AI.configured() && window.PicaLocal) {
+      const last = history[history.length - 1];
+      history.push({ role: 'tutor', text: /^Exercise question:/.test(screen || '') ? PicaLocal.explain(screen) : PicaLocal.answer(last ? last.text : '') });
+      msg.textContent = ''; portrait.replaceChildren(pica('happy')); draw(); return;
+    }
     msg.textContent = 'Pica is thinking…'; portrait.replaceChildren(pica('think')); send.disabled = true; draw();
     AI.onRetry = (n, total) => { msg.textContent = `Pica could not reach the AI. Trying again (${n} of ${total})…`; };
     try { history.push({ role: 'tutor', text: await AI.chat(history, screen) }); msg.textContent = ''; }

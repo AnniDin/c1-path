@@ -201,6 +201,22 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
     check('the progress page has a calendar of 12 or 13 week columns with the streak line', week.length >= 12 && week.length <= 13 && app.all((n) => n.tag === 'i' && n.attrs.title).length === 84 && /day[s]? in a row/.test(app.textContent) && /best \d+/.test(app.textContent));
     st.days = JSON.parse(keep);
   }
+  /* mistakes grouped by cause: the same trick together, other topics apart, practice of one cause only */
+  {
+    const S = sb.Store, A = sb.App, keep = JSON.stringify(S.state.mistakes), render = (hash) => { sb.location.hash = hash; app.children = []; A.route(); };
+    S.state.mistakes = {};
+    const mk = (q, given, right, topic, label) => ({ ok: false, given, item: { type: 'mcq', q, options: [right, given, 'x', 'y'], answer: 0, why: 'w' }, topic, label });
+    const wish = ['I wish I ___ more time.', 'If only I ___ the answer.', 'I wish she ___ here now.'].map((q, i) => mk(q, ['have', 'know', 'is'][i], ['had', 'knew', 'were'][i]));
+    S.logResults(wish, { topic: 'g-wish', label: 'Wishes', href: '#/grammar/wish' });
+    S.logResults([mk('The ___ of the committee was surprising.', 'decide', 'decision')], { topic: 'u-wf', label: 'Word formation', href: '#/practice/wf' });
+    const gs = A.mistakeCauses();
+    check('mistakes are grouped by cause, the biggest group first', gs.length >= 1 && gs[0].items.length >= 3 && /wish/i.test(gs[0].title), gs.map((g) => g.title + ':' + g.items.length).join(', '));
+    render('#/mistakes');
+    check('the mistakes page opens by cause when there are four or more, with a practice button per cause', /By cause/.test(app.textContent) && /Practise 3/.test(app.textContent) && /Read the trick/.test(app.textContent));
+    render('#/mistakes/practice/' + encodeURIComponent(gs[0].key));
+    check('practising one cause shows only its mistakes', /Practise: /.test(app.textContent) && app.all((n) => /item/.test(n.className || '')).length === 3);
+    S.state.mistakes = JSON.parse(keep);
+  }
   /* Pica: the daily greeting, being sad after days away, the first-time tip per task, and the About page */
   {
     const A = sb.App, text = (el) => (el && el.textContent) || '';

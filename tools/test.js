@@ -324,6 +324,23 @@ let notesDone = Promise.resolve();
   eq('the best streak is the longest run of days with answers (days 5 to 9 here)', D.Store.bestStreak(), 5);
 }
 
+/* --- Pica without an AI key: answers come from the site, and nothing is invented --- */
+{
+  const D = device(['data/grammar.js', 'data/grammar2.js', 'data/grammar3.js', 'data/grammar4.js', 'data/grammar5.js', 'data/tricks.js', 'data/tricks2.js', 'data/tricks3.js', 'data/tricks4.js', 'data/trickdrills.js', 'data/trickdrills2.js', 'data/vocab.js', 'data/vocab2.js', 'data/vocab3.js', 'data/vocab4.js', 'data/vocab5.js', 'data/vocab6.js', 'data/trickmap.js', 'js/pica_local.js']), P = D.PicaLocal;
+  const links = (s) => [...s.matchAll(/\]\(([^)]*)\)/g)].map((m) => m[1]);
+  const a1 = P.answer('what is the difference between since and for?');
+  eq('a question about since and for finds the trick and links to it', [/since/i.test(a1), links(a1).some((l) => /^#\/tricks\/[a-z]+-\d+$|^#\/grammar\//.test(l))], [true, true]);
+  const a2 = P.answer('When do I use the third conditional?');
+  eq('the third conditional finds the conditionals lesson', links(a2).includes('#/grammar/conditionals'), true);
+  const a3 = P.answer('Can you give me a recipe for paella?');
+  eq('something it does not know gets an honest "not found" and pointers, not an invented answer', [/could not find that/.test(a3), links(a3).every((l) => /^#\//.test(l))], [true, true]);
+  eq('an empty question is handled', /could not find that/.test(P.answer('')), true);
+  const outs = ['since or for', 'inversion', 'make or do', 'break the ice', 'wish', 'used to', 'despite although'].map(P.answer);
+  eq('answers hold no HTML and only links inside the site', [outs.some((o) => /<[a-z\/]/i.test(o)), outs.every((o) => links(o).every((l) => /^#\//.test(l)))], [false, true]);
+  const ex = P.explain('Exercise question: I wish I ___ more time.\nMy answer: have\nCorrect answer: had\nThe given explanation: A wish about the present takes a past form.');
+  eq('a wrong answer is explained with the exercise\'s own explanation', [/\*\*have\*\*/.test(ex), /\*\*had\*\*/.test(ex), /past form/.test(ex)], [true, true, true]);
+}
+
 /* --- vocabulary games: every question is well formed and has one answer --- */
 {
   const D = device(['data/vocab.js', 'data/vocab2.js', 'data/vocab3.js', 'data/vocab4.js', 'data/vocab5.js', 'data/vocab6.js', 'data/vocabmulti.js', 'js/vgames.js']), G = D.VGames;

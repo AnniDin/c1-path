@@ -262,11 +262,13 @@
     }
     function toggle(force) {
       open = force == null ? !open : force;
+      if (!open && panel.contains(document.activeElement)) handle.focus(); /* closing with the keyboard returns you to the Notes button */
       apply();
       if (open) {
         const sel = String(getSelection()).trim();
         if (sel && !text.value) ed.set(sel);
-        refreshCtx(); draw(); text.focus();
+        refreshCtx(); draw();
+        setTimeout(() => text.focus(), 40); /* the drawer is still hidden for an instant while it slides in, and a hidden box cannot take focus */
       }
     }
     /* keep the drawer in sync when notes are added from buttons elsewhere */
