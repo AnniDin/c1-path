@@ -883,6 +883,101 @@ C1.audio = {
    "marks": [
     0.0
    ]
+  },
+  "lecture-science-replication": {
+   "src": "audio/listening/lecture-science-replication.mp3",
+   "dur": 142.4,
+   "marks": [
+    0.0,
+    58.49,
+    84.93,
+    97.32
+   ]
+  },
+  "panel-cashless-society": {
+   "src": "audio/listening/panel-cashless-society.mp3",
+   "dur": 132.9,
+   "marks": [
+    0.0,
+    15.04,
+    31.48,
+    44.36,
+    49.73,
+    71.53,
+    96.7,
+    100.7,
+    119.49,
+    123.46,
+    131.28
+   ]
+  },
+  "interview-adaptive-reuse": {
+   "src": "audio/listening/interview-adaptive-reuse.mp3",
+   "dur": 149.9,
+   "marks": [
+    0.0,
+    15.93,
+    41.16,
+    42.97,
+    67.37,
+    70.65,
+    88.1,
+    92.77,
+    114.33,
+    116.89,
+    137.25,
+    139.26
+   ]
+  },
+  "meeting-office-relocation": {
+   "src": "audio/listening/meeting-office-relocation.mp3",
+   "dur": 151.3,
+   "marks": [
+    0.0,
+    17.08,
+    32.4,
+    40.71,
+    46.89,
+    54.65,
+    67.07,
+    74.48,
+    77.36,
+    89.92,
+    93.84,
+    104.8,
+    112.24,
+    121.9,
+    131.77,
+    135.1,
+    142.41,
+    146.69
+   ]
+  },
+  "news-grid-storage": {
+   "src": "audio/listening/news-grid-storage.mp3",
+   "dur": 132.4,
+   "marks": [
+    0.0,
+    41.1,
+    60.55,
+    63.64,
+    84.01,
+    86.29,
+    111.58,
+    113.6,
+    130.77
+   ]
+  },
+  "talk-sceptical-guide": {
+   "src": "audio/listening/talk-sceptical-guide.mp3",
+   "dur": 135.5,
+   "marks": [
+    0.0,
+    31.4,
+    60.75,
+    79.42,
+    104.38
+   ]
   }
  }
 };
