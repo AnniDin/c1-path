@@ -252,8 +252,19 @@ window.App = { routes: {}, cleanup: [] };
   function progress(which) {
     if (which === 'settings') return App.routes.account();
     const st = Store.state;
-    const heat = h('div', { class: 'heat' }, Store.lastDays(84).map((d) =>
-      h('i', { class: d.n >= 20 ? 'l3' : d.n >= 8 ? 'l2' : d.n > 0 ? 'l1' : '', title: `${d.day}: ${d.n} answers` })));
+    /* a calendar of the last 12 weeks: a column per week (Monday first), a row per weekday, the month named above the first week of each */
+    const heat = (() => {
+      const days = Store.lastDays(84), today = Store.today(), pad = (new Date(days[0].day + 'T00:00:00').getDay() + 6) % 7;
+      const cells = Array(pad).fill(null).concat(days), weeks = [];
+      for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+      let last = '';
+      return h('div', { class: 'cal', role: 'img', 'aria-label': `Last 12 weeks: practice on ${days.filter((d) => d.n > 0).length} days, ${Store.streak()} days in a row now, ${Store.bestStreak()} at best` },
+        h('div', { class: 'cal-days', 'aria-hidden': 'true' }, h('span', {}), ['Mon', '', 'Wed', '', 'Fri', '', ''].map((t) => h('span', {}, t))),
+        weeks.map((w) => { const m = new Date(w.find(Boolean).day + 'T00:00:00').toLocaleDateString('en-GB', { month: 'short' }), label = m !== last ? m : ''; last = m;
+          return h('div', { class: 'cal-week', 'aria-hidden': 'true' }, h('span', { class: 'cal-m' }, label), w.map((d) => (d ? h('i', { class: (d.n >= 20 ? 'l3' : d.n >= 8 ? 'l2' : d.n > 0 ? 'l1' : '') + (d.day === today ? ' today' : ''), title: `${d.day}: ${d.n} answers` }) : h('i', { class: 'cal-empty' })))); }));
+    })();
+    const flame = h('span', { class: 'flame', 'aria-hidden': 'true', html: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 2c1 4.2 5.5 6.2 5.5 11.2a5.5 5.5 0 0 1-11 0c0-2.2 1.1-3.5 2.2-4.5.1 2 .9 3.2 2 3.4-.7-4.1-.2-6.4 1.3-10.1z" fill="currentColor"/></svg>' });
+    const streakLine = h('p', { class: 'streakline' }, flame, h('strong', {}, ` ${Store.streak()} day${Store.streak() === 1 ? '' : 's'} in a row`), h('span', { class: 'muted' }, ` · best ${Store.bestStreak()}`));
     const groups = [['Grammar', 'g-'], ['Practice', 'u-'], ['Vocabulary and placement', null]];
     const entries = Object.entries(st.stats).filter(([, s]) => s.t > 0);
     const byGroup = (pre) => entries.filter(([k]) => pre ? k.startsWith(pre) : !k.startsWith('g-') && !k.startsWith('u-'));
@@ -279,7 +290,7 @@ window.App = { routes: {}, cleanup: [] };
     const PAGES = {
       today: ['Today', 'What to do now, how this week is going and your daily goal.', [doNow, numbers, App.weekCard ? App.weekCard() : null, goal]],
       progress: ['Results', 'How you are doing: activity, achievements, full tests, skills and accuracy by topic.', [
-        cardBlock('Last 12 weeks', heat, h('p', { class: 'muted' }, 'Darker = more answers that day. Answer at least one question to keep your streak.')),
+        cardBlock('Last 12 weeks', streakLine, heat, h('p', { class: 'muted' }, 'Darker = more answers that day. Answer at least one question to keep your streak.')),
         App.rewards ? App.rewards.shelf() : null, App.historyCard ? App.historyCard() : null, App.skillsCard ? App.skillsCard() : null, App.skillTrendCard ? App.skillTrendCard() : null, App.recsCard ? App.recsCard() : null,
         ...tbl, !entries.length ? h('p', { class: 'muted' }, 'Nothing here yet. Do a lesson or a practice set and your results will appear.') : null]],
     };
@@ -334,7 +345,7 @@ window.App = { routes: {}, cleanup: [] };
 
   /* ---------- vocabulary ---------- */
   /* hear a phrase and read its phonetic transcription (British IPA, machine-generated: data/ipa.js) */
-  const spoken = (t) => t.replace(/\([^)]*\)/g, ' ').replace(/sb/g, 'somebody').replace(/sth/g, 'something').replace(/\//g, ' ').replace(/\s+/g, ' ').trim();
+  const spoken = (t) => t.replace(/\([^)]*\)/g, ' ').replace(/\bsb\b/g, 'somebody').replace(/\bsth\b/g, 'something').replace(/\//g, ' ').replace(/\s+/g, ' ').trim();
   const slug = (p) => p.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   let vclip = null;
   /* a recorded neural clip when there is one (audio/vocab, made by tools/make_vocab_audio.py), otherwise the browser voice */
@@ -371,10 +382,10 @@ window.App = { routes: {}, cleanup: [] };
     return h('div', { class: 'vcard' },
       h('div', {}, h('span', { class: 'hl' }, c.phrase), ' ', phraseLine(c), ' ', h('span', { class: 'tag' }, c.kind), showGroup ? h('span', { class: 'muted' }, ' ' + c.groupTitle) : null),
       meaningBlock(c, false, false),
-      c.logic ? h('div', { class: 'muted' }, '' + c.logic) : null,
+      c.logic ? h('div', { class: 'muted', html: c.logic }) : null,
       h('button', {
         class: 'btn small ghost', style: 'margin-top:6px', onclick: (e) => {
-          Store.addNote({ title: c.phrase, text: `${c.meaning}\n${exOf(c).map(plainEx).join('\n')}${c.logic ? '\n' + c.logic : ''}`, tag: 'Vocabulary', href: '#/vocab/' + (c.group || '') });
+          Store.addNote({ title: c.phrase, text: `${c.meaning}\n${exOf(c).map(plainEx).join('\n')}${c.logic ? '\n' + c.logic.replace(/<\/?em>/g, '*').replace(/<[^>]+>/g, '') : ''}`, tag: 'Vocabulary', href: '#/vocab/' + (c.group || '') });
           e.target.textContent = 'Saved ✓'; e.target.disabled = true;
         }
       }, '＋ Note'));
@@ -461,7 +472,7 @@ window.App = { routes: {}, cleanup: [] };
     function next() {
       box.replaceChildren();
       if (!queue.length) {
-        box.append(h('div', { class: 'card' }, h('h2', { style: 'margin-top:0' }, total ? 'Session complete' : 'Nothing due right now'),
+        box.append(h('div', { class: 'card rel' }, total ? Engine.stamp('Done') : null, h('h2', { style: 'margin-top:0' }, total ? 'Session complete' : 'Nothing due right now'),
           h('p', {}, total ? `You reviewed ${reviewed} card${reviewed === 1 ? '' : 's'}. Cards come back when they are due.` : 'Come back tomorrow, or open a group and study it ahead.'),
           (() => { const more = (group ? dueAll().filter((id) => cardById[id].group === group) : dueAll()).length; return more ? h('p', { class: 'muted' }, `${more} more card${more === 1 ? ' is' : 's are'} waiting. There is no hurry: you can stop here.`) : null; })(),
           h('div', { class: 'row' }, (group ? dueAll().filter((id) => cardById[id].group === group) : dueAll()).length ? h('button', { class: 'btn', onclick: () => review(group) }, 'Another round') : null,
@@ -480,7 +491,7 @@ window.App = { routes: {}, cleanup: [] };
       function reveal() {
         front.replaceChildren(
           h('div', { class: 'big hl' }, c.phrase, ' ', phraseLine(c)), meaningBlock(c, false, true),
-          c.logic ? h('div', { class: 'callout' }, '' + c.logic) : '',
+          c.logic ? h('div', { class: 'callout', html: c.logic }) : '',
           h('p', { class: 'ratehead' }, h('strong', {}, 'How well did you remember it?'), ' Rate it honestly, without thinking about the schedule: the site uses your answer to decide when to show it again.'),
           h('div', { class: 'rate' }, [['Again', 0, 'I forgot it'], ['Hard', 1, 'I got it, with effort'], ['Good', 2, 'I remembered it'], ['Easy', 3, 'No effort at all']].map(([label, r, what]) =>
             h('button', { class: 'btn', 'data-rate': r, onclick: () => rateIt(r) }, label, h('small', { class: 'what' }, what)))),
@@ -541,8 +552,25 @@ window.App = { routes: {}, cleanup: [] };
   }
 
   /* ---------- course: study by theme ---------- */
+  /* the course as a winding trail: one card per unit, Pica on the unit you are up to; the same units as the list below it */
+  const mapMode = () => { try { return localStorage.getItem('c1path.coursemap') === 'list' ? 'list' : 'map'; } catch (e) { return 'map'; } };
+  function coursemap(nc) {
+    const per = matchMedia('(max-width: 520px)').matches ? 1 : matchMedia('(max-width: 860px)').matches ? 2 : 4, rows = [];
+    C1.course.forEach((u, n) => { const r = Math.floor(n / per); (rows[r] = rows[r] || []).push([u, n]); });
+    return h('ol', { class: 'coursemap', 'aria-label': 'Course map' }, rows.map((row, ri) => h('li', { class: 'cm-rowitem' }, h('ol', { class: 'cm-row' + (ri % 2 ? ' rev' : '') }, row.map(([u, n]) => {
+      const t = unitSteps(u).length, d = unitDone(u), cur = nc && nc.u === u, st = d === t ? 'done' : cur ? 'cur' : d ? 'part' : 'todo';
+      const label = `Unit ${n + 1}, ${u.title}: ${st === 'done' ? 'complete' : cur ? 'up next, ' + d + ' of ' + t + ' steps' : d ? d + ' of ' + t + ' steps' : t + ' steps'}`;
+      return h('li', { class: 'cm-cell' }, cur && window.PicaSVG ? h('span', { class: 'cm-pica', 'aria-hidden': 'true', html: window.PicaSVG('happy') }) : null,
+        h('a', { class: 'cm-node ' + st, href: '#/course/' + u.id, 'aria-label': label },
+          h('span', { class: 'cm-n' }, st === 'done' ? '✓' : String(n + 1)), h('span', { class: 'cm-title' }, u.title),
+          h('span', { class: 'cm-meta' }, cur ? h('span', { class: 'cm-here' }, 'You are here') : st === 'done' ? 'Complete' : st === 'part' ? `${d}/${t}` : u.level)));
+    })))));
+  }
   function courseList() {
     const nc = nextCourseStep();
+    const mode = mapMode();
+    const viewToggle = h('div', { class: 'row', role: 'group', 'aria-label': 'Course view' }, h('span', { class: 'muted' }, 'View:'),
+      ['map', 'list'].map((m) => h('button', { class: 'btn small' + (mode === m ? '' : ' ghost'), 'aria-pressed': String(mode === m), onclick: () => { try { localStorage.setItem('c1path.coursemap', m); } catch (e) { /* optional */ } route(); } }, m === 'map' ? 'Map' : 'List')));
     view(h('h1', {}, 'Course', Doodle('course')),
       h('p', { class: 'lead' }, 'Study by theme. Each unit combines vocabulary, grammar and exam practice around one topic and ends with a mixed review, so you revise a little of everything as you go.'),
       nc ? cardBlock(null, h('div', { class: 'pathrow' },
@@ -551,7 +579,8 @@ window.App = { routes: {}, cleanup: [] };
       cardBlock(null, h('div', { class: 'pathrow' },
         h('div', {}, h('strong', {}, 'Mixed review'), h('div', { class: 'muted' }, 'Eleven questions from across the whole course: grammar, vocabulary and rewriting.')),
         link('#/course/mix', 'Start', 'btn small ghost'))),
-      ...(() => {
+      viewToggle,
+      ...(mode === 'map' ? [coursemap(nc)] : (() => {
         /* a table of contents: one ruled list per level, a status on the right of each row */
         const groups = [];
         C1.course.forEach((u, n) => { let g = groups[groups.length - 1]; if (!g || g.level !== u.level) groups.push(g = { level: u.level, rows: [] }); g.rows.push([u, n]); });
@@ -565,7 +594,7 @@ window.App = { routes: {}, cleanup: [] };
               h('span', { class: 'tt' }, h('strong', {}, u.title), h('span', { class: 'muted' }, u.goals[0])),
               h('span', { class: 'ts' + (d === t ? ' ok' : '') }, cur ? 'Up next' : status, d && d < t ? bar(d / t) : null)));
           }))));
-      })());
+      })()));
   }
 
   function unitPage(id) {
@@ -910,16 +939,25 @@ window.App = { routes: {}, cleanup: [] };
   /* ---------- theme ---------- */
   const root = document.documentElement;
   if (Store.state.theme) root.dataset.theme = Store.state.theme;
+  const THEMES = [['auto', 'Automatic', 'Follows your device'], ['light', 'Light', 'White paper, black ink'], ['dark', 'Dark', 'For the evening'], ['sepia', 'Paper', 'Warm, easy on the eyes'], ['contrast', 'High contrast', 'White on black, yellow accent']];
+  const setTheme = (t) => { if (t === 'auto') delete root.dataset.theme; else root.dataset.theme = t; Store.setTheme(t === 'auto' ? null : t); };
+  /* the header button flips light and dark; from Paper or High contrast it goes to Dark */
   document.getElementById('theme').addEventListener('click', () => {
-    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-    root.dataset.theme = dark ? 'light' : 'dark';
-    Store.setTheme(root.dataset.theme);
+    const t = root.dataset.theme, dark = t ? t === 'dark' || t === 'contrast' : matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(dark ? 'light' : 'dark');
   });
+  /* Account: the five looks, each a button that shows its name and what it is for */
+  const themeCard = () => {
+    const cur = Store.state.theme || 'auto';
+    return cardBlock('Look', h('p', { class: 'muted' }, 'Pick the colours that are easiest for you to read.'),
+      h('div', { class: 'row', role: 'group', 'aria-label': 'Colour theme' }, THEMES.map(([id, name, what]) =>
+        h('button', { class: 'btn small' + (cur === id ? '' : ' ghost'), 'aria-pressed': String(cur === id), title: what, onclick: () => { setTheme(id); route(); } }, name))));
+  };
 
   window.App = Object.assign(window.App, {
     stepsLeft: () => { const all = C1.course.flatMap((u) => unitSteps(u)); return { done: all.filter((x) => x.done).length, total: all.length }; },
     unitsDone: () => C1.course.filter((u) => unitDone(u) === unitSteps(u).length).length, unitCount: () => C1.course.length,
-    multiToggle, topicHref, icon, view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
+    themeCard, multiToggle, topicHref, icon, view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
     unitBack, unitFooter, uq, partOf, setKey, scoreChip, nextInUnit, nextCourseStep, dueIds, dueAll, capChips, exOf, sayPhrase, updateBadge, dataCard, freshCards: () => freshToday(), start: route, route
   });
   Object.defineProperty(window.App, 'unitCtx', { get: () => unitCtx });

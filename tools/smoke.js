@@ -184,6 +184,23 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
     S.state.cards = JSON.parse(keep);
     for (const r of ['review', 'vocab']) { sb.location.hash = '#/' + r; app.children = []; sb.App.route(); check('#/' + r + ' renders with the cap', app.textContent.length > 20); }
   }
+  /* the look: course map and list, the five themes, Pica and a stamp on results, the calendar of the last 12 weeks */
+  {
+    const A = sb.App, render = (hash) => { sb.location.hash = hash; app.children = []; A.route(); }, cls = (re) => app.all((n) => re.test(n.className || ''));
+    sb.localStorage.setItem('c1path.coursemap', 'map'); render('#/course');
+    check('the course map has one card per unit, and only one is "up next" with Pica', cls(/cm-node/).length === sb.C1.course.length && cls(/cm-pica/).length <= 1 && cls(/cm-node cur/).length <= 1);
+    sb.localStorage.setItem('c1path.coursemap', 'list'); render('#/course');
+    check('the list view is still there, and both views are one click apart', cls(/toclist/).length > 0 && cls(/cm-node/).length === 0 && app.all((n) => n.tag === 'button' && /^(Map|List)$/.test(n.textContent)).length === 2);
+    sb.localStorage.removeItem('c1path.coursemap');
+    const card = A.themeCard();
+    check('Account offers five looks, and the current one is marked', card.all((n) => n.tag === 'button').length === 5 && card.all((n) => n.attrs['aria-pressed'] === 'true').length === 1);
+    check('a stamp is decorative text with the stamp class', /stamp/.test(sb.Engine.stamp('Done').className) && sb.Engine.stamp('Done').attrs['aria-hidden'] === 'true');
+    const st = sb.Store.state, keep = JSON.stringify(st.days);
+    st.days[sb.Store.today()] = 5; render('#/progress/progress');
+    const week = cls(/cal-week/);
+    check('the progress page has a calendar of 12 or 13 week columns with the streak line', week.length >= 12 && week.length <= 13 && app.all((n) => n.tag === 'i' && n.attrs.title).length === 84 && /day[s]? in a row/.test(app.textContent) && /best \d+/.test(app.textContent));
+    st.days = JSON.parse(keep);
+  }
   /* Pica: the daily greeting, being sad after days away, the first-time tip per task, and the About page */
   {
     const A = sb.App, text = (el) => (el && el.textContent) || '';
@@ -288,10 +305,10 @@ for (const r of routes) {
     if (/^(practice\/[a-z]+\/\d+|grammar\/.+|skills\/listening\/.+|vquiz.*)$/.test(r) && !r.startsWith('practice/reading')) {
       /* press "Check answers" with nothing filled in, then read the result box */
       const b = app.all((n) => n.tag === 'button' && /Check answers/.test(n.textContent))[0];
-      if (b) { try { (b.ls.click || []).forEach((f) => f({ preventDefault() {} })); check('quiz result on #/' + r + ' has no null/undefined text', !/null|undefined|\[object/.test(app.textContent), app.textContent.match(/.{20}(null|undefined).{10}/)); } catch (e) { check('checking answers on #/' + r, false, e.message); } }
+      if (b) { try { (b.ls.click || []).forEach((f) => f({ preventDefault() {} })); check('quiz result on #/' + r + ' has no null/undefined text', !/null|undefined|\[object/.test(app.textContent), app.textContent.match(/.{20}(null|undefined).{10}/)); } catch (e) { check('checking answers on #/' + r, false, e.message); } }
     }
     check('route #/' + r + ' renders', redirected || app.children.length > 0 && app.textContent.trim().length > 20 && !/^Not found/.test(app.textContent), 'empty or not found');
-    const raw = /<\/?(em|strong|b|i|br|u|mark|code|span|p|ul|ol|li|sub|sup)[^>]*>/i.exec(app.textContent);
+    const raw = /<\/?(em|strong|b|i|br|u|mark|code|span|p|ul|ol|li|sub|sup)[^>]*>/i.exec(app.textContent);
     if (raw) rawTags.push('#/' + r + ' -> ' + app.textContent.slice(Math.max(0, raw.index - 40), raw.index + 50).replace(/\s+/g, ' '));
   } catch (e) { check('route #/' + r + ' renders', false, e.stack.split(String.fromCharCode(10)).slice(0, 3).join(' / ')); }
 }
@@ -336,7 +353,7 @@ check('no page shows raw HTML tags as text', rawTags.length === 0, rawTags.slice
   sb.Store.state.stats['weak-x'] = { c: 1, t: 9 };
   const bad = [];
   for (const r of routes.filter((x) => !/^(welcome)$/.test(x))) {
-    try { sb.location.hash = '#/' + r; app.children = []; sb.App.route(); if (/NaN|undefined|\[object|null/.test(app.textContent)) bad.push(r + ': ' + (app.textContent.match(/.{25}(NaN|undefined|\[object|null).{15}/) || [''])[0]); } catch (e) { bad.push(r + ' threw ' + e.message); }
+    try { sb.location.hash = '#/' + r; app.children = []; sb.App.route(); if (/NaN|undefined|\[object|null/.test(app.textContent)) bad.push(r + ': ' + (app.textContent.match(/.{25}(NaN|undefined|\[object|null).{15}/) || [''])[0]); } catch (e) { bad.push(r + ' threw ' + e.message); }
   }
   check('with everything done, no page prints NaN/undefined/null or throws', !bad.length, bad.slice(0, 5).join(' || '));
   const home = (sb.location.hash = '#/', app.children = [], sb.App.route(), app.textContent);

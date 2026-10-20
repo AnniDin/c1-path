@@ -15,13 +15,13 @@
       const opts = [], seen = new Set([first(c)]);
       near.concat(rest).forEach((x) => { if (opts.length < 3 && !seen.has(first(x))) { seen.add(first(x)); opts.push(first(x)); } });
       const all = shuffle([first(c)].concat(opts));
-      return { type: 'mcq', uid: 'vm:' + c.id, q: 'What does <strong>' + esc(c.phrase) + '</strong> mean?', options: all, answer: all.indexOf(first(c)), why: '<em>' + esc(c.phrase) + '</em>: ' + esc(c.meaning) + '. ' + esc(c.logic || '') };
+      return { type: 'mcq', uid: 'vm:' + c.id, q: 'What does <strong>' + esc(c.phrase) + '</strong> mean?', options: all, answer: all.indexOf(first(c)), why: '<em>' + esc(c.phrase) + '</em>: ' + esc(c.meaning) + '. ' + (c.logic || '') };
     };
-    const type = (c) => ({ type: 'gap', uid: 'vt:' + c.id, q: '<span class="muted">' + esc(c.meaning) + '</span><br>Type the expression: ___', answers: answersOf(c), why: '<em>' + esc(c.phrase) + '</em>: ' + esc(c.meaning) + '. ' + esc(c.logic || '') });
+    const type = (c) => ({ type: 'gap', uid: 'vt:' + c.id, q: '<span class="muted">' + esc(c.meaning) + '</span><br>Type the expression: ___', answers: answersOf(c), why: '<em>' + esc(c.phrase) + '</em>: ' + esc(c.meaning) + '. ' + (c.logic || '') });
     const gapOf = (c) => { const e = (exOf(c) || []).find((x) => (x.match(/\[\[/g) || []).length === 1); return e ? { c, e } : null; };
     const gap = (c) => {
       const g = gapOf(c), m = /\[\[(.+?)\]\]/.exec(g.e);
-      return { type: 'gap', uid: 'vg:' + c.id, q: '<span class="muted">' + esc(c.meaning) + '</span><br>' + esc(g.e.replace(/\[\[(.+?)\]\]/, '___')), answers: [m[1]], why: '<em>' + esc(c.phrase) + '</em>: ' + esc(c.meaning) + '. ' + esc(c.logic || '') };
+      return { type: 'gap', uid: 'vg:' + c.id, q: '<span class="muted">' + esc(c.meaning) + '</span><br>' + esc(g.e.replace(/\[\[(.+?)\]\]/, '___')), answers: [m[1]], why: '<em>' + esc(c.phrase) + '</em>: ' + esc(c.meaning) + '. ' + (c.logic || '') };
     };
     const hear = (c) => ({ type: 'hear', uid: 'vh:' + c.id, cardId: c.id, phrase: c.phrase, q: 'Listen and type what you hear: ___', answers: answersOf(c), why: '<em>' + esc(c.phrase) + '</em>: ' + esc(c.meaning) + '.' });
     return { mean, type, gap, hear, ok: { mean: () => true, type: typable, gap: (c) => !!gapOf(c), hear: typable } };

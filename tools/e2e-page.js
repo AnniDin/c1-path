@@ -98,7 +98,7 @@
   for (const width of [375, 1024]) {
     w = await boot(width);
     if (window.axe) await new Promise((res) => { const sc = w.document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.0/axe.min.js'; sc.onload = res; sc.onerror = res; w.document.head.appendChild(sc); }); // axe has to run inside the page it checks
-    for (const theme of ['light', 'dark']) {
+    for (const theme of ['light', 'dark', 'sepia', 'contrast']) {
       w.document.documentElement.dataset.theme = theme;
       for (const hash of ROUTES) {
         await go(w, hash, 300);
@@ -120,7 +120,7 @@
     w.Store.addFx('easier', 6, -30); w.Store.addFx('same', 3, 12);
     w.Store.state.days[d(0)] = 14; w.Store.state.days[d(8)] = 6; w.Store.setExam(d(-12)); w.Store.addMock({ ts: Date.now(), kind: 'Reading', c: 33, t: 60 });
     w.Store.state.stats['u-cloze'] = { c: 3, t: 12 };
-    for (const theme of ['light', 'dark']) {
+    for (const theme of ['light', 'dark', 'sepia', 'contrast']) {
       w.document.documentElement.dataset.theme = theme;
       for (const hash of ['#/progress', '#/progress/progress', '#/progress/settings', '#/account', '#/', '#/mock', '#/plan']) {
         await go(w, hash, 400);

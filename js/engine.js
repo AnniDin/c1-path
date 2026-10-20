@@ -331,7 +331,9 @@
       if (window.Sound && !result.dataset.heard) { result.dataset.heard = '1'; Sound.play(pct >= 80 ? 'right' : pct >= 50 ? 'ok' : 'wrong'); }
       result.style.display = '';
       result.innerHTML = '';
-      result.append(...[pct >= 80 && window.Doodle ? Doodle('trophy', 'inline') : null, h('div', { class: 'score' }, `${correct} / ${res.length}  (${pct}%)`),
+      const face = pct >= 80 && window.Doodle ? Doodle('trophy', 'inline') : (window.PicaSVG ? h('span', { class: 'picaface result', 'aria-hidden': 'true', html: window.PicaSVG(pct >= 50 ? 'idle' : 'think') }) : null);
+      result.classList.add('rel');
+      result.append(...[pct >= 80 ? stamp(pct === 100 ? 'Perfect' : 'Well done') : null, face, h('div', { class: 'score' }, `${correct} / ${res.length}  (${pct}%)`),
         h('p', { class: 'muted' }, pct >= 80 ? 'Strong. Read any explanation you missed, then move on.' :
           pct >= 50 ? 'Good progress. Read the explanations: they tell you why, not just what.' :
             'This topic needs another look. Re-read the lesson idea, then try again.'),
@@ -370,6 +372,8 @@
   }
 
   /* a question about a recording carries a reference to it (audioId, title, intro, script): the player item to show before the question, or null */
+  /* a rubber stamp for a finished task: decorative (the score and the words around it say the same), turned a little, and still when motion is reduced */
+  const stamp = (text) => h('span', { class: 'stamp', 'aria-hidden': 'true' }, text);
   const recording = (it) => (it && it.audioId ? { type: 'audio', audioId: it.audioId, title: it.title, intro: it.intro, script: it.script } : null);
-  window.Engine = { h, quiz, R, recording, item: (it, n) => R[it.type](it, n), norm, matches, Speech, shuffle, diffWords, gapItem };
+  window.Engine = { h, quiz, R, recording, stamp, item: (it, n) => R[it.type](it, n), norm, matches, Speech, shuffle, diffWords, gapItem };
 })();

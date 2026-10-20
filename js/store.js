@@ -75,6 +75,12 @@
       return n;
     },
     totalAnswered() { return Object.values(state.stats).reduce((a, s) => a + s.t, 0); },
+    /* the longest run of days with at least one answer */
+    bestStreak() {
+      let best = 0, run = 0, prev = null;
+      Object.keys(state.days).filter((d) => state.days[d] > 0).sort().forEach((d) => { run = prev && (Date.parse(d) - Date.parse(prev)) / 864e5 === 1 ? run + 1 : 1; best = Math.max(best, run); prev = d; });
+      return best;
+    },
     lastDays(n) {
       const out = [];
       for (let i = n - 1; i >= 0; i--) out.push({ day: addDays(-i), n: state.days[addDays(-i)] || 0 });

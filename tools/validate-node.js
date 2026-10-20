@@ -51,6 +51,8 @@ Object.entries(sandbox.C1.vocabMulti || {}).forEach(([ph, list]) => {
   if (list.length !== n) issues.push('vocabmulti: ' + ph + ' has ' + list.length + ' examples for ' + n + ' senses');
   list.forEach((e, i) => { if ((e.match(/\[\[.+?\]\]/g) || []).length !== 1) issues.push('vocabmulti: ' + ph + ' example ' + (i + 1) + ' needs exactly one [[phrase]] marker'); });
 });
+/* a stray control character (a backspace from a mis-escaped word boundary in a regular expression) silently breaks the pattern */
+['js', 'tools', 'data'].forEach((d) => fs.readdirSync(path.join(root, d)).filter((f) => f.endsWith('.js')).forEach((f) => { if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(fs.readFileSync(path.join(root, d, f), 'utf8'))) issues.push(d + '/' + f + ' contains a control character (a broken escape, such as a backspace inside a regular expression?)'); }));
 Object.values(cardsByPhrase).forEach((c) => { if (/<[a-z\/][^>]*>/i.test(c.phrase + c.meaning)) issues.push('vocabulary: the card "' + c.phrase + '" has HTML in its phrase or meaning (they are shown as plain text)'); });
 Object.values(cardsByPhrase).forEach((c) => { if (c.meaning.includes(';') && !(sandbox.C1.vocabMulti || {})[c.phrase]) issues.push('vocabmulti: missing examples for ' + c.phrase); });
 const swSrc = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');

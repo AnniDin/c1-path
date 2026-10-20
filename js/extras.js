@@ -58,7 +58,7 @@
       ...sections.map((s) => h('section', { id: 'tricks-' + s.id },
         h('h2', {}, s.title), h('p', { class: 'muted' }, s.blurb),
         s.items.map((x, i) => h('details', { class: 'trick', id: 'trick-' + s.id + '-' + i, open: want === s.id + '-' + i }, h('summary', {}, x.t),
-          h('p', { html: x.tip }), x.why ? h('p', { class: 'muted' }, x.why) : null,
+          h('p', { html: x.tip }), x.why ? h('p', { class: 'muted', html: x.why }) : null,
           x.ex ? h('p', { class: 'trickex', html: x.ex }) : null,
           poolFor(s.id + '-' + i).length >= 3 ? link('#/tricks/practice/' + s.id + '-' + i, 'Practise this (' + Math.min(8, poolFor(s.id + '-' + i).length) + ' questions)', 'btn small ghost') : null)))),
       h('div', { class: 'callout' }, 'No trick replaces knowing the language. Use these to avoid losing marks you already deserve, and keep practising in the ', link('#/practice', 'exam tasks'), '.'));

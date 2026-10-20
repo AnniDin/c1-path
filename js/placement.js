@@ -110,7 +110,7 @@
       const it = Object.assign({ type: 'mcq' }, q), r = Engine.item(it, answers.length + 1);
       const rec = Engine.recording(q) ? Engine.item(Engine.recording(q)) : null;
       const go = h('button', { class: 'btn', onclick: check }, 'Check');
-      stage.replaceChildren(h('p', { class: 'muted' }, `Question ${answers.length + 1} of ${MAX}`), rec ? rec.el : null, r.el, h('div', { class: 'row', style: 'margin-top:14px' }, go));
+      stage.replaceChildren(...[h('p', { class: 'muted' }, `Question ${answers.length + 1} of ${MAX}`), rec ? rec.el : null, r.el, h('div', { class: 'row', style: 'margin-top:14px' }, go)].filter(Boolean));
       function check() {
         if (!r.el.querySelector('input:checked')) return;
         const [x] = r.check();

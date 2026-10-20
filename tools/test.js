@@ -315,6 +315,15 @@ let notesDone = Promise.resolve();
   });
 }
 
+/* --- streaks: the best run of days --- */
+{
+  const D = device(), day = (n) => new Date(Date.UTC(2026, 0, 1 + n)).toISOString().slice(0, 10);
+  eq('no practice, no best streak', D.Store.bestStreak(), 0);
+  [0, 1, 2, 5, 6, 7, 8, 9, 20].forEach((n) => { D.Store.state.days[day(n)] = 3; });
+  D.Store.state.days[day(3)] = 0;
+  eq('the best streak is the longest run of days with answers (days 5 to 9 here)', D.Store.bestStreak(), 5);
+}
+
 /* --- vocabulary games: every question is well formed and has one answer --- */
 {
   const D = device(['data/vocab.js', 'data/vocab2.js', 'data/vocab3.js', 'data/vocab4.js', 'data/vocab5.js', 'data/vocab6.js', 'data/vocabmulti.js', 'js/vgames.js']), G = D.VGames;
