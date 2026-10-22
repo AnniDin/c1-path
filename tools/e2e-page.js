@@ -73,7 +73,7 @@
   await go(w, '#/progress', 500);
   ok('Progress has two sections', $$(w, 'nav.tabs a').map((a) => a.textContent.trim()).join('|') === 'Today|Results' && $(w, 'nav.tabs a.on').textContent === 'Today');
   ok('Review (Today) opens with the to-do list', /do now/i.test(text(w)) && /Daily goal/.test(text(w)) && !/Help calibrate|Better voices|Achievements|Your data|Friends/.test(text(w)));
-  await go(w, '#/progress/settings', 400); ok('Settings now live on the account page', ['Settings', 'AI feedback', 'Better voices', 'Use it offline', 'Feedback sounds', 'Your data'].every((t) => text(w).includes(t)));
+  await go(w, '#/progress/settings', 400); ok('Settings now live on the account page', ['Make it yours', 'Technical settings', 'Look', 'AI feedback', 'Better voices', 'Use it offline', 'Feedback sounds', 'Your data'].every((t) => text(w).includes(t)));
   await go(w, '#/account', 500); ok('the account page has friends, calibration, sync and data', ['My account', 'Friends', 'Help calibrate the difficulty', 'Sync between devices', 'Your data'].every((t) => text(w).includes(t)), text(w).slice(0, 120));
   await go(w, '#/progress/progress', 400); ok('Progress section has activity and achievements', /Last 12 weeks/.test(text(w)) && /Achievements/.test(text(w)));
   await go(w, '#/mock', 400);
