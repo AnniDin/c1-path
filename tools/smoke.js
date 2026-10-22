@@ -217,6 +217,25 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
     check('practising one cause shows only its mistakes', /Practise: /.test(app.textContent) && app.all((n) => /item/.test(n.className || '')).length === 3);
     S.state.mistakes = JSON.parse(keep);
   }
+  /* the account page: picture options behind Edit, one "Sync now", the personal options first and the technical ones last */
+  {
+    const A = sb.App, keepU = sb.Cloud.user, keepE = sb.Cloud.enabled;
+    sb.Cloud.user = () => ({ id: 'u1', email: 'ana@example.com' }); sb.Cloud.enabled = true;
+    const render = (hash) => { sb.location.hash = hash; app.children = []; A.route(); };
+    const btns = (n) => n.all((x) => x.tag === 'button').map((x) => x.textContent);
+    const closed = A.pictureCard('ana@example.com');
+    check('the profile picture card shows only an Edit button at first', btns(closed).join() === 'Edit' && !/Choose a photo/.test(closed.textContent));
+    const edit = closed.all((x) => x.tag === 'button')[0]; (edit.ls && edit.ls.click ? edit.ls.click : [edit.onclick]).forEach((f) => f && f());
+    const open = A.pictureCard('ana@example.com');
+    check('after Edit the photo, colour and Done options appear', /Choose a photo/.test(open.textContent) && /Done/.test(open.textContent) && open.all((x) => /swatch/.test(x.className || '')).length > 3);
+    const done = open.all((x) => x.tag === 'button' && x.textContent === 'Done')[0]; (done.ls && done.ls.click ? done.ls.click : [done.onclick]).forEach((f) => f && f());
+    render('#/account');
+    const text = app.textContent, count = (re) => (text.match(re) || []).length;
+    check('"Sync now" appears once on the account page, with an explanation of what it does', count(/Sync now/g) === 2 && /What "Sync now" does/.test(text), String(count(/Sync now/g)));
+    const at = (t) => text.indexOf(t);
+    check('personal options come first (picture, Look, sounds, Pica, cards), technical ones last', at('Profile picture') > 0 && at('Profile picture') < at('Look') && at('Look') < at('Vocabulary cards') && at('Vocabulary cards') < at('Practice and friends') && at('Practice and friends') < at('Technical settings') && at('Technical settings') < at('Delete my account'));
+    sb.Cloud.user = keepU; sb.Cloud.enabled = keepE;
+  }
   /* Pica: the daily greeting, being sad after days away, the first-time tip per task, and the About page */
   {
     const A = sb.App, text = (el) => (el && el.textContent) || '';

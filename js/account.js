@@ -31,6 +31,7 @@
     img.onerror = () => { URL.revokeObjectURL(url); no(new Error('That file is not an image the browser can read.')); };
     img.src = url;
   });
+  let pictureEditing = false; /* the picture options show only after Edit */
   const pictureCard = A.pictureCard = (name) => {
     const msg = h('p', { class: 'muted', role: 'status' });
     const redraw = () => { document.dispatchEvent(new CustomEvent('c1avatar')); if (A.shareAvatar) A.shareAvatar(); A.route(); };
@@ -40,14 +41,19 @@
       try { if (lset(AK, await squarePhoto(file.files[0]))) redraw(); else msg.textContent = 'Could not save the picture: browser storage is full or blocked.'; }
       catch (e) { msg.textContent = e.message; }
     });
+    if (!pictureEditing) {
+      return A.cardBlock('Profile picture', h('div', { class: 'row' }, A.avatar(name, true), h('button', { class: 'btn small', onclick: () => { pictureEditing = true; A.route(); } }, 'Edit')));
+    }
     return A.cardBlock('Profile picture',
       h('div', { class: 'row' }, A.avatar(name, true),
         h('button', { class: 'btn small', onclick: () => file.click() }, lget(AK) ? 'Change photo' : 'Choose a photo'), file,
-        lget(AK) ? h('button', { class: 'btn small ghost', onclick: () => { lset(AK, null); redraw(); } }, 'Remove photo') : null),
+        lget(AK) ? h('button', { class: 'btn small ghost', onclick: () => { lset(AK, null); redraw(); } }, 'Remove photo') : null,
+        h('button', { class: 'btn small ghost', onclick: () => { pictureEditing = false; A.route(); } }, 'Done')),
       lget(AK) ? null : h('div', { class: 'row swatches', role: 'group', 'aria-label': 'Colour for your initial' }, COLOURS.map((c) =>
         h('button', { class: 'swatch' + ((lget(CK) || COLOURS[0]) === c ? ' on' : ''), style: 'background:' + c, 'aria-label': 'Colour ' + c, 'aria-pressed': String((lget(CK) || COLOURS[0]) === c), onclick: () => { lset(CK, c); redraw(); } }))),
       h('p', { class: 'muted' }, 'The photo is cropped to a small square. If you have joined the friends ranking, the friends you add can see it next to your name (it is deleted if you leave the ranking or delete your account). Otherwise it stays on this device.'), msg);
   };
+  window.addEventListener('hashchange', () => { pictureEditing = false; }); /* the options close when you leave the page */
 
   /* ---- the account page (#/account): who you are, friends, sync, backup ---- */
   A.routes.account = () => {
@@ -58,7 +64,7 @@
       ? A.cardBlock('Account', h('p', { class: 'muted' }, 'Accounts are not set up on this copy of the site. Your progress stays in this browser; use the backup and sync options below to move it between devices.'))
       : user
         ? A.cardBlock('Signed in', h('p', {}, h('strong', {}, user.email || 'your account')), h('p', { class: 'muted', role: 'status' }, sync),
-          h('div', { class: 'row' }, h('button', { class: 'btn small', onclick: () => A.syncNow && A.syncNow() }, 'Sync now'),
+          h('div', { class: 'row' },
             h('button', { class: 'btn small ghost', onclick: async () => { await Cloud.signOut(); A.toast && A.toast('Signed out. Your progress stays on this device.'); A.route(); } }, 'Sign out')))
         : A.cardBlock('Not signed in', h('p', { class: 'muted' }, 'Sign in to keep your progress in sync on all your devices and to use the friends ranking. Everything else works without an account.'),
           h('div', { class: 'row' }, h('button', { class: 'btn small', onclick: () => A.openSignIn && A.openSignIn() }, 'Sign in')));
@@ -67,10 +73,15 @@
         if (!confirm('Delete your account and the progress stored in the cloud? Progress on your devices is kept, but it will no longer sync.')) return;
         try { await Cloud.deleteAccount(); A.toast && A.toast('Account deleted'); A.route(); } catch (e) { alert('Could not delete the account: ' + e.message); }
       } }, 'Delete my account')) : null;
-    A.view(h('h1', {}, 'My account', Doodle('account')), h('p', { class: 'lead' }, 'Who you are, your friends, settings, syncing between devices and your data.'),
-      who, user ? pictureCard(user.email) : null, user && A.digestCard ? A.digestCard() : null, A.friendsCard ? A.friendsCard() : null, A.calibCard ? A.calibCard() : null, A.syncCard ? A.syncCard() : null,
-      h('h2', {}, 'Settings'), h('p', { class: 'muted' }, 'AI feedback, better voices, offline use and sounds.'),
-      A.themeCard ? A.themeCard() : null, A.aiCard ? A.aiCard() : null, window.Sound ? window.Sound.card() : null, A.picaCard ? A.picaCard() : null, A.cardBlock('Vocabulary cards', h('p', { class: 'muted' }, 'Some phrasal verbs and expressions have more than one meaning. By default each meaning gets its own example.'), h('p', {}, A.multiToggle()), h('p', { class: 'muted' }, 'A review session shows at most this many cards, the most overdue first. The rest wait, so a few days away never buries you.'), A.capChips ? A.capChips() : null), A.neuralCard ? A.neuralCard() : null, A.offlineCard ? A.offlineCard() : null,
+    const vocabCard = A.cardBlock('Vocabulary cards', h('p', { class: 'muted' }, 'Some phrasal verbs and expressions have more than one meaning. By default each meaning gets its own example.'), h('p', {}, A.multiToggle()), h('p', { class: 'muted' }, 'A review session shows at most this many cards, the most overdue first. The rest wait, so a few days away never buries you.'), A.capChips ? A.capChips() : null);
+    A.view(h('h1', {}, 'My account', Doodle('account')), h('p', { class: 'lead' }, 'Who you are, how the site looks and sounds, your friends, and the technical settings.'),
+      who,
+      h('h2', {}, 'Make it yours'), h('p', { class: 'muted' }, 'Picture, colours, sounds, Pica and your cards. The simplest options come first.'),
+      user ? pictureCard(user.email) : null, A.themeCard ? A.themeCard() : null, window.Sound ? window.Sound.card() : null, A.picaCard ? A.picaCard() : null, vocabCard,
+      h('h2', {}, 'Practice and friends'),
+      user && A.digestCard ? A.digestCard() : null, A.friendsCard ? A.friendsCard() : null, A.calibCard ? A.calibCard() : null,
+      h('h2', {}, 'Technical settings'), h('p', { class: 'muted' }, 'AI key, better voices, offline use, syncing between devices and your data.'),
+      A.aiCard ? A.aiCard() : null, A.neuralCard ? A.neuralCard() : null, A.offlineCard ? A.offlineCard() : null, A.syncCard ? A.syncCard() : null,
       A.dataCard(() => A.routes.account()), del);
   };
   if (cloudOn() && Cloud.onChange) Cloud.onChange(() => { if (location.hash === '#/account' && !document.querySelector('#app :focus')) A.route(); });

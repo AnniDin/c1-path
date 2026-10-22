@@ -141,7 +141,7 @@
       return h('div', {},
         h('p', {}, h('span', { class: 'sdot ' + sync.status, 'aria-hidden': 'true' }), h('strong', {}, 'Connected to ' + sync.name), h('span', { class: 'muted' }, ' · ' + label + (sync.status === 'ok' ? ' · automatic' : ''))),
         h('div', { class: 'row' },
-          h('button', { class: 'btn small', onclick: () => run(true) }, 'Sync now'),
+          h('button', { class: 'btn small', onclick: () => run(true) }, 'Sync the file now'),
           h('button', { class: 'btn small ghost', onclick: async () => { await dropHandle(); sync.status = 'off'; draw(); } }, 'Disconnect')));
     }
 
@@ -156,7 +156,9 @@
       const label = { ok: 'Synced ' + ago(cloud.at) + ' · automatic', busy: 'Syncing…', error: 'Problem: ' + cloud.error, off: 'Waiting to sync' }[cloud.status];
       return h('div', {},
         h('p', {}, h('span', { class: 'sdot ' + (cloud.status === 'off' ? 'paused' : cloud.status), 'aria-hidden': 'true' }), h('strong', {}, 'Signed in as ' + (u.email || 'your account')), h('span', { class: 'muted' }, ' · ' + label)),
-        h('div', { class: 'row' }, h('button', { class: 'btn small', onclick: () => runCloud() }, 'Sync now'), h('span', { class: 'muted' }, 'Sign out or delete your account from the account menu at the top.')));
+        h('div', { class: 'row' }, h('button', { class: 'btn small', onclick: () => runCloud() }, 'Sync now')),
+        h('p', { class: 'muted' }, h('strong', {}, 'What "Sync now" does. '), 'It sends your progress to your account and brings in what you did on your other devices, then merges the two: for each card, lesson and score the most advanced result wins, and notes from both are kept. It already happens by itself a few seconds after you practise and when you come back to the page; press the button to do it right now, for example before you switch device.'),
+        h('p', { class: 'muted' }, 'Sign out or delete your account from the account menu at the top.'));
     }
 
     const out = h('textarea', { rows: 3, readonly: true, 'aria-label': 'Your transfer code', placeholder: 'Press "Create code", then send it to your other device.' });
