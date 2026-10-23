@@ -236,6 +236,26 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
     check('personal options come first (picture, Look, sounds, Pica, cards), technical ones last', at('Profile picture') > 0 && at('Profile picture') < at('Look') && at('Look') < at('Vocabulary cards') && at('Vocabulary cards') < at('Practice and friends') && at('Practice and friends') < at('Technical settings') && at('Technical settings') < at('Delete my account'));
     sb.Cloud.user = keepU; sb.Cloud.enabled = keepE;
   }
+  /* Say this, not that, the tricks hub, and Pica's starter questions */
+  {
+    const A = sb.App, render = (hash) => { sb.location.hash = hash; app.children = []; A.route(); }, cls = (re) => app.all((n) => re.test(n.className || ''));
+    render('#/saythis');
+    check('the Say this, not that hub lists the 12 themes and a mixed practice', cls(/card/).length >= 12 && /Mixed practice/.test(app.textContent));
+    render('#/saythis/at-work');
+    check('a theme shows eight pairs, each with a not-this and a say-this side', cls(/stcard/).length === 8 && /Not this/.test(app.textContent) && /Say this/.test(app.textContent));
+    render('#/saythis/at-work/practice');
+    check('the practice has eight questions', app.all((n) => /\bitem\b/.test(n.className || '') || n.className === 'item').length === 8);
+    render('#/tricks');
+    check('the tricks page is a hub of themes with a search and a trick of the day, not one long list', cls(/^trick$/).length === 0 && /Trick of the day/.test(app.textContent) && app.all((n) => n.tag === 'a' && /^#\/tricks\/[a-z]+$/.test((n.attrs || {}).href || '')).length === sb.C1.tricks.length);
+    render('#/tricks/tasks');
+    check('a theme page splits the exam-task tricks by task', cls(/trick-sub/).length >= 8 && cls(/^trick$/).length === sb.C1.tricks.find((x) => x.id === 'tasks').items.length);
+    render('#/tricks/words-3');
+    check('a link to one trick opens its theme with that trick open', cls(/^trick$/).length === sb.C1.tricks.find((x) => x.id === 'words').items.length);
+    const T = sb.Tutor, seen = new Set(), sets = [];
+    for (let i = 0; i < 6; i++) { const s4 = T.starters(); sets.push(s4.join('|')); s4.forEach((q) => seen.add(q)); }
+    check('Pica offers four starter questions that are all different, and the sets change from one opening to the next', T.starters().length === 4 && new Set(T.starters()).size === 4 && new Set(sets).size >= 5 && seen.size >= 12, seen.size + ' different, ' + new Set(sets).size + ' sets');
+    sb.localStorage.removeItem('c1path.starters');
+  }
   /* Pica: the daily greeting, being sad after days away, the first-time tip per task, and the About page */
   {
     const A = sb.App, text = (el) => (el && el.textContent) || '';
@@ -321,7 +341,7 @@ pending.push((async () => {
     check('a good code is cleaned up', c(' 7d379a ', 'AAAAAA', []).code === '7D379A');
   }
 /* ---- every route renders ---- */
-const C1 = sb.C1, routes = ['', 'welcome', 'ask', 'course', 'course/mix', 'toolkit', 'progress', 'review', 'progress/progress', 'progress/settings', 'account', 'about', 'mistakes', 'mistakes/practice', 'vgames', 'vgames/match', 'vgames/type', 'vgames/gap', 'vgames/mean', 'vgames/hear', 'vgames/mix', 'placement', 'placement/short', 'placement/adaptive', 'placement/full', 'exams', 'privacy', 'about', 'unsubscribe', 'mock', 'tricks', 'generate', 'certacles', 'plan', 'weak',
+const C1 = sb.C1, routes = ['', 'saythis', 'saythis/mix', 'tricks/words', 'tricks/grammar', 'tricks/preps', 'tricks/wf', 'tricks/natural', 'tricks/listening', 'tricks/spanish', 'tricks/exam', 'tricks/everyday', 'tricks/tasks', 'tricks/tasks-12', 'welcome', 'ask', 'course', 'course/mix', 'toolkit', 'progress', 'review', 'progress/progress', 'progress/settings', 'account', 'about', 'mistakes', 'mistakes/practice', 'vgames', 'vgames/match', 'vgames/type', 'vgames/gap', 'vgames/mean', 'vgames/hear', 'vgames/mix', 'placement', 'placement/short', 'placement/adaptive', 'placement/full', 'exams', 'privacy', 'about', 'unsubscribe', 'mock', 'tricks', 'generate', 'certacles', 'plan', 'weak',
   'grammar', 'vocab', 'practice', 'skills', 'skills/listening', 'skills/writing', 'skills/writing/guide', 'skills/speaking', 'skills/pronunciation', 'vquiz/all'];
 C1.course.forEach((u) => routes.push('course/' + u.id, 'course/' + u.id + '/review'));
 C1.grammar.forEach((g) => routes.push('grammar/' + g.id));
@@ -331,6 +351,7 @@ C1.practice.forEach((p) => { routes.push('practice/' + p.id); p.sets.forEach((_,
 ((C1.writing || {}).tasks || []).forEach((t) => routes.push('skills/writing/' + t.id));
 ((C1.speaking || {}).sets || []).forEach((s) => routes.push('skills/speaking/' + s.id));
 (C1.pron || []).forEach((g) => routes.push('skills/pronunciation/' + g.id));
+(C1.saythis || []).forEach((g) => { routes.push('saythis/' + g.id); routes.push('saythis/' + g.id + '/practice'); });
 sb.Store.state.welcomed = true;
 const rawTags = [];
 for (const r of routes) {

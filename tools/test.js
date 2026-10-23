@@ -341,6 +341,18 @@ let notesDone = Promise.resolve();
   eq('a wrong answer is explained with the exercise\'s own explanation', [/\*\*have\*\*/.test(ex), /\*\*had\*\*/.test(ex), /past form/.test(ex)], [true, true, true]);
 }
 
+/* --- Say this, not that: the questions built from the pairs --- */
+{
+  const D = device(['data/saythis.js', 'data/saythis2.js', 'data/saythis3.js', 'data/saythis4.js', 'js/saythis.js']), S = D.SayThis, shuffle = (a) => a.slice().sort(() => Math.random() - 0.5);
+  const pairs = S.all();
+  eq('there are at least 90 pairs in 12 themes', [pairs.length >= 90, D.C1.saythis.length], [true, 12]);
+  const qs = S.practice(pairs, pairs.length, shuffle), bad = qs.filter((q, i) => q.type !== 'mcq' || q.options.length !== 2 || q.answer < 0 || !/___/.test(q.q) || !q.why);
+  eq('every pair becomes a two-option question with the gap, the reason and the right answer', [qs.length, bad.length, new Set(qs.map((q) => q.uid)).size], [pairs.length, 0, pairs.length]);
+  const p = pairs[0], q = S.item(p, shuffle);
+  eq('the right option is the natural phrase and the other is the learner\'s version', [q.options[q.answer], q.options[1 - q.answer]], [S.esc(p.say), S.esc(p.not)]);
+  eq('the text of a pair is escaped so it can never become markup', S.item({ not: '<b>x</b>', say: 'y & z', ctx: 'A: ___ <i>', why: 'w' }, shuffle).q, 'A: ___ &lt;i&gt;');
+}
+
 /* --- vocabulary games: every question is well formed and has one answer --- */
 {
   const D = device(['data/vocab.js', 'data/vocab2.js', 'data/vocab3.js', 'data/vocab4.js', 'data/vocab5.js', 'data/vocab6.js', 'data/vocabmulti.js', 'js/vgames.js']), G = D.VGames;

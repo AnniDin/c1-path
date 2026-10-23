@@ -31,10 +31,10 @@ window.App = { routes: {}, cleanup: [] };
   const setKey = (typeId, i) => typeId + '/' + i;
   let unitCtx = null; // unit id when a page was opened from inside a course unit (?u=)
 
-  const topicLabels = { 'v-cards': 'Vocabulary cards', 'v-quiz': 'Vocabulary quizzes', 'v-games': 'Vocabulary games', placement: 'Placement test', mix: 'Mixed review', trick: 'Trick practice', 'unit-review': 'Unit reviews' };
+  const topicLabels = { 'v-cards': 'Vocabulary cards', 'v-quiz': 'Vocabulary quizzes', 'v-games': 'Vocabulary games', saythis: 'Say this, not that', placement: 'Placement test', mix: 'Mixed review', trick: 'Trick practice', 'unit-review': 'Unit reviews' };
   C1.grammar.forEach((g) => (topicLabels['g-' + g.id] = g.title));
   C1.practice.forEach((p) => (topicLabels['u-' + p.id] = p.title));
-  const topicHref = (k) => k.startsWith('g-') ? '#/grammar/' + k.slice(2) : k.startsWith('u-') ? '#/practice/' + k.slice(2) : k.startsWith('v-') ? (k === 'v-quiz' ? '#/vquiz' : k === 'v-games' ? '#/vgames' : '#/vocab') : ({ listen: '#/skills/listening', mix: '#/course/mix', placement: '#/placement', dictation: '#/skills/dictation', pron: '#/skills/pronunciation', retry: '#/mistakes', 'unit-review': '#/course', ai: '#/generate', weak: '#/weak' })[k] || '#/progress';
+  const topicHref = (k) => k.startsWith('g-') ? '#/grammar/' + k.slice(2) : k.startsWith('u-') ? '#/practice/' + k.slice(2) : k.startsWith('v-') ? (k === 'v-quiz' ? '#/vquiz' : k === 'v-games' ? '#/vgames' : '#/vocab') : ({ listen: '#/skills/listening', mix: '#/course/mix', placement: '#/placement', dictation: '#/skills/dictation', pron: '#/skills/pronunciation', retry: '#/mistakes', 'unit-review': '#/course', ai: '#/generate', weak: '#/weak', saythis: '#/saythis' })[k] || '#/progress';
 
   const allCards = C1.vocab.flatMap((g) => g.cards.map((c, i) => Object.assign({ id: g.id + '-' + i, group: g.id, groupTitle: g.title, section: g.section }, c)));
   const cardById = Object.fromEntries(allCards.map((c) => [c.id, c]));
@@ -678,6 +678,7 @@ window.App = { routes: {}, cleanup: [] };
         tile('#/vquiz', 'Vocabulary quiz', 'A quick quiz on the words you have started.', 'quiz'),
         tile('#/ask', 'Ask the tutor', 'A small chat for your doubts, always one tap away at the bottom right. It only talks about English.', 'AI, needs your key'),
         tile('#/tricks', 'Tricks', 'Short strategies for the tasks students find hardest.', 'tips'),
+        tile('#/saythis', 'Say this, not that', 'What learners say, and what a UK English speaker says instead.', ((C1.saythis || []).reduce((n, g) => n + g.items.length, 0)) + ' pairs'),
         tile('#/generate', 'Generate with AI', 'Make extra practice on any topic with your own AI key.', 'optional'),
         tile('#/placement', 'Placement test', 'Short, adaptive or complete: B1 to C1, to find where to start.', Store.state.placement ? 'taken' : 'not taken'),
         tile('#/exams', 'The exams explained', 'What each paper tests and how it is marked.', 'guide')),

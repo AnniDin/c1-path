@@ -14,6 +14,7 @@
     const C1 = window.C1 || {}, docs = [];
     (C1.grammar || []).forEach((g) => docs.push({ kind: 'lesson', title: g.title, head: tokens(g.title + ' ' + g.tagline), body: tokens(plain(g.idea) + ' ' + (g.parts || []).map((p) => p.h + ' ' + plain(p.body)).join(' ')), g }));
     (C1.tricks || []).forEach((s) => s.items.forEach((t, i) => docs.push({ kind: 'trick', title: plain(t.t), head: tokens(t.t), body: tokens(plain(t.tip) + ' ' + plain(t.ex) + ' ' + plain(t.why)), t, key: s.id + '-' + i })));
+    (C1.saythis || []).forEach((g) => g.items.forEach((it) => docs.push({ kind: 'pair', title: it.say, head: tokens(it.say + ' ' + it.not), body: tokens(plain(it.why) + ' ' + plain(it.es) + ' ' + plain(it.ctx)), it, g })));
     (C1.vocab || []).forEach((grp) => grp.cards.forEach((c) => docs.push({ kind: 'word', title: c.phrase, head: tokens(c.phrase), body: tokens(c.meaning + ' ' + plain(c.logic)), c, grp })));
     docs.forEach((d) => { d.hs = new Set(d.head.map(stem)); d.bs = new Set(d.body.map(stem)); });
     return docs;
@@ -43,6 +44,7 @@
       return `**${d.title}**\n\n${clip(t.tip, 380)}${t.ex ? `\n\nExample: ${clip(t.ex, 200)}` : ''}${t.why ? `\n\n${clip(t.why, 200)}` : ''}\n\n${link('Open this trick', '#/tricks/' + d.key)}${drills && drills.length >= 3 ? ' · ' + link('Practise it', '#/tricks/practice/' + d.key) : ''}`;
     }
     if (d.kind === 'lesson') return `**${d.title}**: ${plain(d.g.tagline)}\n\n${clip(d.g.idea, 420)}\n\n${link('Read the lesson', '#/grammar/' + d.g.id)}`;
+    if (d.kind === 'pair') return `**Say this:** ${d.it.say}\n**Not this:** ${d.it.not}\n\n${plain(d.it.why)}${d.it.es ? ' In Spanish: ' + plain(d.it.es) + '.' : ''}\n\n${link('More in this theme', '#/saythis/' + d.g.id)}`;
     const c = d.c;
     return `**${c.phrase}**: ${plain(c.meaning)}.${c.logic ? ' ' + clip(c.logic, 240) : ''}${c.ex ? `\n\nExample: ${plain(c.ex)}` : ''}\n\n${link('Open the group', '#/vocab/' + d.grp.id)}`;
   }
@@ -53,7 +55,7 @@
     if (!r.length) {
       return 'I could not find that in the lessons here. Try one or two key words ("since", "third conditional", "make or do"), or look in ' + link('Grammar', '#/grammar') + ', ' + link('Tricks', '#/tricks') + ' and ' + link('Vocabulary', '#/vocab') + '.' + NOTE;
     }
-    const lead = show(r[0].d), others = r.slice(1, 3).filter((x) => x.d.title !== r[0].d.title).map((x) => `${x.d.title} (${x.d.kind === 'trick' ? link('trick', '#/tricks/' + x.d.key) : x.d.kind === 'lesson' ? link('lesson', '#/grammar/' + x.d.g.id) : link('word', '#/vocab/' + x.d.grp.id)})`);
+    const lead = show(r[0].d), others = r.slice(1, 3).filter((x) => x.d.title !== r[0].d.title).map((x) => `${x.d.title} (${x.d.kind === 'trick' ? link('trick', '#/tricks/' + x.d.key) : x.d.kind === 'pair' ? link('say this', '#/saythis/' + x.d.g.id) : x.d.kind === 'lesson' ? link('lesson', '#/grammar/' + x.d.g.id) : link('word', '#/vocab/' + x.d.grp.id)})`);
     return 'Here is what I found.\n\n' + lead + (others.length ? '\n\nAlso related: ' + others.join(', ') + '.' : '') + NOTE;
   }
 

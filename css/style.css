@@ -739,3 +739,12 @@ body.exam-focus { background-image: none; }
 @media print { body { background-image: none; } }
 
 .card.cause { margin: 10px 0; } .causeex { margin: .4em 0 0; font-size: .92rem; }
+
+/* the tricks hub and the Say this, not that cards */
+.tod { margin: 14px 0; } .trick-sub { margin: 1.4em 0 .4em; font-size: 1.05rem; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+.trick-hits { list-style: none; padding: 0; margin: 8px 0; } .trick-hits li { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.stlist { display: grid; gap: 12px; margin: 12px 0; }
+.stcard { border: 2px solid var(--line); background: var(--surface); padding: 10px 14px; }
+.stcard p { margin: .25em 0; } .st-not { color: var(--muted); } .st-say { font-size: 1.12rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.st-tag { display: inline-block; min-width: 5.2em; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 1px 6px; border: 1px solid var(--bad); color: var(--bad); }
+.st-tag.ok { border-color: var(--ok); color: var(--ok); } .st-why { margin-top: .5em; } .st-meta { font-size: .85rem; }

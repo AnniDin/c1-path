@@ -3,7 +3,52 @@
 (function () {
   const { h } = Engine;
   const A = window.App;
-  const EXAMPLES = ['What is the difference between "since" and "for"?', 'When do I use the third conditional?', 'How is Part 4 of Reading and Use of English marked?', 'Is "make a decision" or "take a decision" correct?'];
+  /* starter questions: a big pool, four shown each time Pica opens (one about the page you are on, the rest at random, never the same four twice in a row) */
+  const POOL = [
+    'What is the difference between "since" and "for"?', 'When do I use the third conditional?', 'Is "make a decision" or "take a decision" correct?',
+    'How is Part 4 of Reading and Use of English marked?', 'When do I use "used to" and when "would"?', 'What is the difference between "affect" and "effect"?',
+    'Why do we say "I wish I had" and not "I wish I have"?', 'How do I choose between the present perfect and the past simple?', 'When can I leave out "that" in a sentence?',
+    'What does "it depends" mean as an answer, and when is it a good one?', 'How do I use "despite" and "although" correctly?', 'What is inversion and when is it used?',
+    'How can I tell which preposition goes after an adjective?', 'What is the difference between "say" and "tell"?', 'When do I use "the" with general ideas?',
+    'What does "break the ice" mean?', 'How do I use "whether" and "if"?', 'What is a cleft sentence?', 'How do I make my writing sound more formal?',
+    'What is a good way to start an essay for the Writing paper?', 'How do I use linkers such as "however" and "nevertheless"?', 'What are the most common mistakes Spanish speakers make with articles?',
+    'How should I prepare for Speaking Part 2?', 'What can I do if I forget a word while speaking?', 'How do I get better at listening to fast speech?',
+    'How do I spot the answer in a gapped-text task?', 'What is the best way to learn phrasal verbs?', 'How can I remember collocations?',
+    'What is the difference between "bored" and "boring"?', 'When do I use "who" and when "whom"?', 'How do I use the passive with "it is said that"?',
+    'What is the difference between "lose" and "miss"?', 'How do I report a question in indirect speech?', 'When do I use the future perfect?',
+    'What is the difference between "economic" and "economical"?', 'How do I use "as" and "like" correctly?', 'What does "I look forward to hearing from you" teach about "to"?',
+    'How do I know whether a gap needs a prefix or a suffix?', 'How many words should I write in a key word transformation?', 'What is the difference between "rob" and "steal"?'
+  ];
+  const LASTKEY = 'c1path.starters';
+  const pickStarters = () => {
+    const keyless = !AI.configured() && window.PicaLocal;
+    /* without an AI key Pica can only answer from the site, so offer only questions she can answer */
+    const pool = keyless ? POOL.filter((q) => PicaLocal.search(q).length) : POOL.slice();
+    let prev = []; try { prev = JSON.parse(sessionStorage.getItem(LASTKEY) || '[]'); } catch (e) { /* optional */ }
+    const ctx = pageQuestion(), fresh = shuffle(pool.filter((q) => !prev.includes(q) && q !== ctx));
+    const out = (ctx ? [ctx] : []).concat(fresh).slice(0, 4);
+    try { sessionStorage.setItem(LASTKEY, JSON.stringify(out)); } catch (e) { /* optional */ }
+    return out;
+  };
+  /* a question about where the learner is: the lesson, task, trick or theme on screen, or else the topic they find hardest */
+  function pageQuestion() {
+    const C1 = window.C1 || {}, parts = location.hash.replace(/^#\/?/, '').split('?')[0].split('/').filter(Boolean), [r, b] = parts;
+    const title = (list, id) => { const x = (list || []).find((y) => y.id === id); return x && x.title; };
+    let q = null;
+    if (r === 'grammar' && b) { const t = title(C1.grammar, b); if (t) q = 'Explain "' + t + '" in simple words, with an example'; }
+    else if (r === 'practice' && b) { const t = title(C1.practice, b); if (t) q = 'Give me a tip for ' + t.toLowerCase(); }
+    else if (r === 'vocab' && b) { const t = title(C1.vocab, b); if (t) q = 'What is the idea behind "' + t + '"?'; }
+    else if (r === 'saythis') q = 'Why do learners say these things, and why do they sound odd in English?';
+    else if (r === 'mistakes') q = 'Why do I keep making the same mistakes, and how do I stop?';
+    else if (r === 'skills' && ['writing', 'speaking', 'listening'].includes(b)) q = 'How do I get better at ' + b + ' for the C1 exam?';
+    if (!q && window.App && App.weakTopics) {
+      const w = App.weakTopics()[0], g = w && w[0].startsWith('g-') && (C1.grammar || []).find((x) => x.id === w[0].slice(2));
+      if (g) q = 'Why is "' + g.title + '" so hard for me? Help me understand it';
+    }
+    return q && q.length < 120 ? q : null;
+  }
+  const shuffle = (arr) => arr.slice().sort(() => Math.random() - 0.5);
+  let chips = [];
   let history = [], last = 0, opened = false;
 
   /* Pica, drawn with a few shapes so it stays sharp at any size. Moods: idle, think (looks up), happy (closed eye). */
@@ -52,7 +97,7 @@
       ? history.map((m) => h('div', { class: 'turn ' + m.role }, h('strong', {}, m.role === 'user' ? 'You' : 'Pica'), m.role === 'user' ? h('p', {}, m.text) : rich(m.text)))
       : [keyless ? h('div', { class: 'callout' }, 'Without an AI key, Pica answers from the lessons, tricks and vocabulary on this site. For any question, ', h('a', { href: '#/account', onclick: () => toggle(false) }, 'add a free key on your account page'), ' (Google Gemini and Groq both have free plans).') : null,
         h('div', { class: 'picahello' }, pica('happy', 'big'), h('p', {}, h('strong', {}, 'Hi, I am Pica.'), ' I collect shiny words, and I am happy to share them. Ask me about grammar, vocabulary, pronunciation or the C1 exams. For example:')),
-        h('div', { class: 'chatex' }, EXAMPLES.map((q) => h('button', { class: 'btn small ghost', type: 'button', onclick: () => ask(q) }, q)))].filter(Boolean)));
+        h('div', { class: 'chatex' }, (chips.length ? chips : (chips = pickStarters())).map((q) => h('button', { class: 'btn small ghost', type: 'button', onclick: () => ask(q) }, q)))].filter(Boolean)));
     log.scrollTop = history.length ? log.scrollHeight : 0;
   }
   const onScreen = () => { const m = document.getElementById('app'); return m ? m.innerText.replace(/\s+/g, ' ').trim() : ''; };
@@ -85,10 +130,10 @@
   function toggle(show) {
     opened = show == null ? !opened : !!show;
     panel.hidden = !opened; fab.setAttribute('aria-expanded', String(opened)); fab.classList.toggle('on', opened);
-    if (opened) { draw(); box.focus(); } else if (document.activeElement && panel.contains(document.activeElement)) fab.focus();
+    if (opened) { if (!history.length) chips = []; draw(); box.focus(); } else if (document.activeElement && panel.contains(document.activeElement)) fab.focus();
   }
   send.addEventListener('click', () => ask());
-  reset.addEventListener('click', () => { history = []; msg.textContent = ''; portrait.replaceChildren(pica('idle')); draw(); });
+  reset.addEventListener('click', () => { history = []; chips = []; msg.textContent = ''; portrait.replaceChildren(pica('idle')); draw(); });
   close.addEventListener('click', () => toggle(false));
   fab.addEventListener('click', () => toggle());
   box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(); } });
@@ -118,7 +163,7 @@
   }
   window.PicaSay = say;
   window.PicaSVG = PICA; // the welcome pages draw her too
-  window.Tutor = { open: () => toggle(true), toggle, explain };
+  window.Tutor = { open: () => toggle(true), toggle, explain, starters: pickStarters };
   /* #/ask keeps old links working: it opens the panel over the Study page */
   A.routes.ask = () => { location.replace('#/toolkit'); setTimeout(() => toggle(true), 50); };
 })();

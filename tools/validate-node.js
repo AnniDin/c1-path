@@ -53,6 +53,24 @@ Object.entries(sandbox.C1.vocabMulti || {}).forEach(([ph, list]) => {
 });
 /* a stray control character (a backspace from a mis-escaped word boundary in a regular expression) silently breaks the pattern */
 ['js', 'tools', 'data'].forEach((d) => fs.readdirSync(path.join(root, d)).filter((f) => f.endsWith('.js')).forEach((f) => { if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(fs.readFileSync(path.join(root, d, f), 'utf8'))) issues.push(d + '/' + f + ' contains a control character (a broken escape, such as a backspace inside a regular expression?)'); }));
+/* "Say this, not that": every pair has what it needs, one gap, two different phrases, and no phrase is taught twice */
+{
+  const seen = new Set();
+  (sandbox.C1.saythis || []).forEach((g) => {
+    if (g.items.length < 6) issues.push('saythis: theme ' + g.id + ' has fewer than 6 pairs');
+    g.items.forEach((it, i) => {
+      const w = 'saythis ' + g.id + '#' + i;
+      if (!it.not || !it.say || !it.ctx || !it.why) issues.push(w + ': a field is missing');
+      else if ((it.ctx.match(/___/g) || []).length !== 1) issues.push(w + ': the situation needs exactly one gap');
+      else if (it.not.trim().toLowerCase() === it.say.trim().toLowerCase()) issues.push(w + ': both phrases are the same');
+      if (!['neutral', 'informal', 'formal'].includes(it.reg) || !['B1', 'B2', 'C1'].includes(it.level) || !['wrong', 'unnatural'].includes(it.kind)) issues.push(w + ': reg, level or kind is not valid');
+      if (/<[a-z]/i.test(it.not + it.say + it.ctx + it.why)) issues.push(w + ': HTML in a plain-text field');
+      const k = (it.say + '|' + it.not).toLowerCase();
+      if (seen.has(k)) issues.push(w + ': repeated pair');
+      seen.add(k);
+    });
+  });
+}
 Object.values(cardsByPhrase).forEach((c) => { if (/<[a-z\/][^>]*>/i.test(c.phrase + c.meaning)) issues.push('vocabulary: the card "' + c.phrase + '" has HTML in its phrase or meaning (they are shown as plain text)'); });
 Object.values(cardsByPhrase).forEach((c) => { if (c.meaning.includes(';') && !(sandbox.C1.vocabMulti || {})[c.phrase]) issues.push('vocabmulti: missing examples for ' + c.phrase); });
 const swSrc = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');

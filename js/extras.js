@@ -41,28 +41,73 @@
       h('p', { class: 'muted' }, 'Short exercises where this trick settles the doubt. Read the trick first if you need it.'),
       quiz(items, { source: { topic: 'trick', label: 'Trick practice', href: '#/tricks/' + key }, onRetry: () => trickPractice(key), onScore: (c, n) => Store.record('trick', c, n) }));
   }
-  A.routes.tricks = (want, c) => {
-    if (want === 'practice' && c) return trickPractice(c);
-    const sections = C1.tricks;
-    const find = h('input', { type: 'search', class: 'wide', placeholder: 'Search the tricks (e.g. make, since, wish)…', 'aria-label': 'Search the tricks' });
-    find.addEventListener('input', () => {
-      const q = find.value.trim().toLowerCase();
-      document.querySelectorAll('.trick').forEach((d) => { const hit = !q || d.textContent.toLowerCase().includes(q); d.hidden = !hit; if (q && hit) d.open = true; else if (!q) d.open = false; });
-      document.querySelectorAll('section[id^=tricks-]').forEach((s) => { s.hidden = !!q && ![...s.querySelectorAll('.trick')].some((d) => !d.hidden); });
-      document.querySelectorAll('.tricks-nav a').forEach((a) => { const s = document.getElementById(a.getAttribute('href').slice(1)); a.hidden = !!s && s.hidden; });
-    });
-    const nav = h('p', { class: 'row tricks-nav' }, sections.map((s) => h('a', { class: 'btn small ghost', href: '#tricks-' + s.id, onclick: (e) => { e.preventDefault(); document.getElementById('tricks-' + s.id).scrollIntoView({ behavior: 'smooth' }); } }, s.title)));
-    view(back('#/toolkit', 'Study'), h('h1', {}, 'Tricks'),
-      h('p', { class: 'lead' }, 'Small tricks that settle the doubts everyone has: which word, which preposition, which form. Open one, read the example and move on.'),
-      find, nav,
-      ...sections.map((s) => h('section', { id: 'tricks-' + s.id },
-        h('h2', {}, s.title), h('p', { class: 'muted' }, s.blurb),
-        s.items.map((x, i) => h('details', { class: 'trick', id: 'trick-' + s.id + '-' + i, open: want === s.id + '-' + i }, h('summary', {}, x.t),
-          h('p', { html: x.tip }), x.why ? h('p', { class: 'muted', html: x.why }) : null,
-          x.ex ? h('p', { class: 'trickex', html: x.ex }) : null,
-          poolFor(s.id + '-' + i).length >= 3 ? link('#/tricks/practice/' + s.id + '-' + i, 'Practise this (' + Math.min(8, poolFor(s.id + '-' + i).length) + ' questions)', 'btn small ghost') : null)))),
+  /* the tricks page: a hub of themes instead of one giant list, a page per theme, a search over every trick, and a trick of the day */
+  const TRICK_GROUPS = [
+    ['By exam task', 'Technique for each part of the exam.', ['tasks', 'exam']],
+    ['Words and grammar', 'Rules and pairs that settle the usual doubts.', ['words', 'grammar', 'preps', 'wf']],
+    ['Sound natural', 'Say it the way people really say it.', ['natural', 'everyday', 'spanish', 'listening']]
+  ];
+  const TASK_NAMES = { mcq: 'Use of English: multiple-choice cloze', cloze: 'Use of English: open cloze', wf: 'Use of English: word formation', kwt: 'Use of English: key word transformation', reading: 'Reading: Part 5', cross: 'Reading: cross-text, Part 6', gapped: 'Reading: gapped text, Part 7', matching: 'Reading: multiple matching, Part 8', listening: 'Listening', writing: 'Writing', speaking: 'Speaking' };
+  const plainT = (s) => String(s == null ? '' : s).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const trickBox = (s, x, i, open) => {
+    const key = s.id + '-' + i, n = poolFor(key).length;
+    return h('details', { class: 'trick', id: 'trick-' + key, open: !!open }, h('summary', {}, x.t),
+      h('p', { html: x.tip }), x.why ? h('p', { class: 'muted', html: x.why }) : null, x.ex ? h('p', { class: 'trickex', html: x.ex }) : null,
+      n >= 3 ? link('#/tricks/practice/' + key, 'Practise this (' + Math.min(8, n) + ' questions)', 'btn small ghost') : null);
+  };
+  const allTricks = () => C1.tricks.flatMap((s) => s.items.map((x, i) => ({ s, x, i, key: s.id + '-' + i })));
+
+  function sectionPage(s, want) {
+    const find = h('input', { type: 'search', class: 'wide', placeholder: 'Search in ' + s.title + '…', 'aria-label': 'Search in this theme' });
+    const body = h('div');
+    const draw = () => {
+      const q = find.value.trim().toLowerCase(), rows = s.items.map((x, i) => [x, i]).filter(([x]) => !q || plainT(x.t + ' ' + x.tip + ' ' + (x.ex || '')).toLowerCase().includes(q));
+      if (!rows.length) { body.replaceChildren(h('p', { class: 'muted' }, 'No tricks match.')); return; }
+      /* the exam-task theme is split by task so it reads as several short lists, not one long one */
+      const names = s.id === 'tasks' ? [...new Set(rows.map(([x]) => x.task))] : [null];
+      body.replaceChildren(...names.flatMap((t) => [t ? h('h2', { class: 'trick-sub' }, TASK_NAMES[t] || t) : null].concat(rows.filter(([x]) => !t || x.task === t).map(([x, i]) => trickBox(s, x, i, q ? false : want === s.id + '-' + i)))).filter(Boolean));
+    };
+    find.addEventListener('input', draw);
+    draw();
+    view(back('#/tricks', 'Tricks'), h('h1', {}, s.title), h('p', { class: 'lead' }, s.blurb || ''), find, body,
       h('div', { class: 'callout' }, 'No trick replaces knowing the language. Use these to avoid losing marks you already deserve, and keep practising in the ', link('#/practice', 'exam tasks'), '.'));
     if (want) setTimeout(() => { const d = document.getElementById('trick-' + want); if (d) { d.open = true; d.scrollIntoView({ block: 'center' }); } }, 0);
+  }
+
+  function trickHub() {
+    const day = Math.floor(Date.now() / 864e5), pool = allTricks().filter((t) => t.x.tip), today = pool[(day * 7) % pool.length];
+    const find = h('input', { type: 'search', class: 'wide', placeholder: 'Search all ' + allTricks().length + ' tricks (e.g. make, since, wish)…', 'aria-label': 'Search all the tricks' });
+    const results = h('div', { 'aria-live': 'polite' });
+    const groupsEl = h('div');
+    const secById = Object.fromEntries(C1.tricks.map((s) => [s.id, s]));
+    const placed = new Set(TRICK_GROUPS.flatMap((g) => g[2]));
+    const rest = C1.tricks.filter((s) => !placed.has(s.id)).map((s) => s.id);
+    groupsEl.append(...TRICK_GROUPS.map(([title, blurb, ids], gi) => h('section', {}, h('h2', {}, title), h('p', { class: 'muted' }, blurb),
+      h('div', { class: 'grid' }, ids.concat(gi === TRICK_GROUPS.length - 1 ? rest : []).map((id) => secById[id]).filter(Boolean).map((s) =>
+        h('a', { class: 'card', href: '#/tricks/' + s.id }, h('h3', { style: 'margin:0 0 .2em' }, s.title), h('p', { class: 'muted', style: 'margin:0 0 6px' }, s.blurb || ''), h('span', { class: 'tag' }, s.items.length + ' tricks')))))));
+    find.addEventListener('input', () => {
+      const q = find.value.trim().toLowerCase();
+      groupsEl.hidden = q.length >= 2;
+      if (q.length < 2) { results.replaceChildren(); return; }
+      const hits = allTricks().filter((t) => plainT(t.x.t + ' ' + t.x.tip + ' ' + (t.x.ex || '')).toLowerCase().includes(q)).slice(0, 40);
+      results.replaceChildren(...(hits.length ? [h('ul', { class: 'trick-hits' }, hits.map((t) => h('li', {}, link('#/tricks/' + t.key, plainT(t.x.t)), h('span', { class: 'muted' }, ' · ' + t.s.title))))] : [h('p', { class: 'muted' }, 'No tricks match.')]));
+    });
+    view(back('#/toolkit', 'Study'), h('h1', {}, 'Tricks'),
+      h('p', { class: 'lead' }, 'Small tricks that settle the doubts everyone has: which word, which preposition, which form. Pick a theme, or search.'),
+      find, results,
+      h('div', { class: 'card tod' }, h('div', { class: 'muted' }, 'Trick of the day'), h('strong', {}, plainT(today.x.t)), h('p', { html: today.x.tip }), link('#/tricks/' + today.key, 'Open it', 'btn small')),
+      groupsEl,
+      A.routes.saythis ? h('div', { class: 'card' }, h('strong', {}, 'Say this, not that'), h('p', { class: 'muted' }, 'Short pairs: what learners say and what a UK English speaker says, with the reason.'), link('#/saythis', 'Open', 'btn small ghost')) : null);
+  }
+
+  A.routes.tricks = (want, c) => {
+    if (want === 'practice' && c) return trickPractice(c);
+    if (!want) return trickHub();
+    const sec = C1.tricks.find((x) => x.id === want);
+    if (sec) return sectionPage(sec, null);
+    const cut = want.lastIndexOf('-'), s2 = cut > 0 && C1.tricks.find((x) => x.id === want.slice(0, cut)), idx = Number(want.slice(cut + 1));
+    if (s2 && Number.isInteger(idx) && s2.items[idx]) return sectionPage(s2, want);
+    return trickHub();
   };
 
   /* ---------- generate with AI ---------- */
