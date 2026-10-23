@@ -249,6 +249,22 @@ window.App = { routes: {}, cleanup: [] };
         h('button', { class: 'btn small ghost', onclick: () => { if (confirm('Erase all progress in this browser?')) { Store.reset(); refresh(); } } }, 'Reset progress')));
   }
 
+  /* week by week: answers and days practised for each of the last 12 weeks (Monday to Sunday), newest first */
+  function weeksCard() {
+    const monday = new Date(Store.today() + 'T00:00:00'); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    const rows = [];
+    for (let w = 0; w < 12; w++) {
+      let n = 0, d = 0; const start = new Date(monday); start.setDate(start.getDate() - 7 * w);
+      for (let i = 0; i < 7; i++) { const day = new Date(start); day.setDate(day.getDate() + i); const x = (Store.state.days || {})[day.toLocaleDateString('sv')] || 0; n += x; if (x > 0) d++; }
+      rows.push({ w, n, d, label: w === 0 ? 'This week' : w === 1 ? 'Last week' : start.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) });
+    }
+    const max = Math.max(1, ...rows.map((r) => r.n)), best = rows.reduce((a, r) => (r.n > a.n ? r : a), rows[0]);
+    if (!rows.some((r) => r.n)) return null;
+    return cardBlock('Week by week', h('p', { class: 'muted' }, 'Questions answered each week (Monday to Sunday) and on how many days you practised.'),
+      ...rows.map((r) => h('div', { class: 'trow weekrow' }, h('span', {}, r.label), bar(r.n / max, r.n ? 'ok' : ''), h('span', { class: 'muted' }, r.n + ' · ' + r.d + '/7 days'))),
+      h('p', { class: 'muted' }, best.n ? 'Best week: ' + best.label.toLowerCase() + ', with ' + best.n + ' answers.' : ''));
+  }
+
   function progress(which) {
     if (which === 'settings') return App.routes.account();
     const st = Store.state;
@@ -290,6 +306,7 @@ window.App = { routes: {}, cleanup: [] };
     const PAGES = {
       today: ['Today', 'What to do now, how this week is going and your daily goal.', [doNow, numbers, App.weekCard ? App.weekCard() : null, goal]],
       progress: ['Results', 'How you are doing: activity, achievements, full tests, skills and accuracy by topic.', [
+        weeksCard(),
         cardBlock('Last 12 weeks', streakLine, heat, h('p', { class: 'muted' }, 'Darker = more answers that day. Answer at least one question to keep your streak.')),
         App.rewards ? App.rewards.shelf() : null, App.historyCard ? App.historyCard() : null, App.skillsCard ? App.skillsCard() : null, App.skillTrendCard ? App.skillTrendCard() : null, App.recsCard ? App.recsCard() : null,
         ...tbl, !entries.length ? h('p', { class: 'muted' }, 'Nothing here yet. Do a lesson or a practice set and your results will appear.') : null]],
@@ -450,10 +467,11 @@ window.App = { routes: {}, cleanup: [] };
       quiz(items, { source: { topic: 'v-quiz', label: g ? g.title + ' quiz' : 'Vocabulary quiz', href: '#/vquiz' + (group ? '/' + group : '') }, onRetry: () => vocabQuiz(group), onScore: (c, t) => Store.record('v-quiz', c, t) }));
   }
 
-  function review(group) {
+  function review(group, mode) {
     const dueNow = (group ? dueAll().filter((id) => cardById[id].group === group) : dueAll()).slice(0, Store.reviewCap());
     let queue = shuffle(dueNow).concat(newIds(group).slice(0, Math.max(0, Math.min(group ? 12 : NEW_PER_DAY - Store.newTodayCount(), Store.reviewCap() - dueNow.length))));
     if (group && !queue.length) queue = shuffle(allCards.filter((c) => c.group === group).map((c) => c.id)).slice(0, 10);
+    if (mode === 'new') queue = newIds().slice(0, 5); /* only cards you have never seen: these are the ones that count as new */
     const total = queue.length;
     let reviewed = 0;
     const onKey = (e) => {
@@ -475,7 +493,7 @@ window.App = { routes: {}, cleanup: [] };
         box.append(h('div', { class: 'card rel' }, total ? Engine.stamp('Done') : null, h('h2', { style: 'margin-top:0' }, total ? 'Session complete' : 'Nothing due right now'),
           h('p', {}, total ? `You reviewed ${reviewed} card${reviewed === 1 ? '' : 's'}. Cards come back when they are due.` : 'Come back tomorrow, or open a group and study it ahead.'),
           (() => { const more = (group ? dueAll().filter((id) => cardById[id].group === group) : dueAll()).length; return more ? h('p', { class: 'muted' }, `${more} more card${more === 1 ? ' is' : 's are'} waiting. There is no hurry: you can stop here.`) : null; })(),
-          h('div', { class: 'row' }, (group ? dueAll().filter((id) => cardById[id].group === group) : dueAll()).length ? h('button', { class: 'btn', onclick: () => review(group) }, 'Another round') : null,
+          h('div', { class: 'row' }, (group ? dueAll().filter((id) => cardById[id].group === group) : dueAll()).length ? h('button', { class: 'btn', onclick: () => review(group, mode) }, 'Another round') : null,
             link('#/vgames', 'Play a vocabulary game', 'btn ghost'), link(unitCtx ? '#/course/' + unitCtx : gBack, unitCtx ? 'Back to the unit' : 'Back', 'btn ghost'))));
         return;
       }
@@ -870,7 +888,7 @@ window.App = { routes: {}, cleanup: [] };
           h('li', {}, 'The sign-in session token is kept in your browser\'s localStorage.')),
         h('p', {}, 'Optional difficulty calibration: only if you switch it on (My account) and are signed in, the server stores, for each practice or listening set, your score on your FIRST attempt, linked to your account so one learner counts once. Nobody else can read these rows. The site only shows averages for sets with at least ten learners, and uses them to adjust the difficulty rating of each set. "Stop sharing" deletes your rows, and deleting your account deletes them too. Optional friends leaderboard: only if you join it, the server also stores a display name you choose, your questions answered this week, your streak, your level, a friend code and, if you choose one, a small profile picture. They are visible only to you and to people who add your code, or whose code you add: a friendship is mutual, so both see each other. "Leave" in Review deletes them. Deleting your account removes them too.'),
         h('p', {}, 'Supabase and, if you choose Google sign-in, Google act as service providers under their own privacy policies.')) : null,
-      h('p', {}, 'Optional emails: only if you switch them on in the "Emails" card on your account page, the server keeps that choice, a secret code for the unsubscribe link and the date of the last email, linked to your account, and your email address is used to send one trick a week and, if you also choose it, one summary a month. The summary is built from the progress copy you keep in the cloud (answers, streak, topics to revisit), read by the sending job only on that day and not stored anywhere else. Every email has a link to stop them, and switching it off or deleting your account removes the entry. The emails are sent from a Gmail account through a GitHub scheduled job, so those services handle the message.'),
+      h('p', {}, 'Optional emails: only if you switch them on in the "Emails" card on your account page, the server keeps that choice, a secret code for the unsubscribe link and the date of the last email, linked to your account, and your email address is used to send one trick a week and, if you also choose it, one summary a month. The weekly email also shows your own last 7 days, and, if you have joined the friends ranking, the name, answers this week and streak of the friends you added: the same figures they already show you in the app. The summaries are built from the progress copy you keep in the cloud (answers, streak, topics to revisit), read by the sending job only on the day it sends and not stored anywhere else. Every email has a link to stop them, and switching it off or deleting your account removes the entry. The emails are sent from a Gmail account through a GitHub scheduled job, so those services handle the message.'),
       h('h2', {}, 'Optional AI feedback'),
       h('p', {}, 'If you add your own API key (Google Gemini, Groq or Anthropic) and ask for feedback or use the tutor, the text you choose to submit (or the question you type) is sent to that provider to produce the answer. The same goes for "Organise with AI" in your notes: it sends the text of your most recent notes (up to 80) to the provider, only when you press the button. The key stays in your browser. Free plans of some providers may use submitted text to improve their models, so do not include personal details. Without a key, nothing is sent.'),
       h('h2', {}, 'Speech and recording'),
@@ -925,7 +943,7 @@ window.App = { routes: {}, cleanup: [] };
     if (a === 'grammar') return b ? lesson(b) : grammarList();
     if (a === 'vocab') return b ? vocabGroup(b) : vocab();
     if (a === 'vquiz') return vocabQuiz(b);
-    if (a === 'review') return review(b);
+    if (a === 'review') return b === 'new' ? review(null, 'new') : review(b);
     if (a === 'practice') return b ? practiceType(b, c == null ? null : +c) : practiceList();
     if (a === 'exams') return exams();
     if (a === 'mock') return mockRoute(b);

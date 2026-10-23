@@ -103,8 +103,9 @@
   const onScreen = () => { const m = document.getElementById('app'); return m ? m.innerText.replace(/\s+/g, ' ').trim() : ''; };
   async function ask(text, screen) {
     text = String(text || box.value).trim();
-    if (!text || send.disabled) return;
-    if (Date.now() - last < 2000) { msg.textContent = 'One moment, then ask again.'; return; }
+    if (!text) return;
+    if (send.disabled) { msg.textContent = 'Pica is still answering the last question. One moment.'; return; }
+    if (Date.now() - last < 800) { msg.textContent = 'One moment, then ask again.'; return; }
     last = Date.now();
     history.push({ role: 'user', text }); box.value = '';
     const shown = screen || (withPage.checked ? onScreen() : '');
@@ -119,10 +120,12 @@
       msg.textContent = ''; portrait.replaceChildren(pica('happy')); draw(); return;
     }
     msg.textContent = 'Pica is thinking…'; portrait.replaceChildren(pica('think')); send.disabled = true; draw();
-    AI.onRetry = (n, total) => { msg.textContent = `Pica could not reach the AI. Trying again (${n} of ${total})…`; };
+    AI.onRetry = (n, total, other) => { msg.textContent = other ? `Pica could not reach the AI. Trying ${other} instead…` : `Pica could not reach the AI. Trying again (${n} of ${total})…`; };
     try { history.push({ role: 'tutor', text: await AI.chat(history, screen) }); msg.textContent = ''; }
     catch (e) {
-      msg.replaceChildren(...[e.message + ' ', AI.configured() ? h('button', { class: 'btn small', type: 'button', onclick: () => run(screen) }, 'Try again') : null].filter(Boolean));
+      /* after the automatic tries: try again, or take an answer from the lessons of the site (no AI needed) */
+      const local = () => { const last = history[history.length - 1]; history.push({ role: 'tutor', text: /^Exercise question:/.test(screen || '') && window.PicaLocal ? PicaLocal.explain(screen) : PicaLocal.answer(last ? last.text : '') }); msg.textContent = ''; draw(); };
+      msg.replaceChildren(...[e.message + ' ', AI.configured() ? h('button', { class: 'btn small', type: 'button', onclick: () => run(screen) }, 'Try again') : null, window.PicaLocal ? h('button', { class: 'btn small ghost', type: 'button', onclick: local }, 'Answer from the lessons') : null].filter(Boolean));
     }
     AI.onRetry = null;
     send.disabled = false; portrait.replaceChildren(pica(history.length && history[history.length - 1].role === 'tutor' ? 'happy' : 'idle')); draw();

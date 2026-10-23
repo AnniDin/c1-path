@@ -57,6 +57,8 @@ for (const f of scripts.filter((s) => !/^(https?:)?\/\//.test(s))) {
 }
 
 let failed = 0, ok = 0;
+const afterAll = []; /* checks that need the whole script to have run first: they run one after another before the summary */
+const pending = []; /* checks that finish later (promises): the summary waits for them */
 const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.error('FAIL ' + name + (info ? ': ' + info : '')); } };
 
 /* ---- h() and view() flatten nested children and skip null/false ---- */
@@ -256,6 +258,67 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
     check('Pica offers four starter questions that are all different, and the sets change from one opening to the next', T.starters().length === 4 && new Set(T.starters()).size === 4 && new Set(sets).size >= 5 && seen.size >= 12, seen.size + ' different, ' + new Set(sets).size + ' sets');
     sb.localStorage.removeItem('c1path.starters');
   }
+  /* the emails stay opt-in but Pica asks once: yes saves it, no or dismissing is remembered, people who already have it are not asked */
+  {
+    afterAll.push(async () => {
+      const A = sb.App, keepU = sb.Cloud.user, keepE = sb.Cloud.enabled, keepR = sb.Cloud.rpc, keepS = sb.PicaSay, calls = [], asked = [];
+      sb.Cloud.user = () => ({ id: 'u1', email: 'ana@example.com' }); sb.Cloud.enabled = true;
+      let on = false; sb.Cloud.rpc = async (name, args) => { calls.push(name + ':' + JSON.stringify(args || {})); return name === 'get_digest' ? on : null; };
+      sb.PicaSay = (text, actions) => asked.push({ text, actions });
+      sb.localStorage.removeItem('c1path.digestasked');
+      const first = await A.askDigest(), again = await A.askDigest();
+      check('a signed-in person without the emails is asked once, with Yes and No buttons', first === true && again === false && asked.length === 1 && asked[0].actions.map((x) => x[0]).join() === 'Yes, send it,No thanks');
+      await asked[0].actions[0][1]();
+      check('Yes switches the weekly trick on', calls.includes('set_digest:{"p_on":true}'));
+      sb.localStorage.removeItem('c1path.digestasked'); on = true; asked.length = 0;
+      check('someone who already has the emails is not asked', (await A.askDigest()) === false && asked.length === 0);
+      sb.localStorage.removeItem('c1path.digestasked'); sb.Cloud.user = () => null;
+      check('nobody is asked when not signed in', (await A.askDigest()) === false);
+      sb.Cloud.user = keepU; sb.Cloud.enabled = keepE; sb.Cloud.rpc = keepR; sb.PicaSay = keepS; sb.localStorage.removeItem('c1path.digestasked');
+    });
+  }
+  /* the daily quests follow what the learner needs: due cards, saved mistakes, the weakest topic; they are kept all day and measure real progress */
+  {
+    const A = sb.App, S = sb.Store, st = S.state, keep = JSON.stringify({ cards: st.cards, mistakes: st.mistakes, stats: st.stats, dq: st.dayQuests, counters: st.counters, nt: st.newToday });
+    const render = (hash) => { sb.location.hash = hash; app.children = []; A.route(); };
+    const fresh = () => { st.dayQuests = {}; return A.questList(); };
+    st.cards = {}; st.mistakes = {}; st.counters = {}; st.newToday = {};
+    let qs = fresh();
+    check('there are always three quests, the first about the daily goal', qs.length === 3 && qs[0].kind === 'answers' && /Answer \d+ questions/.test(qs[0].label));
+    const old = '2020-01-01'; A.allCards.slice(0, 14).forEach((c) => { st.cards[c.id] = { box: 1, due: old, ts: 1 }; });
+    qs = fresh();
+    check('with many cards due, the vocabulary quest is to review them, and it opens the review', qs[1].kind === 'cards' && /due/.test(qs[1].label) && qs[1].href === '#/review' && qs[1].max === 10);
+    const first = qs[1].now; S.rate(A.allCards[0].id, 2);
+    check('rating a card moves the quest forward', A.questList()[1].now === first + 1);
+    check('the quests are kept all day: the same list on the next call', JSON.stringify(A.questList().map((q) => q.label)) === JSON.stringify(qs.map((q) => q.label)));
+    st.cards = {}; st.counters = {}; st.newToday = {};
+    let sawNew = false; for (let d = 0; d < 2; d++) { const day = Math.floor(Date.now() / 864e5); st.dayQuests = {}; const q = A.questList()[1]; sawNew = sawNew || q.kind === 'new'; }
+    const newQ = (() => { for (let i = 0; i < 4; i++) { st.dayQuests = {}; const q = A.questList()[1]; if (q.kind === 'new') return q; } return null; })();
+    check('when nothing is due, the vocabulary quest is new cards or a game, and "new cards" opens a session of new cards only', !newQ || newQ.href === '#/review/new');
+    render('#/review/new');
+    check('the new-cards session has exactly five cards, all of them new', /5 left/.test(app.textContent));
+    for (let i = 0; i < 9; i++) st.mistakes['m' + i] = { id: 'm' + i, item: { type: 'mcq', q: 'x ___', options: ['a', 'b'], answer: 0, why: 'w' }, given: 'b', topic: 't', label: 'T', href: '#/', count: 1, right: 0, ts: Date.now(), due: 0 };
+    qs = fresh();
+    check('with many saved mistakes due, the third quest is to clear them', qs[2].kind === 'mistakes' && qs[2].href === '#/mistakes/practice' && qs[2].max === 5);
+    st.mistakes = {}; st.stats['g-wish'] = { c: 1, t: 10 };
+    let weakQ = null; for (let i = 0; i < 4 && !weakQ; i++) { st.dayQuests = {}; const q = A.questList()[2]; if (q.kind === 'topic') weakQ = q; }
+    check('the weakest topic can become a quest, linked to that topic and measured by answers on it', !weakQ || (/Answer 8 questions on /.test(weakQ.label) && weakQ.href === '#/grammar/wish'));
+    if (weakQ) { const b = weakQ.now; S.record('g-wish', 2, 3); check('answers on that topic move its quest', A.questList().find((q) => q.kind === 'topic').now === b + 3); }
+    const days = new Set(), shift = vm.runInContext('(d) => { const r = Date.now; Date.now = () => r() + d * 864e5; return () => { Date.now = r; }; }', sb); for (let d = 0; d < 6; d++) { st.dayQuests = {}; const undo = shift(d); days.add(A.questList().map((q) => q.label).join('|')); undo(); }
+    check('the quests change from day to day when several things are needed', days.size >= 2);
+    st.cards = JSON.parse(keep).cards; st.mistakes = JSON.parse(keep).mistakes; st.stats = JSON.parse(keep).stats; st.dayQuests = JSON.parse(keep).dq; st.counters = JSON.parse(keep).counters; st.newToday = JSON.parse(keep).nt;
+  }
+  /* progress by weeks: a card with the last 12 weeks, shown once there is some practice */
+  {
+    const A = sb.App, st = sb.Store.state, keep = JSON.stringify(st.days), today = sb.Store.today();
+    const render = (hash) => { sb.location.hash = hash; app.children = []; A.route(); };
+    st.days = {}; render('#/progress/progress');
+    check('no week-by-week card until there is practice', !/Week by week/.test(app.textContent));
+    st.days = { [today]: 12 }; const lastWeek = new Date(today + 'T00:00:00'); lastWeek.setDate(lastWeek.getDate() - 7); st.days[lastWeek.toLocaleDateString('sv')] = 30;
+    render('#/progress/progress');
+    check('the week-by-week card lists 12 weeks, this week and last week first, with answers and days', /Week by week/.test(app.textContent) && app.all((n) => /weekrow/.test(n.className || '')).length === 12 && /This week/.test(app.textContent) && /Last week/.test(app.textContent) && /30 · 1\/7 days/.test(app.textContent) && /Best week: last week, with 30 answers/.test(app.textContent));
+    st.days = JSON.parse(keep);
+  }
   /* Pica: the daily greeting, being sad after days away, the first-time tip per task, and the About page */
   {
     const A = sb.App, text = (el) => (el && el.textContent) || '';
@@ -314,7 +377,6 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
   st.stats = keep;
 }
 /* ---- friends: a code typed as a name is refused; name and a friend's code can be given when joining ---- */
-const pending = [];
 pending.push((async () => {
   const calls = [], keepUser = sb.Cloud.user, keepRpc = sb.Cloud.rpc, keepEnabled = sb.Cloud.enabled;
   sb.Cloud.user = () => ({ id: 'u1', email: 'ana@example.com' }); sb.Cloud.enabled = true;
@@ -418,7 +480,8 @@ check('no page shows raw HTML tags as text', rawTags.length === 0, rawTags.slice
 sb.location.hash = '#/nope'; sb.App.route();
 check('unknown route shows Not found', /Not found/.test(app.textContent));
 
-Promise.all(pending).then(() => {
+Promise.all(pending).then(async () => {
+for (const f of afterAll) await f();
 console.log(`${ok} checks passed, ${failed} failed, ${routes.length} routes visited`);
 process.exit(failed ? 1 : 0);
 });

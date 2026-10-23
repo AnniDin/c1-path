@@ -29,15 +29,22 @@
   const provId = () => (PROVIDERS[get(PROVIDER)] ? get(PROVIDER) : (get(PROVIDERS.anthropic.keyStore) && !get(PROVIDERS.gemini.keyStore) ? 'anthropic' : 'gemini'));
   const prov = () => PROVIDERS[provId()];
   const modelName = () => get(prov().modelStore) || prov().models[0][0];
+  const modelOf = (p) => get(p.modelStore) || p.models[0][0];
 
   const errorText = (status, detail, p) => status === 401 || status === 403 || (status === 400 && /api key/i.test(detail))
     ? `The ${p.name.replace(/ \(.*/, '')} key was rejected (${status}). Check that you pasted it completely.`
     : status === 429 ? (p.free ? 'The free-tier limit was reached. Wait a minute and try again (free plans also have a daily limit).' : 'Rate limit or no credit left (429). ' + detail)
       : `API error ${status}. ${detail}`;
 
+  /* a request that gets no answer in AI.timeoutMs is cut off (and tried again), so Pica can never wait for ever */
+  const fetchT = (url, opts) => {
+    if (typeof AbortController !== 'function') return fetch(url, opts);
+    const c = new AbortController(), t = setTimeout(() => c.abort(), AI.timeoutMs);
+    return fetch(url, Object.assign({ signal: c.signal }, opts)).finally(() => clearTimeout(t));
+  };
   async function request(p, key, model, system, user, maxTokens, noThinking) {
     if (p === PROVIDERS.anthropic) {
-      return fetch('https://api.anthropic.com/v1/messages', {
+      return fetchT('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: user }] })
@@ -46,13 +53,13 @@
     if (p === PROVIDERS.gemini) {
       const cfg = { maxOutputTokens: maxTokens * 3 };
       if (/flash/.test(model) && !noThinking) cfg.thinkingConfig = { thinkingBudget: 0 };
-      return fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      return fetchT(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
         body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents: [{ role: 'user', parts: [{ text: user }] }], generationConfig: cfg })
       });
     }
-    return fetch('https://api.groq.com/openai/v1/chat/completions', {
+    return fetchT('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: 'Bearer ' + key },
       body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] })
@@ -100,27 +107,38 @@
     }
   }
 
-  async function call(system, user, maxTokens, retried) {
-    const p = prov(), key = get(p.keyStore);
+  async function callOnce(system, user, maxTokens, retried, only) {
+    const p = only ? PROVIDERS[only] : prov(), key = get(p.keyStore);
     if (!key) throw new Error('No API key set. Add one in Review, under AI feedback.');
     let res;
-    try { res = await attempt(() => request(p, key, modelName(), system, user, maxTokens || 1600, retried === 'nothink')); }
-    catch (e) { throw new Error('Could not reach the API. Check your connection.'); }
+    try { res = await attempt(() => request(p, key, modelOf(p), system, user, maxTokens || 1600, retried === 'nothink')); }
+    catch (e) { throw Object.assign(new Error('Could not reach the API. Check your connection.'), { passing: true }); }
     if (!res.ok) {
       let detail = '';
       try { const j = await res.json(); detail = (j.error && (j.error.message || j.error)) || ''; } catch (e) { /* no body */ }
-      if (p === PROVIDERS.gemini && res.status === 400 && /thinking/i.test(String(detail)) && retried !== 'nothink') return call(system, user, maxTokens, 'nothink');
-      if (res.status === 404 && p !== PROVIDERS.anthropic && !retried) {
+      if (p === PROVIDERS.gemini && res.status === 400 && /thinking/i.test(String(detail)) && retried !== 'nothink') return callOnce(system, user, maxTokens, 'nothink', only);
+      if (res.status === 404 && p !== PROVIDERS.anthropic && !retried && !only) {
         // the model was retired: switch to the best model the key can use and try once more
         const list = await listModels(), best = list.find(([id]) => id !== modelName());
-        if (best) { put(p.modelStore, best[0]); return call(system, user, maxTokens, 'model'); }
+        if (best) { put(p.modelStore, best[0]); return callOnce(system, user, maxTokens, 'model', only); }
         if (!list.length) throw new Error(`The model "${modelName()}" is not available and the list of models could not be read with this key. Create a new key at ${p.keyUrl.replace('https://', '')} and make sure it can use the Gemini API. ${detail}`);
       }
-      throw new Error(errorText(res.status, String(detail), p));
+      throw Object.assign(new Error(errorText(res.status, String(detail), p)), { passing: res.status === 429 || res.status >= 500 });
     }
     const out = textOf(p, await res.json());
     if (!out.trim()) throw new Error('The model returned an empty answer. Try again or pick another model.');
     return out;
+  }
+  /* the main provider first; if it keeps failing for a passing reason (no connection, busy, server trouble) and another provider has a key, that one gets a try */
+  async function call(system, user, maxTokens, retried) {
+    try { return await callOnce(system, user, maxTokens, retried); }
+    catch (e) {
+      if (!e.passing) throw e;
+      const alt = Object.keys(PROVIDERS).find((id) => id !== provId() && get(PROVIDERS[id].keyStore));
+      if (!alt) throw e;
+      if (AI.onRetry) AI.onRetry(0, 0, PROVIDERS[alt].name.replace(/ \(.*/, ''));
+      try { return await callOnce(system, user, maxTokens, retried, alt); } catch (e2) { throw e; }
+    }
   }
   function json(text) {
     const m = text.match(/\{[\s\S]*\}/);
@@ -197,6 +215,7 @@
     },
 
     /* the tutor: a short conversation about English and the exams only. The scope is set in the instructions, so it is a strong guide, not a guarantee. */
+    timeoutMs: 30000, /* the longest one request may take */
     retryDelays: [1000, 2500], /* waits between the tries of a failing request: 3 tries in all */
     onRetry: null,
     /* one practice question after an explanation, and never more than MAX_CHECKS in a conversation: the code decides, not the model */

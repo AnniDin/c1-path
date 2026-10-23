@@ -341,6 +341,23 @@ let notesDone = Promise.resolve();
   eq('a wrong answer is explained with the exercise\'s own explanation', [/\*\*have\*\*/.test(ex), /\*\*had\*\*/.test(ex), /past form/.test(ex)], [true, true, true]);
 }
 
+/* --- the weekly email: the reader's week and their friends' week --- */
+{
+  const L = require('./digest_lib'), NIL = '00000000-0000-0000-0000-000000000000', now = Date.parse('2026-10-22T09:00:00Z'), ymd = (n) => new Date(now - n * 864e5).toLocaleDateString('sv');
+  const data = { days: { [ymd(0)]: 10, [ymd(1)]: 20, [ymd(3)]: 5, [ymd(8)]: 12, [ymd(9)]: 8 }, stats: {} };
+  const w = L.weekStats(data, now);
+  eq('week statistics: last 7 days, the week before, days practised, and answers since Monday', [w.answers, w.prev, w.activeDays, w.since], [35, 20, 3, 35]);
+  eq('weekStats copes with no progress at all', L.weekStats({}, now).answers, 0);
+  const monday = L.mondayOf(now);
+  const fr = L.friendRows([{ name: 'Linda', week: monday, answers: 64, streak: 6 }, { name: 'Old', week: '2020-01-06', answers: 99, streak: 1 }, { name: '<b>x</b>', week: monday, answers: 3, streak: 0 }, { week: monday, answers: 5 }], now);
+  eq('friends who did not practise this week count 0, nameless rows are dropped, the best is first', [fr.map((f) => f.name), fr.map((f) => f.answers)], [['Linda', '<b>x</b>', 'Old'], [64, 3, 0]]);
+  const mail = L.renderWeekly(L.pickTrick(now), NIL, { me: w, friends: fr });
+  eq('the weekly email has the reader\'s week and the friends list, with names escaped', [/Your week/.test(mail.html), /You answered 35 questions on 3 of the last 7 days/.test(mail.html), /Linda/.test(mail.html), /<b>x<\/b>/.test(mail.html), /&lt;b&gt;x&lt;\/b&gt;/.test(mail.html), /You and your friends this week/.test(mail.text)], [true, true, true, false, true, true]);
+  const alone = L.renderWeekly(L.pickTrick(now), NIL, null), noFriends = L.renderWeekly(L.pickTrick(now), NIL, { me: w, friends: [] });
+  eq('without extras the email is the trick alone; without friends there is no friends list', [/Your week/.test(alone.html), /Your week/.test(noFriends.html), /friends this week/.test(noFriends.html)], [false, true, false]);
+  eq('a quiet week gets an encouraging line and no invented numbers', /did not practise in the last 7 days/.test(L.renderWeekly(L.pickTrick(now), NIL, { me: L.weekStats({}, now), friends: [] }).html), true);
+}
+
 /* --- Say this, not that: the questions built from the pairs --- */
 {
   const D = device(['data/saythis.js', 'data/saythis2.js', 'data/saythis3.js', 'data/saythis4.js', 'js/saythis.js']), S = D.SayThis, shuffle = (a) => a.slice().sort(() => Math.random() - 0.5);
@@ -392,7 +409,32 @@ let retryDone = Promise.resolve();
   });
 }
 
-swDone.then(() => notesDone).then(() => retryDone).then(() => {
+/* --- AI requests never wait for ever, and a second provider is tried when the first keeps failing --- */
+let robustDone = Promise.resolve();
+{
+  const mk = () => { const D = device(['js/ai.js']); D.AbortController = AbortController; D.AI.retryDelays = [0, 0]; D.AI.timeoutMs = 20; return D; };
+  const okGroq = { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: 'OK' } }] }) };
+  /* a request that never answers is cut off, tried three times, then reported */
+  const H = mk(), seenH = [];
+  H.localStorage.setItem('c1path.apikey.gemini', 'k');
+  H.fetch = (u, o) => new Promise((res, rej) => { seenH.push(1); o.signal.addEventListener('abort', () => rej(new Error('aborted'))); });
+  /* the main provider fails with 503 three times; the other one has a key and answers */
+  const F = mk(), seenF = [], noted = [];
+  F.localStorage.setItem('c1path.apikey.gemini', 'k'); F.localStorage.setItem('c1path.apikey.groq', 'k2');
+  F.AI.onRetry = (n, t, other) => { if (other) noted.push(other); };
+  F.fetch = async (u) => { seenF.push(String(u).includes('groq') ? 'groq' : 'gemini'); return /groq/.test(String(u)) ? okGroq : { ok: false, status: 503, json: async () => ({}) }; };
+  /* a rejected key is not passed on to the other provider */
+  const K = mk(), seenK = [];
+  K.localStorage.setItem('c1path.apikey.gemini', 'k'); K.localStorage.setItem('c1path.apikey.groq', 'k2');
+  K.fetch = async (u) => { seenK.push(1); return { ok: false, status: 401, json: async () => ({ error: { message: 'bad' } }) }; };
+  robustDone = Promise.all([H.AI.test().catch((e) => e.message), F.AI.test(), K.AI.test().catch((e) => 'ERR')]).then(([h, f, k]) => {
+    eq('a request that never answers is cut off, tried 3 times and then reported', [h, seenH.length], ['Could not reach the API. Check your connection.', 3]);
+    eq('when the first provider keeps failing, the second one answers', [f, seenF.filter((x) => x === 'gemini').length, seenF.includes('groq'), noted.length], ['OK', 3, true, 1]);
+    eq('a rejected key is not tried on another provider', [k, seenK.length], ['ERR', 1]);
+  });
+}
+
+swDone.then(() => notesDone).then(() => retryDone).then(() => robustDone).then(() => {
   console.log(`${passed} passed, ${failed} failed`);
   process.exit(failed ? 1 : 0);
 });

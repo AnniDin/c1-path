@@ -106,11 +106,38 @@
   const toast = (m) => A.toast && A.toast(m);
 
   /* Daily quests: three small goals that reset every day. Finishing all three is worth 50 bonus XP. */
-  const quests = () => [
-    { label: `Answer ${Store.goal()} questions`, now: Store.todayCount(), max: Store.goal(), href: '#/course/mix' },
-    { label: 'Start 5 new vocabulary cards', now: Store.newTodayCount(), max: 5, href: '#/review' },
-    { label: 'Finish a lesson, a practice set or a skill task', now: Store.didToday() ? 1 : 0, max: 1, href: '#/course' }
-  ].map((q) => Object.assign(q, { done: q.now >= q.max }));
+  /* How far a quest has got today. Counter quests start from the counter's value when the quest was chosen. */
+  const COUNT = { cards: () => Store.counter('cards'), new: () => Store.newTodayCount(), mistakes: () => Store.counter('mistakes'), game: () => Store.counter('t:v-games'), step: () => (Store.didToday() ? 1 : 0) };
+  const reached = (q) => (q.kind === 'answers' ? Store.todayCount() : q.kind === 'topic' ? Store.counter('t:' + q.key) : (COUNT[q.kind] || (() => 0))()) - (q.base || 0);
+  const topicName = (key) => { const C1 = window.C1 || {}, id = key.slice(2), x = key.startsWith('g-') ? (C1.grammar || []).find((g) => g.id === id) : (C1.practice || []).find((p) => p.id === id); return x ? x.title : ''; };
+  /* the three quests of the day follow the recommendations: due cards or new ones, then what the learner needs most (saved mistakes, the weakest topic, the next step of the course).
+     When several things are needed they take turns from day to day, so the quests change; the most urgent always wins. */
+  function makeQuests() {
+    const day = Math.floor(Date.now() / 864e5), due = A.dueIds ? A.dueIds().length : 0, fresh = A.freshCards ? A.freshCards() : 0, mist = Store.dueMistakes().length;
+    const base = (kind, key) => (kind === 'topic' ? Store.counter('t:' + key) : (COUNT[kind] || (() => 0))());
+    const make = (kind, label, max, href, key) => ({ kind, label, max, href, key, base: base(kind, key) });
+    const two = [];
+    if (due >= 3) two.push(make('cards', 'Review ' + Math.min(10, due) + ' flashcards that are due', Math.min(10, due), '#/review'));
+    if (fresh >= 3) two.push(make('new', 'Start ' + Math.min(5, fresh) + ' new vocabulary cards', Math.min(5, fresh), '#/review/new'));
+    two.push(make('game', 'Play a vocabulary game: answer 6 questions', 6, '#/vgames'));
+    const q2 = due >= 10 ? two[0] : two[day % two.length];
+    const three = [];
+    if (mist >= 3) three.push(make('mistakes', 'Clear ' + Math.min(5, mist) + ' of your saved mistakes', Math.min(5, mist), '#/mistakes/practice'));
+    const weak = A.weakTopics ? A.weakTopics()[0] : null;
+    if (weak && topicName(weak[0])) three.push(make('topic', 'Answer 8 questions on ' + topicName(weak[0]), 8, A.topicHref ? A.topicHref(weak[0]) : '#/course', weak[0]));
+    const nc = A.nextCourseStep ? A.nextCourseStep() : null;
+    if (nc) three.push(make('step', 'Next in the course: ' + nc.u.title, 1, nc.info.href));
+    three.push(make('step', 'Finish a lesson, a practice set or a skill task', 1, '#/course'));
+    const q3 = mist >= 8 ? three[0] : three[day % three.length];
+    return [{ kind: 'answers', max: 0, href: '#/course/mix' }, q2, q3];
+  }
+  const quests = () => Store.dayQuests(makeQuests).map((q0) => {
+    const q = Object.assign({}, q0);
+    if (q.kind === 'answers') { q.max = Store.goal(); q.label = 'Answer ' + q.max + ' questions'; }
+    q.now = Math.max(0, reached(q));
+    q.done = q.now >= q.max;
+    return q;
+  });
 
   /* A short burst of confetti (skipped when the user prefers reduced motion). */
   function confetti() {
@@ -138,6 +165,8 @@
     } finally { busy = false; }
   }
   Store.onChange(() => { if (!busy) check(); });
+
+  A.questList = quests;
 
   /* ---- views ---- */
   A.rewards = {

@@ -38,6 +38,8 @@
     });
     state.stats = stats; state.days = days; state.newToday = nt; state.sub = subs; state.fx = fx; state.wk = wk; state.dk = dk;
   }
+  /* counters of what was done today (cards rated, mistakes cleared, answers per topic), kept for a week: the daily quests measure themselves with them */
+  const bump = (kind, n) => { const d = dayStr(); state.counters = state.counters || {}; const day = (state.counters[d] = state.counters[d] || {}); day[kind] = (day[kind] || 0) + n; Object.keys(state.counters).sort().slice(0, -7).forEach((k) => delete state.counters[k]); };
   const act = (kind) => { const d = dayStr(); state.acts = state.acts || {}; (state.acts[d] = state.acts[d] || {})[kind] = 1; Object.keys(state.acts).sort().slice(0, -14).forEach((k) => delete state.acts[k]); };
   const bury = (kind, id) => { state.tomb[kind + ':' + id] = Date.now(); };
   migrate();
@@ -61,6 +63,7 @@
       state.days[dayStr()] = (state.days[dayStr()] || 0) + total;
       const o = state.own.stats[topic] || (state.own.stats[topic] = { c: 0, t: 0 });
       o.c += correct; o.t += total;
+      bump('t:' + topic, total);
       state.own.days[dayStr()] = (state.own.days[dayStr()] || 0) + total;
       save();
     },
@@ -180,6 +183,7 @@
             count: (m ? m.count : 0) + 1, right: 0, ts: Date.now(), due: Date.now() + DAY
           };
         } else if (m) {
+          bump('mistakes', 1);
           m.right = (m.right || 0) + 1;
           if (m.right >= 2) { delete state.mistakes[id]; bury('m', id); } else m.due = Date.now() + 3 * DAY; // seen once: ask again in 3 days
         }
@@ -259,10 +263,14 @@
       c.due = rating === 0 ? dayStr() : addDays(Store.INTERVALS[c.box]);
       c.ts = Math.max(Date.now(), (c.ts || 0) + 1); // always newer than the copy it replaces
       state.cards[id] = c;
+      bump('cards', 1);
       if (isNew) { state.newToday[dayStr()] = (state.newToday[dayStr()] || 0) + 1; state.own.newToday[dayStr()] = (state.own.newToday[dayStr()] || 0) + 1; }
       save();
       return c;
     },
+    counter(kind) { return ((state.counters || {})[dayStr()] || {})[kind] || 0; },
+    /* the quests of today: chosen once (by make) the first time they are asked for, then kept all day, so a quest does not change under you */
+    dayQuests(make) { const d = dayStr(); state.dayQuests = state.dayQuests || {}; if (!state.dayQuests[d]) { state.dayQuests = { [d]: make() }; save(); } return state.dayQuests[d]; },
     didToday(kind) { const a = (state.acts || {})[dayStr()] || {}; return kind ? !!a[kind] : Object.keys(a).length > 0; },
     newTodayCount() { return state.newToday[dayStr()] || 0; },
     intervalLabel(id, rating) {

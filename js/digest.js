@@ -24,11 +24,31 @@
       .catch(() => Cloud.rpc('get_digest').then((on) => { weekly.checked = !!on; weekly.disabled = false; })
         .catch(() => { msg.textContent = 'Emails are not available on this copy of the site yet.'; }));
     return A.cardBlock('Emails (optional)',
-      h('p', { class: 'muted' }, 'Both are off unless you switch them on, and every email has a link that stops them all. They go to ', h('strong', {}, (Cloud.user() || {}).email || 'your email'), '.'),
-      h('label', { for: 'digest-on', class: 'row' }, weekly, ' One little trick a week, on Thursday morning, about 9:30 (Spanish time), with a link to practise it'),
+      h('p', { class: 'muted' }, 'Both are off unless you switch them on, and every email has a link that stops them all. The weekly one shows your own last 7 days and, only if you have joined the friends ranking, the answers your friends gave this week: the same figures they already show you in the app. They go to ', h('strong', {}, (Cloud.user() || {}).email || 'your email'), '.'),
+      h('label', { for: 'digest-on', class: 'row' }, weekly, ' One little trick a week, on Thursday morning, about 9:30 (Spanish time), with a link to practise it, a summary of your week and, if you are in the friends ranking, how your friends are doing'),
       monthlyRow,
       h('p', { class: 'muted' }, 'The monthly summary is built from the progress copy you keep in the cloud: answers, streak and the topics to revisit. It is not an exam score.'), msg);
   };
+
+  /* The emails stay opt-in: consent has to be an explicit yes, never a pre-ticked box or a list people are put on. But nobody should have to hunt for the
+     switch, so once per device Pica asks a signed-in person who has not got the emails: "Yes, send it" or "No thanks". Dismissing counts as an answer too. */
+  const ASKED = 'c1path.digestasked';
+  A.askDigest = () => {
+    if (!cloudOn() || !window.PicaSay || !Cloud.user || !Cloud.user() || document.body.classList.contains('exam-focus')) return Promise.resolve(false);
+    try { if (localStorage.getItem(ASKED)) return Promise.resolve(false); } catch (e) { return Promise.resolve(false); }
+    return Cloud.rpc('get_digest').then((on) => {
+      try { localStorage.setItem(ASKED, '1'); } catch (e) { /* optional */ }
+      if (on) return false;
+      window.PicaSay('Would you like one little trick by email every Thursday morning? It takes a minute to read, and every email has a link that stops them.', [
+        ['Yes, send it', () => Cloud.rpc('set_digest', { p_on: true }).then(() => { if (A.toast) A.toast('Done. The first trick arrives on Thursday morning.'); }).catch(() => { if (A.toast) A.toast('Could not save that. You can switch it on in your account page.'); })],
+        ['No thanks', () => {}]
+      ]);
+      return true;
+    }).catch(() => false);
+  };
+  /* a few seconds after the page opens, and again right after signing in */
+  setTimeout(() => A.askDigest(), 6000);
+  if (cloudOn() && Cloud.onChange) { let had = !!(Cloud.user && Cloud.user()); Cloud.onChange(() => { const has = !!(Cloud.user && Cloud.user()); if (has && !had) setTimeout(() => A.askDigest(), 3000); had = has; }); }
 
   A.routes.unsubscribe = (token) => {
     const out = h('p', { role: 'status' }, 'One moment…');

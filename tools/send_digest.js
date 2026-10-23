@@ -6,9 +6,10 @@
    --dry-run   writes tools/digest-preview.html and tools/digest-preview-monthly.html and sends nothing.
    --to ADDR   sends this week's trick and a sample monthly summary to ADDR only (a test); the list and the "last sent" dates are not touched. */
 const fs = require('fs'), path = require('path');
-const { pickTrick, renderWeekly, summarise, renderMonthly, plain } = require('./digest_lib');
+const { pickTrick, renderWeekly, summarise, renderMonthly, plain, weekStats, friendRows } = require('./digest_lib');
 const args = process.argv.slice(2), dry = args.includes('--dry-run'), to = args.includes('--to') ? args[args.indexOf('--to') + 1] : null;
 const NIL = '00000000-0000-0000-0000-000000000000';
+const SAMPLE_FRIENDS = [{ name: 'Linda', week: require('./digest_lib').mondayOf(), answers: 64, streak: 6 }, { name: 'Marcos', week: require('./digest_lib').mondayOf(), answers: 31, streak: 2 }]; // previews only
 const SAMPLE = { days: { [new Date().toLocaleDateString('sv')]: 14 }, stats: { 'g-wish': { c: 2, t: 8 } } }; // for previews only (sample numbers)
 
 /* scheduled runs only send on Thursday from 9:00 in Madrid (the workflow has two UTC times to cover summer and winter time) */
@@ -33,7 +34,7 @@ const pause = () => new Promise((r) => setTimeout(r, 1500)); // gentle pace: Gma
   const trick = pickTrick(Date.now());
   console.log('Trick of the week:', trick.key, '-', plain(trick.t.t));
   if (dry) {
-    const w = renderWeekly(trick, NIL), mo = renderMonthly(summarise(SAMPLE), NIL);
+    const w = renderWeekly(trick, NIL, { me: weekStats(SAMPLE), friends: friendRows(SAMPLE_FRIENDS) }), mo = renderMonthly(summarise(SAMPLE), NIL);
     fs.writeFileSync(path.join(__dirname, 'digest-preview.html'), w.html);
     fs.writeFileSync(path.join(__dirname, 'digest-preview-monthly.html'), mo.html);
     console.log('Subjects:', w.subject, '|', mo.subject, '\nWrote the two preview files in tools/ (nothing sent).');
@@ -43,15 +44,21 @@ const pause = () => new Promise((r) => setTimeout(r, 1500)); // gentle pace: Gma
   const mailer = require('nodemailer').createTransport({ service: 'gmail', auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD } });
   const send = (addr, mail) => mailer.sendMail({ from: `"Pica from C1 Path" <${process.env.GMAIL_USER}>`, to: addr, subject: mail.subject, text: mail.text, html: mail.html, headers: { 'List-Unsubscribe': `<${mail.stop}>` } });
   if (to) {
-    await send(to, renderWeekly(trick, NIL)); await send(to, renderMonthly(summarise(SAMPLE), NIL));
+    await send(to, renderWeekly(trick, NIL, { me: weekStats(SAMPLE), friends: friendRows(SAMPLE_FRIENDS) })); await send(to, renderMonthly(summarise(SAMPLE), NIL));
     console.log('Two test emails sent to', to, '(the monthly one uses sample numbers)'); return;
   }
   for (const k of ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY']) if (!process.env[k]) throw new Error('Missing ' + k);
 
-  const due = (await rpc('digest_due')) || [], done = [];
+  /* weekly_due (supabase/digest_weekly.sql) adds each person's progress copy and their friends' week; without it the weekly email is the trick alone */
+  let due, done = [];
+  try { due = (await rpc('weekly_due')) || []; } catch (e) { console.log('weekly_due is not set up yet (' + e.message.slice(0, 60) + '): sending the trick alone.'); due = (await rpc('digest_due')) || []; }
   console.log(due.length + ' people are due a trick.');
   for (const u of due) {
-    try { await send(u.email, renderWeekly(trick, u.token)); done.push(u.user_id); } catch (e) { console.error('Could not send to one address:', e.message); }
+    try {
+      let extra = null;
+      try { extra = { me: u.data ? weekStats(u.data) : null, friends: friendRows(u.friends) }; } catch (e) { extra = null; }
+      await send(u.email, renderWeekly(trick, u.token, extra)); done.push(u.user_id);
+    } catch (e) { console.error('Could not send to one address:', e.message); }
     await pause();
   }
   if (done.length) await rpc('digest_mark', { p_ids: done });

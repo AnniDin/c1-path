@@ -10,5 +10,5 @@ window.C1 = window.C1 || {};
     u.steps.splice(at + 1, 0, { t: 'grammar', id });
   };
   [['law-media', 'itthere'], ['use-of-english-lab', 'cohesion'], ['education', 'nounclauses'], ['everyday-people', 'questions'],
-   ['work', 'obligation'], ['writing-workshop', 'nominalisation'], ['society-work', 'negation'], ['culture', 'fronting']].forEach(([u, id]) => place(u, id));
+   ['work', 'obligation'], ['society', 'bestructures'], ['writing-workshop', 'nominalisation'], ['society-work', 'negation'], ['culture', 'fronting']].forEach(([u, id]) => place(u, id));
 })();

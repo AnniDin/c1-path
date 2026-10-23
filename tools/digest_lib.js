@@ -40,20 +40,20 @@ const hello = (t) => `<p style="margin:18px 0 0">${t}</p>`;
 const signoff = '<p style="margin:22px 0 0">See you soon,<br><strong>Pica</strong></p>';
 const button = (href, label) => `<a href="${href}" style="background:#0b3d91;color:#fff;text-decoration:none;font:600 15px Arial,sans-serif;padding:10px 16px">${label}</a>`;
 
-function renderWeekly(p, token) {
+function renderWeekly(p, token, extra) {
+  const wk = weekBlock(extra);
   const link = SITE + '#/tricks/' + p.key, drill = SITE + '#/tricks/practice/' + p.key, stop = SITE + '#/unsubscribe/' + token;
   const body = `${hello('Hello, Pica here. I found a little trick for you this week.')}<p style="margin:18px 0">${p.t.tip}</p>
 ${p.t.ex ? `<p style="border-left:4px solid #0b3d91;padding:2px 0 2px 12px;margin:18px 0">${p.t.ex}</p>` : ''}
 ${p.t.why ? `<p style="color:#555">${p.t.why}</p>` : ''}
-<p style="margin:26px 0">${button(link, 'Open this trick')}${p.practice ? ` &nbsp; <a href="${drill}" style="color:#0b3d91;font:600 15px Arial,sans-serif">Practise it (6 questions)</a>` : ''}</p>${signoff}`;
-  const text = `Hello, Pica here. I found a little trick for you this week.\n\n${plain(p.t.t)}\n\n${plain(p.t.tip)}\n${p.t.ex ? '\n' + plain(p.t.ex) + '\n' : ''}${p.t.why ? '\n' + plain(p.t.why) + '\n' : ''}\nOpen this trick: ${link}\n${p.practice ? 'Practise it: ' + drill + '\n' : ''}\nSee you soon,\nPica\n\n--\nYou receive this because you switched on "A little trick by email" in your C1 Path account.\nStop these emails: ${stop}\n`;
+<p style="margin:26px 0">${button(link, 'Open this trick')}${p.practice ? ` &nbsp; <a href="${drill}" style="color:#0b3d91;font:600 15px Arial,sans-serif">Practise it (6 questions)</a>` : ''}</p>${wk.html}${signoff}`;
+  const text = `Hello, Pica here. I found a little trick for you this week.\n\n${plain(p.t.t)}\n\n${plain(p.t.tip)}\n${p.t.ex ? '\n' + plain(p.t.ex) + '\n' : ''}${p.t.why ? '\n' + plain(p.t.why) + '\n' : ''}\nOpen this trick: ${link}\n${p.practice ? 'Practise it: ' + drill + '\n' : ''}${wk.text}\nSee you soon,\nPica\n\n--\nYou receive this because you switched on "A little trick by email" in your C1 Path account.\nStop these emails: ${stop}\n`;
   return { subject: 'Pica\'s little trick: ' + plain(p.t.t), html: shell(`C1 Path · this week's trick · ${esc(p.section)}`, esc(plain(p.t.t)), body, stop, 'You receive this because you switched on "A little trick by email" in your C1 Path account.'), text, stop };
 }
 
-/* what someone did in the last 30 days, from the progress copy they chose to keep in the cloud. It reuses the site's own js/store.js, so
-   merging devices, streaks and mistakes are counted exactly as in the app. `data` is the saved progress (an object or its JSON text). */
-function summarise(data, nowMs) {
-  const C1 = siteData(), mem = {};
+/* the site's own js/store.js, loaded on a progress copy, so merging devices, streaks and mistakes are counted exactly as in the app */
+function openStore(data) {
+  const mem = {};
   const noop = () => {}, el = () => new Proxy(function () {}, { get: (t, k) => (k === Symbol.toPrimitive ? () => '' : el()), apply: () => el() });
   const sb = { console, localStorage: { getItem: (k) => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); }, removeItem: (k) => { delete mem[k]; } },
     document: { createElement: el, getElementById: () => null, addEventListener: noop, querySelectorAll: () => [], body: el(), documentElement: el() },
@@ -61,6 +61,50 @@ function summarise(data, nowMs) {
   sb.window = sb; vm.createContext(sb);
   vm.runInContext(read('js/store.js'), sb, { filename: 'js/store.js' });
   try { sb.Store.mergeData(typeof data === 'string' ? data : JSON.stringify(data)); } catch (e) { /* no usable progress copy: summarise as an empty account */ }
+  return sb;
+}
+
+const mondayOf = (nowMs) => { const d = new Date(nowMs || Date.now()); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.toLocaleDateString('sv'); };
+
+/* someone's week from their progress copy: answers in the last 7 days, the 7 before, days practised, streak, and answers since Monday */
+function weekStats(data, nowMs) {
+  const sb = openStore(data), st = sb.Store.state, now = nowMs || Date.now(), day = (i) => new Date(now - i * 864e5).toLocaleDateString('sv');
+  const sum = (from, to) => { let n = 0, d = 0; for (let i = from; i < to; i++) { const x = (st.days || {})[day(i)] || 0; n += x; if (x > 0) d++; } return [n, d]; };
+  const [answers, activeDays] = sum(0, 7), [prev] = sum(7, 14), monday = mondayOf(now);
+  const since = Object.entries(st.days || {}).filter(([k]) => k >= monday).reduce((s, [, n]) => s + n, 0);
+  return { answers, prev, activeDays, streak: sb.Store.streak(), since };
+}
+/* the friends from the leaderboard: a friend who has not practised this week (an older week on their row) counts as 0 */
+function friendRows(rows, nowMs) {
+  const monday = mondayOf(nowMs);
+  return (Array.isArray(rows) ? rows : []).filter((r) => r && r.name).map((r) => ({ name: String(r.name).slice(0, 24), answers: r.week === monday ? Math.max(0, +r.answers || 0) : 0, streak: Math.max(0, +r.streak || 0) }))
+    .sort((a, b) => b.answers - a.answers || b.streak - a.streak).slice(0, 8);
+}
+/* the block of the weekly email about the reader's week and their friends' (nothing if there is nothing to say) */
+function weekBlock(extra) {
+  const me = extra && extra.me, fr = (extra && extra.friends) || [];
+  if (!me && !fr.length) return { html: '', text: '' };
+  const h2 = (s) => `<h2 style="font:700 18px Arial,sans-serif;margin:26px 0 6px">${s}</h2>`;
+  let html = '', text = '';
+  if (me) {
+    const diff = me.answers - me.prev;
+    const line = me.answers
+      ? `You answered ${me.answers} question${me.answers === 1 ? '' : 's'} on ${me.activeDays} of the last 7 days (${!me.prev ? 'your first full week of data' : diff > 0 ? diff + ' more than the week before' : diff < 0 ? -diff + ' fewer than the week before' : 'the same as the week before'}).${me.streak ? ' Streak: ' + me.streak + ' day' + (me.streak === 1 ? '' : 's') + '.' : ''}`
+      : 'You did not practise in the last 7 days. Ten minutes today is enough to start again.';
+    html += h2('Your week') + `<p style="margin:6px 0">${esc(line)}</p>`; text += '\nYour week\n' + line + '\n';
+  }
+  if (fr.length) {
+    const rows = (me ? fr.concat([{ name: 'You', answers: me.since || 0, streak: me.streak || 0, me: true }]) : fr).sort((a, b) => b.answers - a.answers || b.streak - a.streak);
+    html += h2('You and your friends this week, since Monday') + '<ul style="padding-left:20px;margin:6px 0">' + rows.map((r) => `<li style="margin:3px 0">${r.me ? '<strong>You</strong>' : esc(r.name)}: ${r.answers} answer${r.answers === 1 ? '' : 's'}${r.streak ? ' · streak ' + r.streak : ''}</li>`).join('') + '</ul>';
+    text += '\nYou and your friends this week, since Monday\n' + rows.map((r, i) => `${i + 1}. ${r.me ? 'You' : r.name}: ${r.answers} answer${r.answers === 1 ? '' : 's'}${r.streak ? ' (streak ' + r.streak + ')' : ''}`).join('\n') + '\n';
+  }
+  return { html, text };
+}
+
+/* what someone did in the last 30 days, from the progress copy they chose to keep in the cloud. It reuses the site's own js/store.js, so
+   merging devices, streaks and mistakes are counted exactly as in the app. `data` is the saved progress (an object or its JSON text). */
+function summarise(data, nowMs) {
+  const C1 = siteData(), sb = openStore(data);
   const st = sb.Store.state, now = nowMs || Date.now();
   const since = new Date(now - 30 * 864e5).toLocaleDateString('sv');
   const days = Object.entries(st.days || {}).filter(([d, n]) => d >= since && n > 0);
@@ -95,4 +139,4 @@ function renderMonthly(s, token) {
   return { subject: 'Pica: your month on C1 Path', html: shell('C1 Path · your last 30 days', 'Your month on C1 Path', body, stop, 'You receive this because you switched on "A monthly summary" in your C1 Path account.'), text, stop };
 }
 
-module.exports = { SITE, pickTrick, renderWeekly, summarise, renderMonthly, plain };
+module.exports = { SITE, pickTrick, renderWeekly, summarise, renderMonthly, plain, weekStats, friendRows, mondayOf };
