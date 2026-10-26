@@ -8,10 +8,11 @@
   const answersOf = (c) => [c.phrase].concat(/^to /i.test(c.phrase) ? [c.phrase.replace(/^to /i, '')] : []);
 
   /* builders: each takes a card (and the pool it came from) and returns an Engine item */
-  function builders(pool, shuffle, exOf) {
+  function builders(pool, shuffle, exOf, universe) {
     const mean = (c) => {
-      const near = shuffle(pool.filter((x) => x !== c && first(x) !== first(c) && (x.group === c.group || x.kind === c.kind)));
-      const rest = shuffle(pool.filter((x) => x !== c && first(x) !== first(c) && !near.includes(x)));
+      const cand = universe || pool; /* wrong answers can come from every card, so a small set (the cards just studied) still gets four options */
+      const near = shuffle(cand.filter((x) => x !== c && first(x) !== first(c) && (x.group === c.group || x.kind === c.kind)));
+      const rest = shuffle(cand.filter((x) => x !== c && first(x) !== first(c) && !near.includes(x)));
       const opts = [], seen = new Set([first(c)]);
       near.concat(rest).forEach((x) => { if (opts.length < 3 && !seen.has(first(x))) { seen.add(first(x)); opts.push(first(x)); } });
       const all = shuffle([first(c)].concat(opts));
@@ -27,8 +28,8 @@
     return { mean, type, gap, hear, ok: { mean: () => true, type: typable, gap: (c) => !!gapOf(c), hear: typable } };
   }
   /* n items of one kind (or a mix) from the pool, each from a different card */
-  function build(kind, pool, n, shuffle, exOf) {
-    const B = builders(pool, shuffle, exOf), kinds = kind === 'mix' ? ['mean', 'type', 'gap'] : [kind], out = [], used = new Set();
+  function build(kind, pool, n, shuffle, exOf, universe) {
+    const B = builders(pool, shuffle, exOf, universe), kinds = kind === 'mix' ? ['mean', 'type', 'gap'] : [kind], out = [], used = new Set();
     const cards = shuffle(pool);
     for (const c of cards) {
       if (out.length >= n) break;
@@ -46,6 +47,11 @@
   const setPref = (v) => { try { localStorage.setItem(POOLKEY, v); } catch (e) { /* optional */ } };
   /* the cards to play with: those you have started (if there are enough), or everything; or one group */
   function poolFor(group) {
+    if (group === 'last') { /* the cards of the review session that just ended */
+      let ids = []; try { ids = JSON.parse(sessionStorage.getItem('c1path.vgids') || '[]'); } catch (e) { /* optional */ }
+      const list = A.allCards.filter((c) => ids.includes(c.id));
+      return list.length >= 4 ? list : A.allCards;
+    }
     const all = A.allCards, list = group ? all.filter((c) => c.group === group) : all;
     if (group || pref() === 'all') return list;
     const mine = list.filter((c) => Store.card(c.id));
@@ -107,9 +113,9 @@
     A.view(A.back('#/vgames', 'Vocabulary games'), h('h1', {}, MODES.match[0]), box);
   }
   function play(mode, group) {
-    const items = window.VGames.build(mode, poolFor(group), MODES[mode][2], A.shuffle, A.exOf);
+    const items = window.VGames.build(mode, poolFor(group), MODES[mode][2], A.shuffle, A.exOf, A.allCards);
     if (items.length < 4) { A.view(A.back('#/vgames', 'Vocabulary games'), h('h1', {}, MODES[mode][0]), h('p', {}, 'Not enough suitable cards in this set for this game. Try another game or "All vocabulary".')); return; }
-    A.view(A.back('#/vgames', 'Vocabulary games'), h('h1', {}, MODES[mode][0]), h('p', { class: 'muted' }, MODES[mode][1]),
+    A.view(A.back('#/vgames', 'Vocabulary games'), h('h1', {}, MODES[mode][0]), h('p', { class: 'muted' }, MODES[mode][1] + (group === 'last' ? ' Only with the cards you have just studied.' : '')),
       quiz(items, { source: { topic: 'v-games', label: 'Vocabulary games · ' + MODES[mode][0], href: '#/vgames/' + mode + (group ? '/' + group : '') }, onRetry: () => A.route(), onScore: (c, t) => Store.record('v-games', c, t) }));
   }
 
@@ -132,7 +138,7 @@
     if (!mode) return hub();
     if (!MODES[mode]) return A.notFound();
     let g = group; if (!g) { try { g = sessionStorage.getItem('c1path.vggroup') || ''; } catch (e) { g = ''; } }
-    if (g && !C1.vocab.some((x) => x.id === g)) g = '';
+    if (g && g !== 'last' && !C1.vocab.some((x) => x.id === g)) g = '';
     return mode === 'match' ? match(g) : play(mode, g);
   };
 })();

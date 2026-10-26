@@ -78,7 +78,8 @@ window.App = { routes: {}, cleanup: [] };
   const sectionHead = (title, blurb, right) => h('div', { class: 'section-h' }, h('div', {}, h('h2', {}, title), blurb ? h('div', { class: 'muted' }, blurb) : null), right || null);
   const scoreChip = (key) => { const s = Store.score(key); return s ? h('span', { class: 'chip best' }, 'best ' + pct(s.p) + '%') : null; };
   const setsDone = (p) => p.sets.filter((_, i) => Store.score(setKey(p.id, i))).length;
-  const cardsSeen = (group) => allCards.filter((c) => c.group === group && Store.card(c.id)).length;
+  const cardsSeen = (group) => allCards.filter((c) => c.group === group && Store.isSeen(c.id)).length;
+  const cardsNeeded = (group) => Math.ceil(allCards.filter((c) => c.group === group).length * 0.7); /* a vocabulary step is complete when 70% of its cards have been studied */
 
 
   /* ---------- course model ---------- */
@@ -87,7 +88,7 @@ window.App = { routes: {}, cleanup: [] };
     const q = '?u=' + u.id;
     if (s.t === 'vocab') {
       const g = C1.vocab.find((x) => x.id === s.id);
-      return { kind: 'Vocabulary', label: g.title, sub: `${g.cards.length} items`, href: `#/vocab/${s.id}${q}`, done: cardsSeen(s.id) >= Math.ceil(g.cards.length * 0.7) };
+      return { kind: 'Vocabulary', label: g.title, sub: `${g.cards.length} items · study ${Math.ceil(g.cards.length * 0.7)} to finish`, href: `#/vocab/${s.id}${q}`, done: cardsSeen(s.id) >= Math.ceil(g.cards.length * 0.7) };
     }
     if (s.t === 'grammar') {
       const g = grammar.find((x) => x.id === s.id);
@@ -444,6 +445,13 @@ window.App = { routes: {}, cleanup: [] };
       search, results, ...sections);
   }
 
+  /* what completes a vocabulary lesson, said plainly: studying 70% of the cards with the flashcards; the quiz is extra practice */
+  function vocabRule(g) {
+    const need = cardsNeeded(g.id), seen = cardsSeen(g.id), done = seen >= need;
+    return h('div', { class: 'callout' + (done ? '' : ' warn') }, h('strong', {}, done ? 'This step is complete.' : 'To complete this step'),
+      h('p', { style: 'margin:.3em 0' }, done ? `You have studied ${seen} of the ${g.cards.length} cards. The quick quiz is extra practice and is not needed.` : `Study at least ${need} of the ${g.cards.length} cards with the flashcards (${seen} so far). Rating a card, or pressing "Next card without rating", counts as studying it. The quick quiz is extra practice and does not count towards completing the step.`),
+      bar(Math.min(1, seen / need), done ? 'ok' : ''));
+  }
   function vocabGroup(id) {
     const g = C1.vocab.find((x) => x.id === id);
     if (!g) return notFound();
@@ -451,6 +459,7 @@ window.App = { routes: {}, cleanup: [] };
     const uf = unitFooter('vocab', id);
     view(unitBack() || back('#/vocab', 'Vocabulary'), partOf('vocab', id), h('div', {}, h('span', { class: 'tag' }, g.section || 'Vocabulary')), h('h1', {}, g.title),
       h('div', { class: 'callout' }, h('strong', {}, 'The idea'), h('div', { html: g.idea })),
+      unitCtx ? vocabRule(g) : null,
       h('div', { class: 'row' }, link('#/review/' + g.id + uq(), 'Study with flashcards', 'btn'), link('#/vquiz/' + g.id + uq(), 'Quick quiz', 'btn ghost')),
       h('p', {}, multiToggle(() => route())),
       h('div', { class: 'card' }, g.cards.map((c) => cardView(Object.assign({ groupTitle: g.title }, c)))),
@@ -471,8 +480,8 @@ window.App = { routes: {}, cleanup: [] };
     const dueNow = (group ? dueAll().filter((id) => cardById[id].group === group) : dueAll()).slice(0, Store.reviewCap());
     let queue = shuffle(dueNow).concat(newIds(group).slice(0, Math.max(0, Math.min(group ? 12 : NEW_PER_DAY - Store.newTodayCount(), Store.reviewCap() - dueNow.length))));
     if (group && !queue.length) queue = shuffle(allCards.filter((c) => c.group === group).map((c) => c.id)).slice(0, 10);
-    if (mode === 'new') queue = newIds().slice(0, 5); /* only cards you have never seen: these are the ones that count as new */
-    const total = queue.length;
+    if (mode === 'new') queue = newIds().filter((x) => !Store.isSeen(x)).slice(0, 5); /* only cards you have never seen: these are the ones that count as new */
+    const total = queue.length, sessionIds = queue.slice(); /* the cards of this session, for a game with just these */
     let reviewed = 0;
     const onKey = (e) => {
       if (e.target.matches('input,textarea,select') || e.ctrlKey || e.metaKey) return;
@@ -492,9 +501,10 @@ window.App = { routes: {}, cleanup: [] };
       if (!queue.length) {
         box.append(h('div', { class: 'card rel' }, total ? Engine.stamp('Done') : null, h('h2', { style: 'margin-top:0' }, total ? 'Session complete' : 'Nothing due right now'),
           h('p', {}, total ? `You reviewed ${reviewed} card${reviewed === 1 ? '' : 's'}. Cards come back when they are due.` : 'Come back tomorrow, or open a group and study it ahead.'),
+          group ? h('p', { class: 'muted' }, cardsSeen(group) >= cardsNeeded(group) ? 'This vocabulary step is complete: you have studied ' + cardsSeen(group) + ' cards.' : 'To complete this vocabulary step, study ' + (cardsNeeded(group) - cardsSeen(group)) + ' more card' + (cardsNeeded(group) - cardsSeen(group) === 1 ? '' : 's') + ' (' + cardsSeen(group) + ' of ' + cardsNeeded(group) + ' needed so far).') : null,
           (() => { const more = (group ? dueAll().filter((id) => cardById[id].group === group) : dueAll()).length; return more ? h('p', { class: 'muted' }, `${more} more card${more === 1 ? ' is' : 's are'} waiting. There is no hurry: you can stop here.`) : null; })(),
           h('div', { class: 'row' }, (group ? dueAll().filter((id) => cardById[id].group === group) : dueAll()).length ? h('button', { class: 'btn', onclick: () => review(group, mode) }, 'Another round') : null,
-            link('#/vgames', 'Play a vocabulary game', 'btn ghost'), link(unitCtx ? '#/course/' + unitCtx : gBack, unitCtx ? 'Back to the unit' : 'Back', 'btn ghost'))));
+            link(sessionIds.length >= 4 ? '#/vgames/mix/last' : '#/vgames', sessionIds.length >= 4 ? 'Play a game with these cards' : 'Play a vocabulary game', 'btn ghost'), link(unitCtx ? '#/course/' + unitCtx : gBack, unitCtx ? 'Back to the unit' : 'Back', 'btn ghost'))));
         return;
       }
       const id = queue[0], c = cardById[id];
@@ -516,7 +526,7 @@ window.App = { routes: {}, cleanup: [] };
           h('p', { class: 'skiprow' }, h('button', { class: 'btn small ghost', type: 'button', 'data-skip': '1', onclick: skipIt }, 'Next card without rating'), h('span', { class: 'muted' }, ' Rating is optional: the card keeps its schedule and comes back later. Key: N or →')));
       }
       /* rating is optional: move on and leave the card exactly as it was */
-      function skipIt() { queue.shift(); next(); }
+      function skipIt() { Store.markSeen(id); queue.shift(); next(); }
       function rateIt(r) {
         Store.rate(id, r);
         Store.record('v-cards', r >= 2 ? 1 : 0, 1);
@@ -976,6 +986,7 @@ window.App = { routes: {}, cleanup: [] };
   window.App = Object.assign(window.App, {
     stepsLeft: () => { const all = C1.course.flatMap((u) => unitSteps(u)); return { done: all.filter((x) => x.done).length, total: all.length }; },
     unitsDone: () => C1.course.filter((u) => unitDone(u) === unitSteps(u).length).length, unitCount: () => C1.course.length,
+    stepIsDone: (uid, i) => { const u = unitById(uid), s = u && u.steps[i]; return !!(s && stepInfo(u, s).done); },
     themeCard, multiToggle, topicHref, icon, view, back, link, bar, cardBlock, sectionHead, notFound, sample, shuffle, vocabItem, allCards, grammar, topicLabels,
     unitBack, unitFooter, uq, partOf, setKey, scoreChip, nextInUnit, nextCourseStep, dueIds, dueAll, capChips, exOf, sayPhrase, updateBadge, dataCard, freshCards: () => freshToday(), start: route, route
   });

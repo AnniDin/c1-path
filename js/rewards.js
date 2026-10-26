@@ -108,14 +108,14 @@
   /* Daily quests: three small goals that reset every day. Finishing all three is worth 50 bonus XP. */
   /* How far a quest has got today. Counter quests start from the counter's value when the quest was chosen. */
   const COUNT = { cards: () => Store.counter('cards'), new: () => Store.newTodayCount(), mistakes: () => Store.counter('mistakes'), game: () => Store.counter('t:v-games'), step: () => (Store.didToday() ? 1 : 0) };
-  const reached = (q) => (q.kind === 'answers' ? Store.todayCount() : q.kind === 'topic' ? Store.counter('t:' + q.key) : (COUNT[q.kind] || (() => 0))()) - (q.base || 0);
+  /* everything done today counts, however it was reached (the quest link, the Home steps, the menu), and also what was done before the quest was chosen */
+  const reached = (q) => (q.kind === 'answers' ? Store.todayCount() : q.kind === 'topic' ? Store.counter('t:' + q.key) : q.kind === 'step' && q.unit ? ((A.stepIsDone && A.stepIsDone(q.unit, q.i)) || Store.didToday() ? 1 : 0) : (COUNT[q.kind] || (() => 0))());
   const topicName = (key) => { const C1 = window.C1 || {}, id = key.slice(2), x = key.startsWith('g-') ? (C1.grammar || []).find((g) => g.id === id) : (C1.practice || []).find((p) => p.id === id); return x ? x.title : ''; };
   /* the three quests of the day follow the recommendations: due cards or new ones, then what the learner needs most (saved mistakes, the weakest topic, the next step of the course).
      When several things are needed they take turns from day to day, so the quests change; the most urgent always wins. */
   function makeQuests() {
     const day = Math.floor(Date.now() / 864e5), due = A.dueIds ? A.dueIds().length : 0, fresh = A.freshCards ? A.freshCards() : 0, mist = Store.dueMistakes().length;
-    const base = (kind, key) => (kind === 'topic' ? Store.counter('t:' + key) : (COUNT[kind] || (() => 0))());
-    const make = (kind, label, max, href, key) => ({ kind, label, max, href, key, base: base(kind, key) });
+    const make = (kind, label, max, href, key) => ({ kind, label, max, href, key });
     const two = [];
     if (due >= 3) two.push(make('cards', 'Review ' + Math.min(10, due) + ' flashcards that are due', Math.min(10, due), '#/review'));
     if (fresh >= 3) two.push(make('new', 'Start ' + Math.min(5, fresh) + ' new vocabulary cards', Math.min(5, fresh), '#/review/new'));
@@ -126,7 +126,7 @@
     const weak = A.weakTopics ? A.weakTopics()[0] : null;
     if (weak && topicName(weak[0])) three.push(make('topic', 'Answer 8 questions on ' + topicName(weak[0]), 8, A.topicHref ? A.topicHref(weak[0]) : '#/course', weak[0]));
     const nc = A.nextCourseStep ? A.nextCourseStep() : null;
-    if (nc) three.push(make('step', 'Next in the course: ' + nc.u.title, 1, nc.info.href));
+    if (nc) three.push(Object.assign(make('step', 'Next in the course: ' + nc.info.label, 1, nc.info.href), { unit: nc.u.id, i: nc.i }));
     three.push(make('step', 'Finish a lesson, a practice set or a skill task', 1, '#/course'));
     const q3 = mist >= 8 ? three[0] : three[day % three.length];
     return [{ kind: 'answers', max: 0, href: '#/course/mix' }, q2, q3];

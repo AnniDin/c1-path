@@ -319,6 +319,47 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
     check('the week-by-week card lists 12 weeks, this week and last week first, with answers and days', /Week by week/.test(app.textContent) && app.all((n) => /weekrow/.test(n.className || '')).length === 12 && /This week/.test(app.textContent) && /Last week/.test(app.textContent) && /30 · 1\/7 days/.test(app.textContent) && /Best week: last week, with 30 answers/.test(app.textContent));
     st.days = JSON.parse(keep);
   }
+  /* quests count however the activity was reached; skipped cards count as seen; the vocabulary rule; the game with the cards just studied; the backup AI key */
+  {
+    const A = sb.App, S = sb.Store, st = S.state, render = (hash) => { sb.location.hash = hash; app.children = []; A.route(); };
+    const keep = JSON.stringify({ cards: st.cards, seen: st.seen, counters: st.counters, dq: st.dayQuests, nt: st.newToday, lessons: st.lessons });
+    st.cards = {}; st.seen = {}; st.counters = {}; st.newToday = {}; st.dayQuests = {};
+    /* 1. what was done before the quests were chosen still counts */
+    const old = '2020-01-01'; A.allCards.slice(0, 14).forEach((c) => { st.cards[c.id] = { box: 1, due: old, ts: 1 }; });
+    S.rate(A.allCards[0].id, 2); S.rate(A.allCards[1].id, 2);
+    st.dayQuests = {}; const q2 = A.questList()[1];
+    check('cards rated before the quest was chosen already count towards it', q2.kind !== 'cards' || q2.now >= 2);
+    /* 2. a step finished by another route completes its quest */
+    const g = A.allCards[40].group; st.cards = {}; st.seen = {}; st.counters = {}; st.newToday = {};
+    const unit = sb.C1.course.find((u) => u.steps.some((s) => s.t === 'vocab')), si = unit.steps.findIndex((s) => s.t === 'vocab'), vg = unit.steps[si].id;
+    st.dayQuests = { [S.today()]: [{ kind: 'answers' }, { kind: 'game', label: 'g', max: 6, href: '#/vgames' }, { kind: 'step', label: 'Next: x', max: 1, href: '#/vocab/' + vg, unit: unit.id, i: si }] };
+    const keepActs = st.acts; st.acts = {}; /* nothing done today yet, so only the step itself can complete the quest */
+    const before = A.questList()[2].done; A.allCards.filter((c) => c.group === vg).forEach((c) => S.markSeen(c.id));
+    check('a course step done by another route (the Home steps, the menu) completes its quest', before === false && A.questList()[2].done === true); st.acts = keepActs;
+    /* 3. skipping a card without rating counts as seen, once, as new today, with no schedule */
+    st.cards = {}; st.seen = {}; st.newToday = {};
+    const id = A.allCards[5].id; S.markSeen(id); S.markSeen(id);
+    check('a skipped card is seen and new today (once) but has no schedule', S.isSeen(id) && !S.card(id) && S.newTodayCount() === 1);
+    S.rate(id, 2);
+    check('rating it afterwards does not count it as new a second time', S.newTodayCount() === 1 && !!S.card(id));
+    /* 4. the vocabulary lesson says plainly what completes it */
+    st.cards = {}; st.seen = {};
+    render('#/vocab/' + vg + '?u=' + unit.id);
+    const need = Math.ceil(sb.C1.vocab.find((x) => x.id === vg).cards.length * 0.7);
+    check('inside a unit, a vocabulary group says: study 70% of the cards with the flashcards, the quiz is extra', /To complete this step/.test(app.textContent) && new RegExp('at least ' + need + ' of the').test(app.textContent) && /quiz is extra practice/.test(app.textContent));
+    A.allCards.filter((c) => c.group === vg).forEach((c) => S.markSeen(c.id));
+    render('#/vocab/' + vg + '?u=' + unit.id);
+    check('and says so when the step is complete', /This step is complete/.test(app.textContent));
+    /* 5. the game with just the cards of the session */
+    const six = A.allCards.slice(100, 108).map((c) => c.id);
+    if (sb.sessionStorage) { sb.sessionStorage.setItem('c1path.vgids', JSON.stringify(six)); render('#/vgames/mix/last'); check('"Play a game with these cards" opens a game made only of those cards', /Only with the cards you have just studied/.test(app.textContent) && app.all((n) => /\bitem\b/.test(n.className || '') || n.className === 'item').length >= 4); }
+    /* 6. the backup AI key */
+    const card = A.aiCard(), cardText = card.textContent;
+    check('the AI card offers a backup key, with Groq as the first choice', /Backup key \(optional\)/.test(cardText) && /Groq/.test(cardText));
+    sb.AI.setKeyFor('groq', ' gsk_abcd1234 ');
+    check('a backup key is saved trimmed and shown only by its last characters', sb.AI.keyHintFor('groq') === '…1234'); sb.AI.setKeyFor('groq', '');
+    const k = JSON.parse(keep); st.cards = k.cards; st.seen = k.seen; st.counters = k.counters; st.dayQuests = k.dq; st.newToday = k.nt; st.lessons = k.lessons;
+  }
   /* Pica: the daily greeting, being sad after days away, the first-time tip per task, and the About page */
   {
     const A = sb.App, text = (el) => (el && el.textContent) || '';

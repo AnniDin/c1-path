@@ -749,4 +749,4 @@ body.exam-focus { background-image: none; }
 .st-tag { display: inline-block; min-width: 5.2em; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 1px 6px; border: 1px solid var(--bad); color: var(--bad); }
 .st-tag.ok { border-color: var(--ok); color: var(--ok); } .st-why { margin-top: .5em; } .st-meta { font-size: .85rem; }
 
-.weekrow span:first-child { min-width: 5.5em; } .weekrow span:last-child { white-space: nowrap; min-width: 9em; text-align: right; font-size: .85rem; }
+.weekrow { display: grid; grid-template-columns: 5.2em minmax(40px, 1fr) auto; gap: 8px; align-items: center; } .weekrow span:last-child { white-space: nowrap; text-align: right; font-size: .82rem; } @media (max-width: 420px) { .weekrow { grid-template-columns: 4.6em minmax(30px, 1fr) auto; gap: 6px; } .weekrow span:last-child { font-size: .75rem; } }

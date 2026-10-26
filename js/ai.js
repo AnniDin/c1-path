@@ -215,6 +215,10 @@
     },
 
     /* the tutor: a short conversation about English and the exams only. The scope is set in the instructions, so it is a strong guide, not a guarantee. */
+    /* the backup provider: when the main one cannot be reached, a second provider with a key of its own is tried (see call) */
+    setKeyFor: (id, k) => put(PROVIDERS[id].keyStore, String(k || '').trim()),
+    keyHintFor: (id) => { const k = get(PROVIDERS[id].keyStore); return k ? '…' + k.slice(-4) : ''; },
+    testWith: (id) => callOnce('Reply with the single word OK.', 'Test', 10, undefined, id),
     timeoutMs: 30000, /* the longest one request may take */
     retryDelays: [1000, 2500], /* waits between the tries of a failing request: 3 tries in all */
     onRetry: null,

@@ -54,7 +54,26 @@
           h('button', { class: 'btn small ghost', onclick: async () => { show('Testing…'); try { await AI.test(); show('The key works (model: ' + AI.model() + ').'); refresh(); } catch (e) { show(e.message, true); } } }, 'Test'),
           h('button', { class: 'btn small ghost', onclick: async () => { await refresh(); show('Model list updated.'); } }, 'Refresh models'),
           h('button', { class: 'btn small ghost', onclick: () => { AI.setKey(''); draw(); } }, 'Remove key')),
-        status);
+        status, backupPart(id));
+    }
+    /* a second key, for another provider, used only when the main one cannot be reached (no connection, busy, a free-plan limit) */
+    let backupId = null;
+    function backupPart(mainId) {
+      const others = Object.keys(AI.PROVIDERS).filter((k) => k !== mainId);
+      if (!backupId || backupId === mainId) backupId = others.includes('groq') ? 'groq' : others[0];
+      const bp = AI.PROVIDERS[backupId], note = h('p', { class: 'muted', role: 'status' }, AI.keyHintFor(backupId) ? `A backup key ending ${AI.keyHintFor(backupId)} is saved in this browser.` : 'No backup key saved.');
+      const say = (t, bad) => { note.textContent = t; note.className = bad ? 'a-warn' : 'muted'; };
+      const sel = h('select', { 'aria-label': 'Backup provider', onchange: (e) => { backupId = e.target.value; draw(); } }, others.map((k) => h('option', { value: k, selected: k === backupId }, AI.PROVIDERS[k].name)));
+      const bkey = h('input', { type: 'password', class: 'wide', placeholder: bp.keyHint, autocomplete: 'off', 'aria-label': bp.name + ' backup API key' });
+      return h('details', { class: 'backupkey', open: !!AI.keyHintFor(backupId) },
+        h('summary', {}, 'Backup key (optional)'),
+        h('p', { class: 'muted' }, `If your main provider cannot be reached (no connection, busy, a free-plan limit), Pica and the feedback tools try this one instead. A free Groq key works well: `, h('a', { href: AI.PROVIDERS.groq.keyUrl, target: '_blank', rel: 'noopener' }, 'console.groq.com/keys'), '.'),
+        h('div', { class: 'row' }, sel), bkey,
+        h('div', { class: 'row', style: 'margin:8px 0' },
+          h('button', { class: 'btn small', onclick: () => { if (!bkey.value.trim()) return say('Paste a key first.', true); AI.setKeyFor(backupId, bkey.value); bkey.value = ''; say(`Saved (ending ${AI.keyHintFor(backupId)}). Press Test to check it.`); } }, 'Save backup key'),
+          h('button', { class: 'btn small ghost', onclick: async () => { say('Testing…'); try { await AI.testWith(backupId); say('The backup key works.'); } catch (e) { say(e.message, true); } } }, 'Test'),
+          h('button', { class: 'btn small ghost', onclick: () => { AI.setKeyFor(backupId, ''); draw(); } }, 'Remove')),
+        note);
     }
     draw();
     return cardBlock('AI feedback (optional)', box);

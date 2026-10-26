@@ -140,6 +140,7 @@
       each(s.tomb, (k, v) => { if (v < cutoff) delete s.tomb[k]; });
       each(r.cards, (k, v) => { const c = s.cards[k]; if (!c || (v.ts && c.ts ? v.ts > c.ts : v.box > c.box || (v.box === c.box && v.due > c.due))) s.cards[k] = v; }); // newest rating wins, so Again on one device sticks; copies without a time keep the old rule
       each(r.lessons, (k, v) => { if (v) s.lessons[k] = v; });
+      each(r.seen, (k, v) => { s.seen = s.seen || {}; if (!s.seen[k] || v > s.seen[k]) s.seen[k] = v; });
       each(r.scores, (k, v) => { const o = s.scores[k], best = !o || v.p > o.p ? Object.assign({}, v) : Object.assign({}, o), la = [o && o.last, v.last].filter(Boolean).sort((a, b) => b.ts - a.ts)[0]; if (la) best.last = la; best.n = Math.max((o && o.n) || (o ? 1 : 0), v.n || 1); s.scores[k] = best; });
       each(r.mistakes, (k, v) => { const m = s.mistakes[k]; if (!m || v.ts > m.ts) s.mistakes[k] = v; else if (v.ts === m.ts) { m.right = Math.max(m.right || 0, v.right || 0); m.due = Math.max(m.due || 0, v.due || 0); } });
       each(s.mistakes, (k, v) => { if ((s.tomb['m:' + k] || 0) >= v.ts) delete s.mistakes[k]; });
@@ -252,8 +253,16 @@
       return moved;
     },
     restoreDue(list) { list.forEach(([id, due]) => { const c = state.cards[id]; if (c) { c.due = due; c.ts = Math.max(Date.now(), (c.ts || 0) + 1); } }); save(); },
+    /* a card looked at but not rated ("Next card without rating"): it counts as seen (to complete a lesson, for the new-card quest) and, the first time, as new today, but it gets no schedule */
+    markSeen(id) {
+      state.seen = state.seen || {}; if (state.seen[id]) return;
+      state.seen[id] = Date.now();
+      if (!state.cards[id]) { state.newToday[dayStr()] = (state.newToday[dayStr()] || 0) + 1; state.own.newToday[dayStr()] = (state.own.newToday[dayStr()] || 0) + 1; }
+      save();
+    },
+    isSeen(id) { return !!(state.cards[id] || (state.seen || {})[id]); },
     rate(id, rating) { // 0 again, 1 hard, 2 good, 3 easy
-      const isNew = !state.cards[id];
+      const isNew = !state.cards[id] && !(state.seen || {})[id];
       const c = state.cards[id] || { box: 0, due: dayStr() };
       const max = Store.INTERVALS.length - 1;
       if (rating === 0) c.box = 0;
