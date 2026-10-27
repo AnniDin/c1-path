@@ -336,6 +336,8 @@ window.App = { routes: {}, cleanup: [] };
       }));
   }
 
+  /* the drawings of a lesson (data/visuals*.js) for a place on the page: after the big idea, or after a part; a broken spec never breaks the lesson */
+  const visualEls = (id, slot) => ((C1.visuals || {})[id] || []).filter((v) => (v.after || 'idea') === slot).map((v) => { try { return window.Diagrams ? window.Diagrams.render(v) : null; } catch (e) { return null; } }).filter(Boolean);
   function lesson(id) {
     const g = grammar.find((x) => x.id === id);
     if (!g) return notFound();
@@ -350,8 +352,8 @@ window.App = { routes: {}, cleanup: [] };
         : h('button', { class: 'btn small ghost', onclick: (e) => { Store.markLesson(id); e.target.replaceWith(h('span', { class: 'tag ok' }, 'Read')); } }, 'Mark as read')),
       h('h1', {}, g.title), h('p', { class: 'lead' }, g.tagline),
       h('div', { class: 'toc' }, toc.map(([t, target]) => h('a', { href: '#', onclick: jump(target) }, t))),
-      h('div', { class: 'callout', id: 'idea' }, h('strong', {}, 'The big idea'), h('div', { html: g.idea })));
-    g.parts.forEach((p, i) => box.append(h('h2', { id: 'part' + i }, p.h), h('div', { html: p.body })));
+      h('div', { class: 'callout', id: 'idea' }, h('strong', {}, 'The big idea'), h('div', { html: g.idea })), ...visualEls(id, 'idea'));
+    g.parts.forEach((p, i) => box.append(h('h2', { id: 'part' + i }, p.h), h('div', { html: p.body }), ...visualEls(id, 'part' + i)));
     if (g.traps) box.append(h('h2', { id: 'traps' }, 'Common traps'), h('div', { class: 'callout warn', html: g.traps }));
     if (g.exam) box.append(h('h2', { id: 'exam' }, 'Where it shows up in the exams'), h('div', { html: g.exam }));
     box.append(h('h2', { id: 'practice' }, 'Practice'), h('p', { class: 'muted' }, 'Answer first, then read the explanation for every item, including the ones you got right.'),

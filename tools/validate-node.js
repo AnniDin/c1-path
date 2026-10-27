@@ -53,6 +53,20 @@ Object.entries(sandbox.C1.vocabMulti || {}).forEach(([ph, list]) => {
 });
 /* a stray control character (a backspace from a mis-escaped word boundary in a regular expression) silently breaks the pattern */
 ['js', 'tools', 'data'].forEach((d) => fs.readdirSync(path.join(root, d)).filter((f) => f.endsWith('.js')).forEach((f) => { if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(fs.readFileSync(path.join(root, d, f), 'utf8'))) issues.push(d + '/' + f + ' contains a control character (a broken escape, such as a backspace inside a regular expression?)'); }));
+/* drawings of the theory pages: for a real lesson, in a real place, well formed */
+{
+  try { vm.runInContext(fs.readFileSync(path.join(root, 'js/diagrams.js'), 'utf8'), sandbox, { filename: 'js/diagrams.js' }); } catch (e) { issues.push('js/diagrams.js does not load: ' + e.message); }
+  Object.entries(sandbox.C1.visuals || {}).forEach(([id, list]) => {
+    const g = sandbox.C1.grammar.find((x) => x.id === id);
+    if (!g) { issues.push('visuals: no lesson "' + id + '"'); return; }
+    list.forEach((v, i) => {
+      const slot = v.after || 'idea', ok = slot === 'idea' || (/^part\d+$/.test(slot) && +slot.slice(4) < g.parts.length);
+      if (!ok) issues.push('visuals ' + id + '#' + i + ': the place "' + slot + '" does not exist in the lesson');
+      const p = sandbox.Diagrams.check(v);
+      if (p.length) issues.push('visuals ' + id + '#' + i + ' (' + v.type + '): ' + p.join('; '));
+    });
+  });
+}
 /* "Say this, not that": every pair has what it needs, one gap, two different phrases, and no phrase is taught twice */
 {
   const seen = new Set();
