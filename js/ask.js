@@ -146,7 +146,7 @@
   /* a wrong answer taken to Pica: the question, the learner's answer and the right one go with the question */
   function explain(x) {
     toggle(true);
-    ask('Why is my answer wrong? Please explain.', 'Exercise question: ' + x.q + '\nMy answer: ' + (x.given || '(blank)') + '\nCorrect answer: ' + x.correct + (x.why ? '\nThe given explanation: ' + x.why : ''));
+    ask('Why is my answer wrong? (' + String(x.q).slice(0, 80) + ')','Exercise question: ' + x.q + '\nMy answer: ' + (x.given || '(blank)') + '\nCorrect answer: ' + x.correct + (x.why ? '\nThe given explanation: ' + x.why : ''));
   }
   /* Pica speaks up: a bubble above her button with a few words and optional buttons ([[label, href or function]...]). It stays until closed or 25 s pass. */
   let notice = null, noticeTimer = 0;

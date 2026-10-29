@@ -66,5 +66,7 @@
     const [, q, given, correct, why] = m, C1 = window.C1 || {}, tr = C1.trickFor ? C1.trickFor(q, given === '(blank)' ? '' : given, [correct]) : null;
     return `Let us look at it.\n\nYou wrote **${plain(given)}**; the answer is **${plain(correct)}**.${why ? '\n\n' + plain(why) : ''}${tr ? `\n\nThis trick fits: ${link(tr.title || 'open it', '#/tricks/' + tr.key)}.` : ''}\n\nThis is the explanation the exercise already has. A free AI key lets me explain it in more ways.`;
   }
-  window.PicaLocal = { answer, explain, search, plain };
+  /* what the site itself says about a question, as plain text: the AI is told to rely on it, so it invents less */
+  const facts = (q) => search(String(q || '').slice(0, 300)).slice(0, 3).map((r) => show(r.d).replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\*\*/g, '')).join('\n---\n');
+  window.PicaLocal = { answer, explain, search, plain, facts };
 })();
