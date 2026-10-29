@@ -95,7 +95,7 @@
       h('span', { class: 'picaface', 'aria-hidden': 'true', html: window.PicaSVG('happy') }),
       h('div', { class: 'picasay' },
         h('p', {}, h('strong', {}, hello() + '! '), line, r ? ' ' + r : ''),
-        w ? h('p', { class: 'muted' }, 'Shiny word of the day: ', h('a', { href: '#/vocab/' + w.g.id }, h('strong', {}, w.c.phrase)), ' — ' + w.c.meaning.split(';')[0].trim() + '.') : null));
+        w ? h('p', { class: 'muted' }, 'Shiny word of the day: ', h('a', { href: '#/vocab/' + w.g.id + '?card=' + w.g.cards.indexOf(w.c) }, h('strong', {}, w.c.phrase)), ' — ' + w.c.meaning.split(';')[0].trim() + '.') : null));
   };
 
   /* the first time you open a kind of task, Pica says in two sentences what it asks and how to attack it, with a link to that task's tricks. Once per task; "Got it" hides it. */

@@ -399,7 +399,7 @@ window.App = { routes: {}, cleanup: [] };
     return h('ol', { class: 'senses' }, ss.map((s, i) => h('li', {}, h('div', { class: 'sense' }, s), h('div', { class: 'eg-row' }, line(ex[i]), hear(ex[i], i + 1)))));
   }
   function cardView(c, showGroup) {
-    return h('div', { class: 'vcard' },
+    return h('div', Object.assign({ class: 'vcard' }, c.anchor ? { id: c.anchor } : {}),
       h('div', {}, h('span', { class: 'hl' }, c.phrase), ' ', phraseLine(c), ' ', h('span', { class: 'tag' }, c.kind), showGroup ? h('span', { class: 'muted' }, ' ' + c.groupTitle) : null),
       meaningBlock(c, false, false),
       c.logic ? h('div', { class: 'muted', html: c.logic }) : null,
@@ -454,7 +454,7 @@ window.App = { routes: {}, cleanup: [] };
       h('p', { style: 'margin:.3em 0' }, done ? `You have studied ${seen} of the ${g.cards.length} cards. The quick quiz is extra practice and is not needed.` : `Study at least ${need} of the ${g.cards.length} cards with the flashcards (${seen} so far). Rating a card, or pressing "Next card without rating", counts as studying it. The quick quiz is extra practice and does not count towards completing the step.`),
       bar(Math.min(1, seen / need), done ? 'ok' : ''));
   }
-  function vocabGroup(id) {
+  function vocabGroup(id, _x, query) {
     const g = C1.vocab.find((x) => x.id === id);
     if (!g) return notFound();
     const i = C1.vocab.indexOf(g), pv = C1.vocab[i - 1], nx = C1.vocab[i + 1];
@@ -464,8 +464,11 @@ window.App = { routes: {}, cleanup: [] };
       unitCtx ? vocabRule(g) : null,
       h('div', { class: 'row' }, link('#/review/' + g.id + uq(), 'Study with flashcards', 'btn'), link('#/vquiz/' + g.id + uq(), 'Quick quiz', 'btn ghost')),
       h('p', {}, multiToggle(() => route())),
-      h('div', { class: 'card' }, g.cards.map((c) => cardView(Object.assign({ groupTitle: g.title }, c)))),
+      h('div', { class: 'card' }, g.cards.map((c, n) => cardView(Object.assign({ groupTitle: g.title, anchor: 'card-' + n }, c)))),
       uf || h('div', { class: 'pager' }, pv ? link('#/vocab/' + pv.id, '← ' + pv.title, 'btn ghost small') : h('span'), nx ? link('#/vocab/' + nx.id, nx.title + ' →', 'btn ghost small') : h('span')));
+    /* ?card=N (the shiny word, a search result): scroll to that card and mark it */
+    const hit = /^\d+$/.test(new URLSearchParams(query || '').get('card') || '') && document.getElementById('card-' + new URLSearchParams(query).get('card'));
+    if (hit) { hit.classList.add('vcard-hit'); setTimeout(() => hit.scrollIntoView({ block: 'center' }), 50); }
   }
 
   function vocabQuiz(group) {
@@ -686,7 +689,7 @@ window.App = { routes: {}, cleanup: [] };
         .concat(grammar.filter((g) => has(g.title, g.tagline, g.category, g.idea, g.parts.map((p) => p.h + ' ' + p.body).join(' '))).map((g) => ['Grammar', g.title, g.tagline, '#/grammar/' + g.id]))
         .concat(C1.course.filter((u) => has(u.title, u.intro)).map((u) => ['Course', u.title, u.intro.slice(0, 90) + '…', '#/course/' + u.id]))
         .concat(C1.vocab.filter((g) => has(g.title, g.short)).map((g) => ['Vocabulary group', g.title, g.short, '#/vocab/' + g.id]))
-        .concat(allCards.filter((c) => has(c.phrase, c.meaning)).slice(0, 15).map((c) => ['Vocabulary', c.phrase, c.meaning, '#/vocab/' + c.group]));
+        .concat(allCards.filter((c) => has(c.phrase, c.meaning)).slice(0, 15).map((c) => ['Vocabulary', c.phrase, c.meaning, '#/vocab/' + c.group + '?card=' + c.id.slice(c.group.length + 1)]));
       results.append(h('div', { class: 'card' }, hits.length ? hits.slice(0, 25).map(([kind, t, d, href]) => h('div', { class: 'pathrow' }, h('div', {}, h('span', { class: 'tag' }, kind), h('strong', {}, t), h('div', { class: 'muted' }, d)), link(href, 'Open', 'btn small ghost'))) : h('p', { class: 'muted' }, 'No matches.')));
     });
     view(h('h1', {}, 'Study', Doodle('study')),
@@ -953,7 +956,7 @@ window.App = { routes: {}, cleanup: [] };
     if (App.routes[a]) return App.routes[a](b, c, query);
     if (a === 'progress') return progress(b);
     if (a === 'grammar') return b ? lesson(b) : grammarList();
-    if (a === 'vocab') return b ? vocabGroup(b) : vocab();
+    if (a === 'vocab') return b ? vocabGroup(b, c, query) : vocab();
     if (a === 'vquiz') return vocabQuiz(b);
     if (a === 'review') return b === 'new' ? review(null, 'new') : review(b);
     if (a === 'practice') return b ? practiceType(b, c == null ? null : +c) : practiceList();

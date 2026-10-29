@@ -777,3 +777,5 @@ body.exam-focus { background-image: none; }
 .dg-say { display: flex; align-items: flex-end; gap: 10px; margin-top: 10px; } .dg-say .picaface { width: 56px; height: 56px; } .dg-say p { margin: 0; padding: 8px 12px; border: 2px solid var(--ink); background: var(--bg); font-family: var(--hand); }
 .dg-say-text { margin: 10px 0 0; font-family: var(--hand); }
 @media (max-width: 560px) { .dg-compare { grid-template-columns: 1fr; } .dg-vs { justify-self: center; } .dg-crow { grid-template-columns: 1fr; } .dg-go { transform: rotate(90deg); justify-self: start; } }
+
+.vcard-hit { outline: 3px solid var(--accent); outline-offset: 3px; background: var(--accent-soft); }
