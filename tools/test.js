@@ -404,7 +404,7 @@ let retryDone = Promise.resolve();
   retryDone = Promise.all([A1.AI.test(), A2.AI.test().catch((e) => 'ERR'), A3.AI.test().catch((e) => e.message), A4.AI.test()]).then(([r1, r2, r3, r4]) => {
     eq('two busy answers and then a good one: Pica gets the answer, after 3 tries', [r1, A1.D.seen.length, A1.D.retries], ['OK', 3, ['2/3', '3/3']]);
     eq('a refused key is not tried again', [r2, A2.D.seen.length], ['ERR', 1]);
-    eq('no connection: 3 tries, then the error to show', [r3, A3.D.seen.length], ['Could not reach the API. Check your connection.', 3]);
+    eq('no connection: 3 tries, then the error to show', [/^Could not reach Google Gemini\. Check your connection/.test(r3), A3.D.seen.length], [true, 3]);
     eq('a 429 (busy) is tried again', [r4, A4.D.seen.length], ['OK', 2]);
   });
 }
@@ -428,7 +428,7 @@ let robustDone = Promise.resolve();
   K.localStorage.setItem('c1path.apikey.gemini', 'k'); K.localStorage.setItem('c1path.apikey.groq', 'k2');
   K.fetch = async (u) => { seenK.push(1); return { ok: false, status: 401, json: async () => ({ error: { message: 'bad' } }) }; };
   robustDone = Promise.all([H.AI.test().catch((e) => e.message), F.AI.test(), K.AI.test().catch((e) => 'ERR')]).then(([h, f, k]) => {
-    eq('a request that never answers is cut off, tried 3 times and then reported', [h, seenH.length], ['Could not reach the API. Check your connection.', 3]);
+    eq('a request that never answers is cut off, tried 3 times and then reported', [/^Could not reach Google Gemini\. Check your connection/.test(h), seenH.length], [true, 3]);
     eq('when the first provider keeps failing, the second one answers', [f, seenF.filter((x) => x === 'gemini').length, seenF.includes('groq'), noted.length], ['OK', 3, true, 1]);
     eq('a rejected key is not tried on another provider', [k, seenK.length], ['ERR', 1]);
   });

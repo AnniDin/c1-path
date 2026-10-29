@@ -112,7 +112,13 @@
     if (!key) throw new Error('No API key set. Add one in Review, under AI feedback.');
     let res;
     try { res = await attempt(() => request(p, key, modelOf(p), system, user, maxTokens || 1600, retried === 'nothink')); }
-    catch (e) { throw Object.assign(new Error('Could not reach the API. Check your connection.'), { passing: true }); }
+    catch (e) {
+      /* say what really happened: no answer in time, a key that cannot be sent (stray characters), or no connection */
+      const why = e && e.name === 'AbortError' ? `${p.name.replace(/ \(.*/, '')} did not answer within ${AI.timeoutMs / 1000} seconds.`
+        : /[^\x20-\x7e]/.test(key) ? 'The key has characters that are not allowed (a space, a line break or an accent). Paste it again.'
+          : `Could not reach ${p.name.replace(/ \(.*/, '')}. Check your connection (${(e && e.message) || 'network error'}).`;
+      throw Object.assign(new Error(why), { passing: true });
+    }
     if (!res.ok) {
       let detail = '';
       try { const j = await res.json(); detail = (j.error && (j.error.message || j.error)) || ''; } catch (e) { /* no body */ }
@@ -172,7 +178,7 @@
     keyHint: () => { const k = get(prov().keyStore); return k ? '…' + k.slice(-4) : ''; },
     listModels,
     model: modelName,
-    setKey: (k) => put(prov().keyStore, k.trim()),
+    setKey: (k) => put(prov().keyStore, String(k || '').replace(/\s+/g, '')),
     setModel: (m) => put(prov().modelStore, m.trim()),
     test: () => call('Reply with the single word OK.', 'Test', 10),
 
@@ -218,7 +224,7 @@
 
     /* the tutor: a short conversation about English and the exams only. The scope is set in the instructions, so it is a strong guide, not a guarantee. */
     /* the backup provider: when the main one cannot be reached, a second provider with a key of its own is tried (see call) */
-    setKeyFor: (id, k) => put(PROVIDERS[id].keyStore, String(k || '').trim()),
+    setKeyFor: (id, k) => put(PROVIDERS[id].keyStore, String(k || '').replace(/\s+/g, '')),
     keyHintFor: (id) => { const k = get(PROVIDERS[id].keyStore); return k ? '…' + k.slice(-4) : ''; },
     testWith: (id) => callOnce('Reply with the single word OK.', 'Test', 10, undefined, id),
     timeoutMs: 30000, /* the longest one request may take */
