@@ -85,7 +85,17 @@ C1.grammar = [
       <div class="eg"><em>What</em> happened <em>was</em> that the printer jammed.</div>
       <div class="eg"><em>What</em> he did <em>was</em> (to) call the police.</div>
       <p>The logic: the wh-clause is a headline ("the thing I need"), <em>be</em> is an equals sign, and the focus completes it.</p>` },
-    { h: 'Reversed wh-clefts', body: `<p>Same meaning, turned round: the focus comes first, for an even stronger start.</p><div class="eg">A long holiday <em>is what</em> I need.</div><div class="eg">His attitude <em>is what</em> annoys me.</div>` }
+    { h: 'Reversed wh-clefts', body: `<p>Same meaning, turned round: the focus comes first, for an even stronger start.</p><div class="eg">A long holiday <em>is what</em> I need.</div><div class="eg">His attitude <em>is what</em> annoys me.</div>` },
+    { h: 'What is a cleft structure, in one line?', body: `<p>A cleft has <strong>two clauses</strong> joined by <em>be</em>: one clause carries the background, the other the news. Take any plain sentence and ask "what do I want them to remember?". That piece becomes the focus.</p>
+      <div class="eg">Plain: <em>I admire her honesty.</em></div>
+      <div class="eg">It-cleft: <em>It is her honesty that I admire.</em> (not her talent)</div>
+      <div class="eg">Wh-cleft: <em>What I admire is her honesty.</em> (the headline comes first)</div>
+      <p>If the sentence does not need a spotlight, do not split it: a cleft in every sentence sounds heavy. Use one or two per paragraph, where you correct, contrast or stress.</p>` },
+    { h: 'Other clefts you will meet', body: `<p>The focus does not have to be a noun. It can be a time, a place or a reason:</p>
+      <div class="eg">It was <em>because he was tired</em> that he made the mistake.</div>
+      <div class="eg">It was <em>when I got home</em> that I noticed the door was open.</div>
+      <p>To contrast two things: <em>It is not money but time that I need.</em> And with <em>who/what</em> the focus can be a person or thing: <em>The one who called was my sister.</em></p>
+      <p>Spanish does this too: <em>Fue Tom quien rompió la ventana.</em> The English <em>It was Tom who…</em> is the same idea, but English needs the dummy <em>It</em> at the start.</p>` }
   ],
   traps: `<ul><li><em>The reason … is <strong>that</strong> …</em>, not <s>because</s>: <em>The reason I left is that I was bored.</em></li>
     <li>Match the verb after <em>What</em>: <em>What annoys me is…</em> The verb <em>be</em> agrees with what follows: <em>What I need are more hours.</em> (plural) is acceptable, though <em>is</em> is very common.</li>
@@ -95,9 +105,9 @@ C1.grammar = [
     { type: 'mcq', q: '___ annoys me most is his constant lateness.', options: ['That', 'What', 'It', 'Which'], answer: 1, why: '<em>What</em> here means "the thing that" and starts a wh-cleft.' },
     { type: 'mcq', q: 'It wasn\'t until midnight ___ the storm died down.', options: ['when', 'which', 'that', 'than'], answer: 2, why: 'In an it-cleft, the focus is followed by <em>that</em> (or <em>who</em> for people).' },
     { type: 'gap', q: 'What she did ___ to ignore the message completely.', answers: ['was'], why: 'The wh-clause "What she did" is past, so <em>be</em> is <em>was</em>.' },
-    { type: 'mcq', q: 'The reason I left the company is ___ I was bored.', options: ['because', 'that', 'why', 'for'], answer: 1, why: 'After <em>The reason … is</em> we use <em>that</em>. <em>Because</em> repeats the meaning of <em>reason</em>.' },
     { type: 'kwt', first: 'Maria was the only person to notice the mistake.', key: 'it', second: '___ noticed the mistake.', answers: ['It was only Maria who', 'It was Maria alone who', 'It was only Maria that', 'It was Maria alone that'], why: 'An it-cleft: <em>It was</em> + focus + <em>who</em> + rest.' },
-    { type: 'mcq', q: 'All I want ___ a quiet evening.', options: ['is', 'are', 'be', 'being'], answer: 0, why: '<em>All I want</em> is a singular headline, so <em>is</em> equals "a quiet evening".' }
+    { type: 'mcq', q: 'It was when I got home ___ I noticed the open window.', options: ['what', 'that', 'then', 'which'], answer: 1, why: 'An it-cleft keeps <em>that</em> even when the focus is a time clause.' },
+    { type: 'mcq', q: 'Which sentence is a cleft?', options: ['I admire her honesty.', 'What I admire is her honesty.', 'Her honesty is admired.', 'I admire how honest she is.'], answer: 1, why: 'A cleft splits one idea into two clauses joined by <em>be</em>: "What I admire" + "is" + the focus.' }
   ]
 },
 {

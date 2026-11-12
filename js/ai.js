@@ -98,14 +98,18 @@
   /* a request that fails for a passing reason (no connection, 429 busy, 5xx server trouble) is tried again after a short wait, up to 3 times in all;
      a refusal that will not change (bad key, bad request) is returned at once. AI.onRetry(n, total) lets the page say it is trying again. */
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  async function attempt(run) {
+  /* the reason a try failed, in words: shown while Pica tries again */
+  const short = (p) => p.name.replace(/ \(.*/, '');
+  const reasonOf = (p, err, res) => err ? (err.name === 'AbortError' ? `${short(p)} did not answer in ${AI.timeoutMs / 1000} seconds` : `no connection to ${short(p)}`)
+    : res.status === 429 ? `${short(p)} says the free-tier limit was reached (429)` : res.status === 503 ? `${short(p)} is overloaded (503)` : `${short(p)} had a server error (${res.status})`;
+  async function attempt(run, p) {
     const total = AI.retryDelays.length + 1;
     for (let i = 0; ; i++) {
       let res = null, err = null;
       try { res = await run(); } catch (e) { err = e; }
       const passing = err || res.status === 429 || res.status >= 500;
       if (!passing || i >= total - 1) { if (err) throw err; return res; }
-      if (AI.onRetry) AI.onRetry(i + 2, total);
+      if (AI.onRetry) AI.onRetry(i + 2, total, '', reasonOf(p, err, res));
       await wait(AI.retryDelays[i]);
     }
   }
@@ -114,7 +118,7 @@
     const p = only ? PROVIDERS[only] : prov(), key = get(p.keyStore);
     if (!key) throw new Error('No API key set. Add one in Review, under AI feedback.');
     let res;
-    try { res = await attempt(() => request(p, key, alt || modelOf(p), system, user, maxTokens || 1600, retried === 'nothink')); }
+    try { res = await attempt(() => request(p, key, alt || modelOf(p), system, user, maxTokens || 1600, retried === 'nothink'), p); }
     catch (e) {
       /* say what really happened: no answer in time, a key that cannot be sent (stray characters), or no connection */
       const why = e && e.name === 'AbortError' ? `${p.name.replace(/ \(.*/, '')} did not answer within ${AI.timeoutMs / 1000} seconds.`

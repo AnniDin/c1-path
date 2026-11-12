@@ -23,6 +23,16 @@
   }
   const matches = (given, answers) => { const g = norm(given); return g !== '' && answers.some((a) => norm(a) === g); };
 
+  /* what the learner needs to know before typing: are contractions accepted, required or not allowed? (norm() above treats n't, 'll, 're, 've and 'm as the full words; 's and 'd must match exactly) */
+  function contractionNote(answers) {
+    const a = answers.map((x) => String(x).replace(/[’‘]/g, "'")), sd = a.filter((x) => /'(s|d)\b/i.test(x));
+    const text = sd.length === a.length && a.length ? 'Contractions: write it with an apostrophe, as in ' + a[0] + '.'
+      : sd.length ? "Contractions: both forms are accepted (it's or it is)."
+        : a.some((x) => /\b(i|you|he|she|it|we|they|there|that|who|what|here|where)\s+(is|has|would|had)\b/i.test(x)) ? "Contractions: not allowed here. Write the two words in full (a form such as it's is marked wrong)."
+          : a.some((x) => /n't|'ll|'re|'ve|'m\b|\bcannot\b|\b(not|will|are|have|am)\b/i.test(x)) ? "Contractions: accepted. Both forms count, for example isn't or is not."
+            : 'Contractions: none needed in this answer.';
+    return h('p', { class: 'muted contr' }, text);
+  }
   const plain = (t) => String(t == null ? '' : t).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   /* ask = { q, given }: when the answer is wrong and the tutor panel exists, offer to ask Pica why */
   function feedback(ok, expected, why, ask) {
@@ -43,7 +53,9 @@
     let token = 0;
     /* English voices, best first: neural/natural voices, then British ones. */
     function allVoices() {
-      const score = (v) => (/natural|neural|online|premium|enhanced/i.test(v.name) ? 5 : /google/i.test(v.name) ? 3 : 0) + (/en[-_]GB/i.test(v.lang) ? 2 : 0) + (/en[-_]US|en[-_]AU|en[-_]IE/i.test(v.lang) ? 1 : 0);
+      /* natural (neural) voices first, then premium and Google ones; robotic and novelty voices (compact, eSpeak, Zarvox and the like) last */
+      const BAD = /compact|espeak|albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|organ|superstar|trinoids|whisper|wobble|zarvox|junior|ralph|fred|kathy|princess/i;
+      const score = (v) => (/natural|neural|online/i.test(v.name) ? 8 : /premium|enhanced/i.test(v.name) ? 6 : /google/i.test(v.name) ? 4 : 0) + (/en[-_]GB/i.test(v.lang) ? 2 : 0) + (/en[-_]US|en[-_]AU|en[-_]IE/i.test(v.lang) ? 1 : 0) - (BAD.test(v.name) ? 12 : 0);
       return speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang)).map((v, i) => [v, i]).sort((a, b) => score(b[0]) - score(a[0]) || a[1] - b[1]).map((x) => x[0]);
     }
     const GOOD = /natural|neural|online|premium|enhanced|google/i;
@@ -74,11 +86,14 @@
       const my = token;
       ready(() => {
         const vs = voicesNow(), speakers = [];
+        /* one sentence at a time: the voice keeps its natural rhythm, and long texts are not cut off (some voices stop after about 15 seconds) */
+        const chunks = [];
+        segments.forEach((seg, si) => String(seg.text).split(/(?<=[.!?;])\s+/).map((t) => t.trim()).filter(Boolean).forEach((t, ci) => chunks.push({ who: seg.who, text: t, seg: si, first: ci === 0 })));
         let i = 0;
         const next = () => {
           if (my !== token) return;
-          if (i >= segments.length) { o.onEnd && o.onEnd(true); return; }
-          const seg = segments[i++];
+          if (i >= chunks.length) { o.onEnd && o.onEnd(true); return; }
+          const seg = chunks[i++];
           let k = speakers.indexOf(seg.who || ''); if (k < 0) { speakers.push(seg.who || ''); k = speakers.length - 1; }
           const u = new SpeechSynthesisUtterance(seg.text);
           u.lang = 'en-GB';
@@ -87,9 +102,10 @@
           u.rate = o.rate || 1;
           const sameVoice = k > 0 && (chosen ? chosen === speechSynthesis.getVoices().find((v) => v.name === pref('a')) : vs.length < 2 || speakers.length > vs.length);
           if (sameVoice) u.pitch = [1, 0.82, 1.15][k % 3];
-          u.onend = () => setTimeout(next, 250);
-          u.onerror = () => { if (my === token) o.onEnd && o.onEnd(false); };
-          o.onSegment && o.onSegment(i - 1);
+          /* a short pause between sentences, a longer one when the speaker changes */
+          u.onend = () => setTimeout(next, i < chunks.length && chunks[i].seg !== seg.seg ? 300 : 140);
+          u.onerror = (e) => { if (my === token && !(e && /interrupted|canceled/.test(e.error))) o.onEnd && o.onEnd(false); };
+          if (seg.first) o.onSegment && o.onSegment(seg.seg);
           speechSynthesis.speak(u);
         };
         next();
@@ -157,7 +173,7 @@
       const input = h('input', { type: 'text', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Answer ' + n });
       const parts = item.q.split('___');
       const q = h('p', { class: 'q' }, h('span', { class: 'num' }, n + '.'), h('span', { html: parts[0] }), input, h('span', { html: parts[1] || '' }));
-      const el = h('div', { class: 'item' }, q);
+      const el = h('div', { class: 'item' }, q, contractionNote(item.answers));
       return {
         el, check() {
           const ok = matches(input.value, item.answers);
@@ -175,7 +191,7 @@
         h('p', { class: 'q' }, h('span', { class: 'num' }, n + '.'), h('span', { html: item.first })),
         h('p', {}, h('span', { class: 'keyword' }, item.key.toUpperCase())),
         h('p', {}, h('span', { html: a }), input, h('span', { html: b || '' })),
-        h('p', { class: 'muted' }, 'Use between two and five words, including the key word. Do not change it.'));
+        h('p', { class: 'muted' }, 'Use between two and five words, including the key word. Do not change it.'), contractionNote(item.answers));
       return {
         el, check() {
           const ok = matches(input.value, item.answers);
@@ -278,7 +294,7 @@
         if (mode === 'wf') passage.append(h('span', { class: 'muted' }, ' (' + item.gaps[i].base.toUpperCase() + ') '));
       });
       const list = h('div');
-      const el = h('div', { class: 'item' }, h('h3', {}, item.title), item.intro ? h('p', { class: 'muted', html: item.intro }) : null, passage, list);
+      const el = h('div', { class: 'item' }, h('h3', {}, item.title), item.intro ? h('p', { class: 'muted', html: item.intro }) : null, passage, mode === 'mcq' ? null : contractionNote([].concat(...item.gaps.map((g) => g.answers))), list);
       return {
         el, check() {
           list.innerHTML = '';

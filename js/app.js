@@ -398,11 +398,17 @@ window.App = { routes: {}, cleanup: [] };
     if (ss.length < 2 || ex.length !== ss.length) return h('div', {}, h('div', {}, c.meaning), h('div', { class: 'eg-row' }, line(ex[0]), hear(ex[0], 0)));
     return h('ol', { class: 'senses' }, ss.map((s, i) => h('li', {}, h('div', { class: 'sense' }, s), h('div', { class: 'eg-row' }, line(ex[i]), hear(ex[i], i + 1)))));
   }
+  /* a phrasal verb points to the memory trick of its particle (data/tricks5.js) */
+  const trickLine = (c) => {
+    const t = c.kind === 'phrasal verb' && C1.phrasalTrick && C1.phrasalTrick(c.phrase);
+    return t ? h('div', { class: 'muted vtrick' }, 'Memory trick: ', link('#/tricks/' + t.key, t.title)) : null;
+  };
   function cardView(c, showGroup) {
     return h('div', Object.assign({ class: 'vcard' }, c.anchor ? { id: c.anchor } : {}),
       h('div', {}, h('span', { class: 'hl' }, c.phrase), ' ', phraseLine(c), ' ', h('span', { class: 'tag' }, c.kind), showGroup ? h('span', { class: 'muted' }, ' ' + c.groupTitle) : null),
       meaningBlock(c, false, false),
       c.logic ? h('div', { class: 'muted', html: c.logic }) : null,
+      trickLine(c),
       h('button', {
         class: 'btn small ghost', style: 'margin-top:6px', onclick: (e) => {
           Store.addNote({ title: c.phrase, text: `${c.meaning}\n${exOf(c).map(plainEx).join('\n')}${c.logic ? '\n' + c.logic.replace(/<\/?em>/g, '*').replace(/<[^>]+>/g, '') : ''}`, tag: 'Vocabulary', href: '#/vocab/' + (c.group || '') });
@@ -451,7 +457,7 @@ window.App = { routes: {}, cleanup: [] };
   function vocabRule(g) {
     const need = cardsNeeded(g.id), seen = cardsSeen(g.id), done = seen >= need;
     return h('div', { class: 'callout' + (done ? '' : ' warn') }, h('strong', {}, done ? 'This step is complete.' : 'To complete this step'),
-      h('p', { style: 'margin:.3em 0' }, done ? `You have studied ${seen} of the ${g.cards.length} cards. The quick quiz is extra practice and is not needed.` : `Study at least ${need} of the ${g.cards.length} cards with the flashcards (${seen} so far). Rating a card, or pressing "Next card without rating", counts as studying it. The quick quiz is extra practice and does not count towards completing the step.`),
+      h('p', { style: 'margin:.3em 0' }, done ? `You have studied ${seen} of the ${g.cards.length} cards.` : `Study at least ${need} of the ${g.cards.length} cards with the flashcards (${seen} so far). Rating a card, pressing "Next card without rating", or answering it in the quick quiz counts as studying it.`),
       bar(Math.min(1, seen / need), done ? 'ok' : ''));
   }
   function vocabGroup(id, _x, query) {
@@ -473,14 +479,17 @@ window.App = { routes: {}, cleanup: [] };
 
   function vocabQuiz(group) {
     const pool = group ? allCards.filter((c) => c.group === group) : allCards;
-    const items = sample(pool, group ? 8 : 12).map(vocabItem);
+    /* in a group quiz the cards you have not studied yet come first: answering a card counts as studying it */
+    const items = (group ? shuffle(pool.filter((c) => !Store.isSeen(c.id))).concat(shuffle(pool.filter((c) => Store.isSeen(c.id)))).slice(0, 8) : sample(pool, 12)).map(vocabItem);
     const g = group && C1.vocab.find((x) => x.id === group);
     const home = g ? '#/vocab/' + g.id + uq() : '#/vocab';
     view(back(home, g ? g.title : 'Vocabulary'), h('h1', {}, g ? g.title + ': quiz' : 'Mixed vocabulary quiz'),
       h('p', { class: 'muted' }, 'Choose the expression that fits the gap and the meaning shown in grey.'),
-      quiz(items, { source: { topic: 'v-quiz', label: g ? g.title + ' quiz' : 'Vocabulary quiz', href: '#/vquiz' + (group ? '/' + group : '') }, onRetry: () => vocabQuiz(group), onScore: (c, t) => Store.record('v-quiz', c, t) }));
+      quiz(items, { source: { topic: 'v-quiz', label: g ? g.title + ' quiz' : 'Vocabulary quiz', href: '#/vquiz' + (group ? '/' + group : '') }, onRetry: () => vocabQuiz(group), onScore: (c, t, res) => { Store.record('v-quiz', c, t); (res || []).forEach((r) => { const u = r.item && r.item.uid; if (/^v:/.test(u || '')) Store.markSeen(u.slice(2)); }); } }));
   }
 
+  const CARD_STYLE = 'c1path.cardstyle', CARD_STYLES = [['mix', 'in a mix of ways'], ['meaning', 'meaning, then the expression'], ['phrase', 'the expression, then the meaning'], ['choose', 'by choosing'], ['type', 'by typing']];
+  const cardStyle = () => { try { const m = localStorage.getItem(CARD_STYLE); return CARD_STYLES.some((x) => x[0] === m) ? m : 'mix'; } catch (e) { return 'mix'; } };
   function review(group, mode) {
     const dueNow = (group ? dueAll().filter((id) => cardById[id].group === group) : dueAll()).slice(0, Store.reviewCap());
     let queue = shuffle(dueNow).concat(newIds(group).slice(0, Math.max(0, Math.min(group ? 12 : NEW_PER_DAY - Store.newTodayCount(), Store.reviewCap() - dueNow.length))));
@@ -499,7 +508,9 @@ window.App = { routes: {}, cleanup: [] };
     App.cleanup.push(() => document.removeEventListener('keydown', onKey));
     const box = h('div');
     const gBack = group ? '#/vocab/' + group + uq() : '#/vocab';
-    view(unitBack() || back(gBack, group ? 'Back to the group' : 'Vocabulary'), h('h1', {}, 'Review'), box);
+    const styleSel = h('select', { 'aria-label': 'How the cards are asked', onchange: (e) => { try { localStorage.setItem(CARD_STYLE, e.target.value); } catch (x) { /* optional */ } if (queue.length) next(); } },
+      CARD_STYLES.map(([v, label]) => h('option', Object.assign({ value: v }, cardStyle() === v ? { selected: true } : {}), label)));
+    view(unitBack() || back(gBack, group ? 'Back to the group' : 'Vocabulary'), h('h1', {}, 'Review'), h('label', { class: 'muted' }, 'Ask me ', styleSel), box);
 
     function next() {
       box.replaceChildren();
@@ -514,17 +525,35 @@ window.App = { routes: {}, cleanup: [] };
       }
       const id = queue[0], c = cardById[id];
       box.append(h('p', { class: 'muted' }, `${queue.length} left · ${c.groupTitle}`));
-      const front = h('div', { class: 'card flash' },
-        h('div', { class: 'muted' }, 'Which expression fits? Try to remember it before you look.'),
-        h('div', { class: 'big' }, c.meaning),
-        h('div', { class: 'eg', html: exOf(c)[0].replace(/\[\[(.+?)\]\]/g, '<span class="blank"></span>') }),
-        h('div', {}, h('button', { class: 'btn', 'data-act': 'reveal', onclick: reveal }, 'Show answer'), h('span', { class: 'muted', style: 'margin-left:10px' }, 'Space reveals · 1–4 rates (optional)')));
+      /* the same card is asked in different ways, so the review does not become a routine (the learner can fix one way) */
+      const how = cardStyle() === 'mix' ? ['meaning', 'meaning', 'phrase', 'choose', 'type'][Math.floor(Math.random() * 5)] : cardStyle();
+      const eg = exOf(c)[Math.floor(Math.random() * exOf(c).length)];
+      const revealBtn = h('div', {}, h('button', { class: 'btn' + (how === 'choose' || how === 'type' ? ' ghost' : ''), 'data-act': 'reveal', onclick: () => reveal() }, 'Show answer'), h('span', { class: 'muted', style: 'margin-left:10px' }, 'Space reveals · 1–4 rates (optional)'));
+      const norm = (s) => s.toLowerCase().replace(/\(.*?\)/g, ' ').replace(/\b(sb|sth|somebody|something|someone|one's|your)\b/g, ' ').replace(/[^a-z' ]/g, ' ').replace(/\s+/g, ' ').trim();
+      const front = h('div', { class: 'card flash' });
+      if (how === 'phrase') {
+        front.append(h('div', { class: 'muted' }, 'What does it mean? Say it in your head before you look.'), h('div', { class: 'big hl' }, c.phrase, ' ', phraseLine(c)),
+          h('div', { class: 'eg', html: eg.replace(/\[\[(.+?)\]\]/g, '<em>$1</em>') }), revealBtn);
+      } else {
+        front.append(h('div', { class: 'muted' }, how === 'type' ? 'Type the expression that fits the meaning and the gap.' : how === 'choose' ? 'Choose the expression that fits the meaning and the gap.' : 'Which expression fits? Try to remember it before you look.'),
+          h('div', { class: 'big' }, c.meaning), h('div', { class: 'eg', html: eg.replace(/\[\[(.+?)\]\]/g, '<span class="blank"></span>') }));
+        if (how === 'choose') {
+          front.append(h('div', { class: 'row vopts' }, vocabItem(c).options.map((o) => h('button', { class: 'btn ghost', type: 'button', onclick: () => reveal(o === c.phrase ? 'Correct.' : 'Not this one: the answer is below.') }, o))));
+        } else if (how === 'type') {
+          const inp = h('input', { type: 'text', class: 'wide', placeholder: 'Type it here…', 'aria-label': 'Your answer', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' });
+          const check = () => { const t = norm(inp.value); if (t) reveal(c.phrase.split('/').some((p) => norm(p) === t) ? 'Correct.' : 'Not exactly: compare with the answer below. You wrote "' + inp.value.trim() + '".'); };
+          inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); check(); } });
+          front.append(h('div', { class: 'row' }, inp, h('button', { class: 'btn', type: 'button', onclick: check }, 'Check')));
+        }
+        front.append(revealBtn);
+      }
       box.append(front);
 
-      function reveal() {
+      function reveal(note) {
         front.replaceChildren(
+          note ? h('p', { class: 'fb' + (note === 'Correct.' ? ' good' : ''), role: 'status' }, note) : '',
           h('div', { class: 'big hl' }, c.phrase, ' ', phraseLine(c)), meaningBlock(c, false, true),
-          c.logic ? h('div', { class: 'callout', html: c.logic }) : '',
+          c.logic ? h('div', { class: 'callout', html: c.logic }) : '', trickLine(c) || '',
           h('p', { class: 'ratehead' }, h('strong', {}, 'How well did you remember it?'), ' Rate it honestly, without thinking about the schedule: the site uses your answer to decide when to show it again.'),
           h('div', { class: 'rate' }, [['Again', 0, 'I forgot it'], ['Hard', 1, 'I got it, with effort'], ['Good', 2, 'I remembered it'], ['Easy', 3, 'No effort at all']].map(([label, r, what]) =>
             h('button', { class: 'btn', 'data-rate': r, onclick: () => rateIt(r) }, label, h('small', { class: 'what' }, what)))),

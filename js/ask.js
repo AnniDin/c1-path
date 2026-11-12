@@ -120,7 +120,7 @@
       msg.textContent = ''; portrait.replaceChildren(pica('happy')); draw(); return;
     }
     msg.textContent = 'Pica is thinking…'; portrait.replaceChildren(pica('think')); send.disabled = true; draw();
-    AI.onRetry = (n, total, other) => { msg.textContent = other ? `Pica could not reach the AI. Trying ${other} instead…` : `Pica could not reach the AI. Trying again (${n} of ${total})…`; };
+    AI.onRetry = (n, total, other, why) => { msg.textContent = other ? `Pica could not get an answer. Trying ${other} instead…` : `${why ? why[0].toUpperCase() + why.slice(1) : 'The AI did not answer'}. Trying again (${n} of ${total})…`; };
     try { history.push({ role: 'tutor', text: await AI.chat(history, screen) }); msg.textContent = ''; }
     catch (e) {
       /* after the automatic tries: try again, or take an answer from the lessons of the site (no AI needed) */

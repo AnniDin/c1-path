@@ -190,7 +190,7 @@
         const read = g.trick ? link('#/tricks/' + g.trick, 'Read the trick', 'btn small ghost') : (A.topicHref && g.topic ? link(A.topicHref(g.topic), 'Open the topic', 'btn small ghost') : null);
         return h('div', { class: 'card cause' },
           h('div', { class: 'pathrow' }, h('div', {}, h('strong', {}, g.title), h('div', { class: 'muted' }, `${n} mistake${n === 1 ? '' : 's'} saved${again > n ? ` · ${again} slips in all` : ''} · last on ${fmtDate(latest.ts)}`)),
-            h('div', { class: 'row' }, read, link('#/mistakes/practice/' + encodeURIComponent(g.key), `Practise ${Math.min(n, 10)}`, 'btn small'))),
+            h('div', { class: 'row' }, read, link('#/mistakes/practice/' + encodeURIComponent(g.key), `Practise ${Math.min(n, mistN())}`, 'btn small'))),
           h('p', { class: 'muted causeex', html: 'For example: ' + strip(promptHtml(it)).slice(0, 140) + ' &rarr; <b>' + strip(correctText(it)).slice(0, 60) + '</b>' }));
       });
     }
@@ -216,21 +216,33 @@
     view(back('#/progress', 'Review'), h('h1', {}, 'My mistakes'),
       h('p', { class: 'lead' }, 'Every question you answered wrongly is saved here with the correct answer and the reason. A mistake comes back a day after the slip and again three days after your first right answer; after two right answers it disappears, so this list shows what you still need to learn.'),
       h('div', { class: 'row' },
-        n ? link('#/mistakes/practice', (nDue ? `Practise ${Math.min(nDue, 10)} due today` : `Practise ${Math.min(n, 10)} early`), 'btn') : null,
+        n ? link('#/mistakes/practice', `Practise ${Math.min(n, mistN())} by priority` + (nDue ? ` (${nDue} due today)` : ''), 'btn') : null,
+        n ? mistPicker(() => mistakes()) : null,
         h('label', { class: 'muted' }, 'Sort ', h('select', { onchange: (e) => { sort = e.target.value; draw(); } }, h('option', { value: 'recent' }, 'Newest first'), h('option', { value: 'repeated' }, 'Most repeated'))),
         n ? h('button', { class: 'btn small ghost', onclick: () => { if (confirm('Remove all saved mistakes?')) { Store.clearMistakes(); draw(); } } }, 'Clear all') : null),
       modeBar, topBox, chipsBox, list);
     draw();
   }
 
+  /* how many mistakes one practice shows: the learner chooses, the system picks which ones */
+  const MIST_N = 'c1path.mistn', MIST_SIZES = [5, 10, 20, 30, 50];
+  const mistN = () => { try { const n = +localStorage.getItem(MIST_N); return MIST_SIZES.includes(n) ? n : 10; } catch (e) { return 10; } };
+  const mistPicker = (after) => h('label', { class: 'muted' }, 'How many ', h('select', { 'aria-label': 'How many mistakes to practise', onchange: (e) => { try { localStorage.setItem(MIST_N, e.target.value); } catch (x) { /* optional */ } after(); } },
+    MIST_SIZES.map((n) => h('option', Object.assign({ value: n }, mistN() === n ? { selected: true } : {}), String(n)))));
+  /* priority, as the recommendations rank them: what is due first, then what you slip on most often, then the causes with most mistakes, then the most recent */
+  function byPriority(list) {
+    const size = {}; causes(Store.mistakes()).forEach((g) => { size[g.key] = g.items.length; });
+    const due = new Set(Store.dueMistakes()), score = (m) => (due.has(m) ? 1000 : 0) + (m.count || 1) * 20 + (size[causeOf(m).key] || 1) * 5 + (m.ts || 0) / 1e13; /* the last term only breaks ties: newer first */
+    return list.slice().sort((a, b) => score(b) - score(a));
+  }
   function mistakePractice(cause) {
-    /* the ones that are due come first; if fewer than ten are due, the rest are the next in line. With a cause, only the mistakes of that cause. */
+    /* the N chosen mistakes with the highest priority (due ones first). With a cause, only the mistakes of that cause. */
     const mine = Store.mistakes().filter((m) => !cause || causeOf(m).key === cause), title = cause && mine[0] ? causeOf(mine[0]).title : '';
-    const due = mine.filter((m) => Store.dueMistakes().includes(m)), rest = mine.filter((m) => !due.includes(m)).sort((a, b) => (a.due || 0) - (b.due || 0));
-    const items = sample(due, 10).concat(rest).slice(0, 10).flatMap((m) => [Engine.recording(m.item), m.item].filter(Boolean));
+    const items = byPriority(mine).slice(0, mistN()).flatMap((m) => [Engine.recording(m.item), m.item].filter(Boolean));
     if (!items.length) { location.hash = '#/mistakes'; return; }
     view(back('#/mistakes', 'My mistakes'), h('h1', {}, title ? 'Practise: ' + title : 'Practise your mistakes'),
-      h('p', { class: 'muted' }, 'Answer correctly twice (in two sessions) and a mistake leaves your list.'),
+      h('p', { class: 'muted' }, 'Answer correctly twice (in two sessions) and a mistake leaves your list. The ones shown first are those due today, then the ones you miss most often.'),
+      h('div', { class: 'row' }, mistPicker(() => mistakePractice(cause))),
       quiz(items, { source: { topic: 'retry', label: 'Mistake practice', href: '#/mistakes' }, onRetry: () => mistakePractice(cause), onScore: (c, t) => Store.record('retry', c, t) }));
   }
 

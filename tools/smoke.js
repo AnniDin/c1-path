@@ -346,10 +346,17 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
     st.cards = {}; st.seen = {};
     render('#/vocab/' + vg + '?u=' + unit.id);
     const need = Math.ceil(sb.C1.vocab.find((x) => x.id === vg).cards.length * 0.7);
-    check('inside a unit, a vocabulary group says: study 70% of the cards with the flashcards, the quiz is extra', /To complete this step/.test(app.textContent) && new RegExp('at least ' + need + ' of the').test(app.textContent) && /quiz is extra practice/.test(app.textContent));
+    check('inside a unit, a vocabulary group says: study 70% of the cards, with the flashcards or the quiz', /To complete this step/.test(app.textContent) && new RegExp('at least ' + need + ' of the').test(app.textContent) && /answering it in the quick quiz counts as studying/.test(app.textContent));
     A.allCards.filter((c) => c.group === vg).forEach((c) => S.markSeen(c.id));
     render('#/vocab/' + vg + '?u=' + unit.id);
     check('and says so when the step is complete', /This step is complete/.test(app.textContent));
+    /* 5. phrasal verb cards point to the trick of their particle; the flashcards can be asked in several ways, each with a "Show answer" */
+    render('#/vocab/up');
+    check('a phrasal verb card shows its memory trick', /Memory trick: UP/.test(app.textContent) && !!sb.C1.phrasalTrick('come up with') && sb.C1.phrasalTrick('look after') === null);
+    ['meaning', 'phrase', 'choose', 'type', 'mix'].forEach((m) => { sb.localStorage.setItem('c1path.cardstyle', m); st.cards = {}; st.seen = {}; st.newToday = {}; render('#/review/up'); check('flashcards asked "' + m + '" show a Show answer button', /Show answer/.test(app.textContent)); });
+    sb.localStorage.removeItem('c1path.cardstyle');
+    /* 6. every typed exercise says what to do about contractions */
+    ['kwt', 'cloze', 'wf'].forEach((pid) => { const p = sb.C1.practice.find((x) => x.id === pid); if (!p) return; render('#/practice/' + pid + '/0'); check('typed exercises (' + pid + ') state the contraction rule', /Contractions:/.test(app.textContent)); });
     /* 5. the game with just the cards of the session */
     const six = A.allCards.slice(100, 108).map((c) => c.id);
     if (sb.sessionStorage) { sb.sessionStorage.setItem('c1path.vgids', JSON.stringify(six)); render('#/vgames/mix/last'); check('"Play a game with these cards" opens a game made only of those cards', /Only with the cards you have just studied/.test(app.textContent) && app.all((n) => /\bitem\b/.test(n.className || '') || n.className === 'item').length >= 4); }
