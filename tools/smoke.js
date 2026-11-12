@@ -366,8 +366,10 @@ const check = (name, cond, info) => { if (cond) ok++; else { failed++; console.e
     const days = new Set(); for (let d = 20000; d < 20060; d++) days.add(A.greetLine(d, d % 7));
     check('Pica has a different line on different days', days.size >= 15);
     check('the same day always gets the same line', A.greetLine(20123, 3) === A.greetLine(20123, 3));
+    const daysBefore = JSON.stringify(sb.Store.state.days); sb.Store.state.days = {}; /* answers recorded earlier in this run would cheer her up */
     const sad3 = A.missYou(3), sad10 = A.missYou(10), sad40 = A.missYou(40), fine = A.missYou(2);
     check('Pica is sad after 3 days away, sadder texts later, and not at 2 days', fine === null && sad3.mood === 'sad' && /3 days/.test(sad3.text) && /10 days/.test(sad10.text) && /gently|few flashcards/.test(sad40.text));
+    sb.Store.state.days = JSON.parse(daysBefore);
     const st2 = sb.Store.state, daysKeep = JSON.stringify(st2.days);
     st2.days[sb.Store.today()] = 4;
     check('she cheers up once you have practised today', A.missYou(10).mood === 'happy');
