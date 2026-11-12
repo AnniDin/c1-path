@@ -12,7 +12,7 @@
     groq: {
       name: 'Groq (free)', host: 'api.groq.com', keyHint: 'gsk_…', free: true,
       keyUrl: 'https://console.groq.com/keys', keyStore: 'c1path.apikey.groq', modelStore: 'c1path.aimodel.groq',
-      models: [['llama-3.3-70b-versatile', 'Llama 3.3 70B (recommended)'], ['llama-3.1-8b-instant', 'Llama 3.1 8B (faster, lighter)']]
+      models: [['openai/gpt-oss-120b', 'GPT-OSS 120B (recommended: the most accurate)'], ['llama-3.3-70b-versatile', 'Llama 3.3 70B'], ['llama-3.1-8b-instant', 'Llama 3.1 8B (faster, lighter)']]
     },
     anthropic: {
       name: 'Anthropic Claude (paid)', host: 'api.anthropic.com', keyHint: 'sk-ant-…', free: false,
@@ -30,7 +30,8 @@
   const prov = () => PROVIDERS[provId()];
   const modelName = () => modelOf(prov());
   const BAD_GROQ = /allam|guard|whisper|tts|orpheus|playai|embed|safeguard/i;
-  const modelOf = (p) => { const m = get(p.modelStore); return m && !(p === PROVIDERS.groq && BAD_GROQ.test(m)) ? m : p.models[0][0]; };
+  /* the Llama 3.3 that older versions saved on its own is not a choice: until the learner picks a model, Groq uses the recommended one */
+  const modelOf = (p) => { const m = get(p.modelStore); return m && !(p === PROVIDERS.groq && (BAD_GROQ.test(m) || (m === 'llama-3.3-70b-versatile' && !get('c1path.modelpicked')))) ? m : p.models[0][0]; };
 
   const errorText = (status, detail, p) => status === 401 || status === 403 || (status === 400 && /api key/i.test(detail))
     ? `The ${p.name.replace(/ \(.*/, '')} key was rejected (${status}). Check that you pasted it completely.`
@@ -63,7 +64,8 @@
     return fetchT('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: 'Bearer ' + key },
-      body: JSON.stringify({ model, max_tokens: maxTokens, temperature: 0.3, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] })
+      body: JSON.stringify(Object.assign({ model, max_tokens: /gpt-oss/.test(model) ? maxTokens * 3 : maxTokens, temperature: 0.3 }, /gpt-oss/.test(model) ? { reasoning_effort: 'low' } : {},
+        { messages: [{ role: 'system', content: system }, { role: 'user', content: user }] }))
     });
   }
   function textOf(p, data) {
@@ -73,7 +75,7 @@
   }
 
   /* the best chat models first: the big Llama, then the small Llama, then the rest */
-  const groqRank = (id) => (/llama-3.3-70b/.test(id) ? 0 : /llama-3.1-8b/.test(id) ? 1 : /llama|qwen|gpt-oss/.test(id) ? 2 : 3);
+  const groqRank = (id) => (/gpt-oss-120b/.test(id) ? 0 : /llama-3.3-70b/.test(id) ? 1 : /llama-3.1-8b/.test(id) ? 2 : /llama|qwen|gpt-oss/.test(id) ? 3 : 4);
   /* Ask the provider which models this key can use, so the list never goes stale. Returns [[id, label]] or []. */
   async function listModels() {
     const p = prov(), key = get(p.keyStore);
@@ -132,9 +134,12 @@
       if (p === PROVIDERS.gemini && res.status === 400 && /thinking/i.test(String(detail)) && retried !== 'nothink') return callOnce(system, user, maxTokens, 'nothink', only, alt);
       /* the model is overloaded (503) or out of quota (429): another Gemini model of the same key gets one try, without changing the saved choice */
       if (p === PROVIDERS.gemini && (res.status === 503 || res.status === 429) && !alt && !only) {
-        const other = (await listModels()).find(([id]) => id !== modelName());
+        const lite = (id) => (/flash-lite/.test(id) ? 0 : 1), /* the lighter model first: it is less busy and has a larger free allowance */
+          other = (await listModels()).filter(([id]) => id !== modelName()).sort((a, b) => lite(a[0]) - lite(b[0]))[0];
         if (other) { try { return await callOnce(system, user, maxTokens, retried, only, other[0]); } catch (e2) { /* the first error is the one to show */ } }
       }
+      /* the recommended Groq model refuses the request (400) or is not offered to this key (404): Llama 3.3 gets one try, the saved choice is kept */
+      if (p === PROVIDERS.groq && (res.status === 400 || res.status === 404) && !alt && !only && /gpt-oss/.test(modelOf(p))) { try { return await callOnce(system, user, maxTokens, retried, only, 'llama-3.3-70b-versatile'); } catch (e2) { /* the first error is the one to show */ } }
       if (res.status === 404 && p !== PROVIDERS.anthropic && !retried && !only) {
         // the model was retired: switch to the best model the key can use and try once more
         const list = await listModels(), best = list.find(([id]) => id !== modelName());
@@ -192,7 +197,7 @@
     listModels,
     model: modelName,
     setKey: (k) => put(prov().keyStore, String(k || '').replace(/\s+/g, '')),
-    setModel: (m) => put(prov().modelStore, m.trim()),
+    setModel: (m) => { put('c1path.modelpicked', '1'); put(prov().modelStore, m.trim()); },
     test: () => call('Reply with the single word OK.', 'Test', 10),
 
     async writing(task, text) {
