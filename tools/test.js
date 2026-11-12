@@ -401,11 +401,11 @@ let retryDone = Promise.resolve();
   const okRes = { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: 'OK' }] } }] }) };
   const bad = (status) => ({ ok: false, status, json: async () => ({ error: { message: 'x' } }) });
   const A1 = mk([bad(503), bad(503), okRes]), A2 = mk([bad(401)]), A3 = mk(['net']), A4 = mk([bad(429), okRes]);
-  retryDone = Promise.all([A1.AI.test(), A2.AI.test().catch((e) => 'ERR'), A3.AI.test().catch((e) => e.message), A4.AI.test()]).then(([r1, r2, r3, r4]) => {
+  retryDone = Promise.all([A1.AI.test(), A2.AI.test().catch((e) => 'ERR'), A3.AI.test().catch((e) => e.message), A4.AI.test().catch((e) => 'ERR')]).then(([r1, r2, r3, r4]) => {
     eq('two busy answers and then a good one: Pica gets the answer, after 3 tries', [r1, A1.D.seen.length, A1.D.retries], ['OK', 3, ['2/3', '3/3']]);
     eq('a refused key is not tried again', [r2, A2.D.seen.length], ['ERR', 1]);
     eq('no connection: 3 tries, then the error to show', [/^Could not reach Google Gemini\. Check your connection/.test(r3), A3.D.seen.length], [true, 3]);
-    eq('a 429 (busy) is tried again', [r4, A4.D.seen.length], ['OK', 2]);
+    eq('a 429 (limit) is not tried again on the same model: no wasted allowance', [r4, A4.D.seen.length < 3], ['ERR', true]);
   });
 }
 

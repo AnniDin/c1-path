@@ -35,7 +35,7 @@
 
   const errorText = (status, detail, p) => status === 401 || status === 403 || (status === 400 && /api key/i.test(detail))
     ? `The ${p.name.replace(/ \(.*/, '')} key was rejected (${status}). Check that you pasted it completely.`
-    : status === 429 ? (p.free ? 'The free-tier limit was reached. Wait a minute and try again (free plans also have a daily limit).' : 'Rate limit or no credit left (429). ' + detail)
+    : status === 429 ? (p.free ? (/PerDay|per day|daily/i.test(detail) ? `The free daily allowance of ${short(p)} is used up. It comes back tomorrow; meanwhile add a free key from the other provider (Groq or Gemini) on your account page.` : 'The free-tier limit was reached. Wait a minute and try again (free plans also have a daily limit).') : 'Rate limit or no credit left (429). ' + detail)
       : `API error ${status}. ${detail}`;
 
   /* a request that gets no answer in AI.timeoutMs is cut off (and tried again), so Pica can never wait for ever */
@@ -109,7 +109,8 @@
     for (let i = 0; ; i++) {
       let res = null, err = null;
       try { res = await run(); } catch (e) { err = e; }
-      const passing = err || res.status === 429 || res.status >= 500;
+      /* a 429 is not tried again on the same model (waiting seconds does not refill a free allowance, and each try uses it up): the next model or provider gets it at once */
+      const passing = err || res.status >= 500;
       if (!passing || i >= total - 1) { if (err) throw err; return res; }
       if (AI.onRetry) AI.onRetry(i + 2, total, '', reasonOf(p, err, res));
       await wait(AI.retryDelays[i]);
