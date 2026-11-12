@@ -265,7 +265,22 @@
       const earlier = turns.slice(0, -1).map((m) => (m.role === 'user' ? 'Learner: ' : 'Tutor: ') + String(m.text).slice(0, 800)).join('\n');
       const now = String((turns[turns.length - 1] || {}).text || '').slice(0, 800);
       const user = (earlier ? `Earlier in this chat:\n${earlier}\n\n` : '') + `The learner's message now. Answer exactly this, in English, without greeting or introducing yourself:\n${now}`;
-      return call(TUTOR + ' ' + rule + seen + grounded, user, 700);
+      const system = TUTOR + ' ' + rule + seen + grounded;
+      let out = await call(system, user, 700);
+      /* the code checks what it can: an answer in Spanish, or a greeting that ignores the question, gets ONE more try with the fault named */
+      const fault = AI.fault(out, now);
+      if (fault) { try { const again = await call(system, user + '\n\nYour previous answer was rejected: ' + fault + ' Answer the question now.', 700); if (!AI.fault(again, now)) out = again; } catch (e) { /* keep the first answer */ } }
+      /* an exercise the rules forbid is removed by the code, whatever the model did */
+      if (!/may end with one check question/.test(rule)) out = out.replace(/\n*^Try it:.*$/gim, '').trim();
+      return out;
+    },
+    /* why an answer is not acceptable ('' when it is): Spanish instead of English, or a greeting/introduction instead of an answer */
+    fault(answer, question) {
+      const words = String(answer).toLowerCase().match(/[a-záéíóúñü']+/g) || [];
+      const es = words.filter((w) => /^(el|los|las|una|que|para|con|por|pero|como|también|porque|esto|esta|este|puedes|muy|más|hay)$/.test(w)).length;
+      if (words.length >= 8 && es >= 4 && es / words.length > 0.08) return 'it was written in Spanish. Write the whole answer in English.';
+      if (/^\s*(hi|hello|hola|hey|hi there)\b[^.!?\n]*[.!?]?\s*(i'?m|i am) pica/i.test(answer) && String(question).split(/\s+/).length > 3 && !/\bwho are you|what are you\b/i.test(question)) return 'it only greeted the learner and introduced itself. Do not greet; answer the question.';
+      return '';
     },
 
     /* notes: ask for a category and an optional parent note for each note; the answer is checked here (known ids, short plain category names, no loops, depth of 3 at most) */

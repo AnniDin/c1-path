@@ -432,6 +432,12 @@ let robustDone = Promise.resolve();
     eq('when the first provider keeps failing, the second one answers', [f, seenF.filter((x) => x === 'gemini').length, seenF.includes('groq'), noted.length], ['OK', 3, true, 1]);
     eq('a rejected key is not tried on another provider', [k, seenK.length], ['ERR', 1]);
   });
+  /* the quality guard: Spanish and a bare greeting are rejected, a good English answer is not */
+  const Q = device(['js/ai.js']).AI;
+  eq('Pica answers are checked: Spanish and greetings are faulty, English is fine', [
+    !!Q.fault('Hola, puedes usar la palabra para que el verbo sea más claro porque hay una regla con el tiempo.', 'why is it so'),
+    !!Q.fault('Hello! I am Pica, the C1 Path tutor.', 'what does to mean after look forward'),
+    !!Q.fault('After look forward you use -ing because to is a preposition here, not part of the infinitive.', 'why')], [true, true, false]);
 }
 
 swDone.then(() => notesDone).then(() => retryDone).then(() => robustDone).then(() => {
