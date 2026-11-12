@@ -422,7 +422,7 @@ let robustDone = Promise.resolve();
   const F = mk(), seenF = [], noted = [];
   F.localStorage.setItem('c1path.apikey.gemini', 'k'); F.localStorage.setItem('c1path.apikey.groq', 'k2');
   F.AI.onRetry = (n, t, other) => { if (other) noted.push(other); };
-  F.fetch = async (u) => { seenF.push(String(u).includes('groq') ? 'groq' : 'gemini'); return /groq/.test(String(u)) ? okGroq : { ok: false, status: 503, json: async () => ({}) }; };
+  F.fetch = async (u) => { if (!/\/models\?/.test(String(u))) seenF.push(String(u).includes('groq') ? 'groq' : 'gemini'); /* the list of models (to find another Gemini model) is not a try of the answer */ return /groq/.test(String(u)) ? okGroq : { ok: false, status: 503, json: async () => ({}) }; };
   /* a rejected key is not passed on to the other provider */
   const K = mk(), seenK = [];
   K.localStorage.setItem('c1path.apikey.gemini', 'k'); K.localStorage.setItem('c1path.apikey.groq', 'k2');

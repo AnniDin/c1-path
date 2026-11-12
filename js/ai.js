@@ -107,11 +107,11 @@
     }
   }
 
-  async function callOnce(system, user, maxTokens, retried, only) {
+  async function callOnce(system, user, maxTokens, retried, only, alt) {
     const p = only ? PROVIDERS[only] : prov(), key = get(p.keyStore);
     if (!key) throw new Error('No API key set. Add one in Review, under AI feedback.');
     let res;
-    try { res = await attempt(() => request(p, key, modelOf(p), system, user, maxTokens || 1600, retried === 'nothink')); }
+    try { res = await attempt(() => request(p, key, alt || modelOf(p), system, user, maxTokens || 1600, retried === 'nothink')); }
     catch (e) {
       /* say what really happened: no answer in time, a key that cannot be sent (stray characters), or no connection */
       const why = e && e.name === 'AbortError' ? `${p.name.replace(/ \(.*/, '')} did not answer within ${AI.timeoutMs / 1000} seconds.`
@@ -122,7 +122,12 @@
     if (!res.ok) {
       let detail = '';
       try { const j = await res.json(); detail = (j.error && (j.error.message || j.error)) || ''; } catch (e) { /* no body */ }
-      if (p === PROVIDERS.gemini && res.status === 400 && /thinking/i.test(String(detail)) && retried !== 'nothink') return callOnce(system, user, maxTokens, 'nothink', only);
+      if (p === PROVIDERS.gemini && res.status === 400 && /thinking/i.test(String(detail)) && retried !== 'nothink') return callOnce(system, user, maxTokens, 'nothink', only, alt);
+      /* the model is overloaded (503) or out of quota (429): another Gemini model of the same key gets one try, without changing the saved choice */
+      if (p === PROVIDERS.gemini && (res.status === 503 || res.status === 429) && !alt && !only) {
+        const other = (await listModels()).find(([id]) => id !== modelName());
+        if (other) { try { return await callOnce(system, user, maxTokens, retried, only, other[0]); } catch (e2) { /* the first error is the one to show */ } }
+      }
       if (res.status === 404 && p !== PROVIDERS.anthropic && !retried && !only) {
         // the model was retired: switch to the best model the key can use and try once more
         const list = await listModels(), best = list.find(([id]) => id !== modelName());
